@@ -3,8 +3,9 @@
 //
 
 #include <iostream>
+#include "ChessInstance.h"
 
 int main() {
-    std::cout << "Hello World!" << std::endl;
+    ChessInstance chess;
     return 0;
 }
