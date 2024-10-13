@@ -18,8 +18,8 @@ public:
 
     void initBoard();
     void updateBoard() const;
-    void handleMoveInput(const std::string &input) const;
-    void move(ChessTile *fromTile, ChessTile *toTile) const;
+    void handleMoveInput(const std::string &input);
+    void move(ChessTile *fromTile, ChessTile *toTile);
 
     std::vector<ChessTile*> getPossibleMoves(const ChessTile * fromTile) const;
     std::vector<ChessTile*> getPossibleMovesPawn(const ChessTile *fromTile) const;
@@ -32,8 +32,13 @@ public:
                                                          const std::vector<std::pair<int, int>> &directions) const;
     std::vector<ChessTile*> getPossibleMovesByDirectionSingle(const ChessTile *fromTile,
                                       const std::vector<std::pair<int, int>> &directions) const;
+    std::vector<ChessTile*> getAllWhiteTiles() const;
+    std::vector<ChessTile*> getAllBlackTiles() const;
 
-    bool isPossibleMove(bool fromTileWhite, ChessTile *toTile, std::vector<ChessTile*> &possibleMoves) const;
+    bool isPossibleMove(bool fromTileWhite, ChessTile *toTile, std::vector<ChessTile*> &possibleMoves,
+                        bool isPawnSpecialMove = false) const;
+    bool isKingChecked();
+    bool isKingCheckmate();
 
     ChessTile *getTileAt(const std::string &pos) const;
     ChessTile *getTileAt(int x,int y) const;
@@ -41,6 +46,7 @@ public:
     void mergePossVec(std::vector<ChessTile*> &possibleMoves, std::vector<ChessTile*> possibleMovesMerge) const;
 private:
     std::vector<ChessTile*> board;
+    bool whitesTurn = true;
     std::pair<bool, bool> whiteRookMoved = {false, false};
     std::pair<bool, bool> blackRookMoved = {false, false};
     int doublePawnMoveAt = -1; // says in what column a pawn move with two steps happened

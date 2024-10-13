@@ -50,57 +50,59 @@ void ChessBoard::initBoard() {
 }
 
 void ChessBoard::updateBoard() const {
-    system("clear");
+    // system("clear"); // disable for debugging
     // Print the chessboard with characters
-    for (int i = 0; i < 8; ++i) {
-        for (int j = 0; j < 8; ++j) {
-            if ((i + j) % 2 == 0) {
-                // White square
-                std::cout << "\x1b[48;5;231m";
-            } else {
+    for (int y = 7; y >= 0; --y) {
+        std::cout << " " << y + 1 << " ";
+        for (int x = 0; x < 8; ++x) {
+            if ((y + x) % 2 == 0) {
                 // Black square
                 std::cout << "\x1b[48;5;0m";
+            } else {
+                // White square
+                std::cout << "\x1b[48;5;231m";
             }
-            if (getTileAt(j, i)->piece == nullptr) {
+            if (getTileAt(x, y)->piece == nullptr) {
                 std::cout << "   ";
                 continue;
             }
-            if (getTileAt(j, i)->piece->isWhite()) {
+            if (getTileAt(x, y)->piece->isWhite()) {
                 // green
                 std::cout << "\x1b[38;5;22m";
             } else {
                 // magenta
                 std::cout << "\x1b[38;5;126m";
             }
-            std::cout << " " << getTileAt(j, i)->piece->getShortName() << " ";
+            std::cout << " " << getTileAt(x, y)->piece->getShortName() << " ";
         }
         std::cout << "\x1b[0m" << std::endl;  // Reset to default color after each line
     }
+    std::cout << "    a  b  c  d  e  f  g  h " << std::endl;
 }
 
 std::vector<ChessTile *> ChessBoard::getPossibleMoves(const ChessTile *fromTile) const {
     std::vector<ChessTile *> possibleMoves;
     if (fromTile->piece == nullptr) return possibleMoves;
-    const ChessPiece *piece = fromTile->piece;
-    switch(piece->getType()) {
+    // const ChessPiece *piece = fromTile->piece;
+    switch(fromTile->piece->getType()) {
         case Pawn:
             mergePossVec(possibleMoves, getPossibleMovesPawn(fromTile));
-            break;
+        break;
         case Rook:
             mergePossVec(possibleMoves, getPossibleMovesRook(fromTile));
-            break;
+        break;
         case Knight:
             mergePossVec(possibleMoves, getPossibleMovesKnight(fromTile));
-            break;
+        break;
         case Bishop:
             mergePossVec(possibleMoves, getPossibleMovesBishop(fromTile));
-            break;
+        break;
         case Queen:
             mergePossVec(possibleMoves, getPossibleMovesQueen(fromTile));
-            break;
+        break;
         case King:
             mergePossVec(possibleMoves, getPossibleMovesKing(fromTile));
-            break;
+        break;
         default:
             return possibleMoves;
     }
@@ -114,23 +116,18 @@ std::vector<ChessTile *> ChessBoard::getPossibleMovesPawn(const ChessTile *fromT
     const int white = fromTile->piece->isWhite() ? 1 : -1;
     if (getTileAt(x, y + white)->piece == nullptr) {
         possibleMoves.push_back(getTileAt(x, y + white));
-        if (white && y == 1 && getTileAt(x, y + 2 * white)->piece == nullptr) {
+        if (white == 1 && y == 1 && getTileAt(x, y + 2 * white)->piece == nullptr) {
             possibleMoves.push_back(getTileAt(x, y + 2 * white));
         }
-    } else {
-        possibleMoves.push_back(getTileAt(x, y + white));
-        if (white && y == 6 && getTileAt(x, y + 2 * white)->piece == nullptr) {
+        if (white == -1 && y == 6 && getTileAt(x, y + 2 * white)->piece == nullptr) {
             possibleMoves.push_back(getTileAt(x, y + 2 * white));
         }
     }
-    if (!getTileAt(x - 1, y + white)->piece->isWhite()) {
-        possibleMoves.push_back(getTileAt(x - 1, y + white));
-    }
-    if (!getTileAt(x + 1, y + white)->piece->isWhite()) {
-        possibleMoves.push_back(getTileAt(x + 1, y + white));
-    }
+    isPossibleMove(fromTile->piece->isWhite(), getTileAt(x + 1, y + white), possibleMoves, true);
+    isPossibleMove(fromTile->piece->isWhite(), getTileAt(x - 1, y + white), possibleMoves, true);
     // get pawn move for that special pawn move that never happens
     if (doublePawnMoveAt != -1) {
+        // TODO: add weird pawn move
         if (x - 1 == doublePawnMoveAt) {
             possibleMoves.push_back(getTileAt(x - 1, y + white));
         } else if (x + 1 == doublePawnMoveAt) {
@@ -198,29 +195,89 @@ std::vector<ChessTile *> ChessBoard::getPossibleMovesByDirectionSingle(const Che
         const int xDirection = pair.first;
         const int yDirection = pair.second;
         ChessTile *nextTile = getTileAt(x + xDirection, y + yDirection);
-        if (!isPossibleMove(fromTile->piece->isWhite(), nextTile, possibleMoves)) break;
+        isPossibleMove(fromTile->piece->isWhite(), nextTile, possibleMoves);
     }
     return possibleMoves;
 }
 
+std::vector<ChessTile *> ChessBoard::getAllWhiteTiles() const {
+    std::vector<ChessTile *> whiteTiles;
+    for (ChessTile* tile : board) {
+        if (tile->piece == nullptr) continue;
+        if (tile->piece->isWhite()) whiteTiles.push_back(tile);
+    }
+    return whiteTiles;
+}
+
+std::vector<ChessTile *> ChessBoard::getAllBlackTiles() const {
+    std::vector<ChessTile *> blackTiles;
+    for (ChessTile* tile : board) {
+        if (tile->piece == nullptr) continue;
+        if (!tile->piece->isWhite()) blackTiles.push_back(tile);
+    }
+    return blackTiles;
+}
+
 bool ChessBoard::isPossibleMove(const bool fromTileWhite, ChessTile *toTile,
-                                std::vector<ChessTile *> &possibleMoves) const {
+                                std::vector<ChessTile *> &possibleMoves, const bool isPawnSpecialMove) const {
     if (toTile == nullptr) return false;
-    if (fromTileWhite == toTile->piece->isWhite()) return false;
+    if (toTile->piece != nullptr && fromTileWhite == toTile->piece->isWhite()) return false;
+    if (isPawnSpecialMove && toTile->piece == nullptr) return false;
     possibleMoves.push_back(toTile);
     return true;
 }
 
-void ChessBoard::handleMoveInput(const std::string &input) const {
-    if (input.length() != 5) {
-        std::cerr << "ChessBoard::move: Wrong input length, should be 5." << std::endl;
+bool ChessBoard::isKingChecked() {
+    const std::vector<ChessTile*> pieceTiles = whitesTurn ? getAllWhiteTiles() : getAllBlackTiles();
+    for (const ChessTile* tile : pieceTiles) {
+        for (const ChessTile* possMove : getPossibleMoves(tile)) {
+            if (possMove->piece == nullptr) continue;
+            if (possMove->piece->getType() == King) {
+                return true;
+            }
+        }
     }
-    ChessTile *fromTile = getTileAt(input.substr(0,2));
-    ChessTile *toTile = getTileAt(input.substr(3,2));
-    move(fromTile, toTile);
+    return false;
 }
 
-void ChessBoard::move(ChessTile *fromTile, ChessTile *toTile) const {
+bool ChessBoard::isKingCheckmate() {
+
+}
+
+void ChessBoard::handleMoveInput(const std::string &input) {
+    if (input.length() != 5) {
+        std::cerr << "ChessBoard::handleMoveInput: Wrong input length, should be 5." << std::endl;
+        return;
+    }
+    std::string subStrFrom = input.substr(0, 2);
+    std::string subStrTo = input.substr(3);
+    subStrFrom[1] = subStrFrom[1] - 1;
+    subStrTo[1] = subStrTo[1] - 1;
+    ChessTile *fromTile = getTileAt(subStrFrom);
+    ChessTile *toTile = getTileAt(subStrTo);
+    if (fromTile == nullptr || toTile == nullptr) {
+        std::cerr << "ChessBoard::handleMoveInput: there is no tile like that" << std::endl;
+        return;
+    }
+    if (fromTile->piece == nullptr || fromTile->piece->isWhite() != whitesTurn) {
+        std::cerr << "ChessBoard::handleMoveInput: trying to move a piece from the opponent or no piece" << std::endl;
+        return;
+    }
+    std::vector<ChessTile*> possibleMoves = getPossibleMoves(fromTile);
+    std::cout << "the possible moves are:" << std::endl;
+    for (auto possMove : possibleMoves) {
+        std::cout << possMove->getX() << " " << possMove->getY() << std::endl;
+    }
+    auto itPossMove = std::find(possibleMoves.begin(), possibleMoves.end(), toTile);
+    if (itPossMove == possibleMoves.end()) {
+        std::cerr << "ChessBoard::handleMoveInput: that is not a possible move" << std::endl;
+        return;
+    }
+    move(fromTile, toTile);
+    whitesTurn = !whitesTurn;
+}
+
+void ChessBoard::move(ChessTile *fromTile, ChessTile *toTile) {
     toTile->piece = fromTile->piece;
     fromTile->piece = nullptr;
 }
@@ -231,9 +288,9 @@ ChessTile *ChessBoard::getTileAt(const std::string &pos) const {
         return nullptr;
     }
     const char xText = pos[0];
-    if (xText >= 'a' && xText <= 'h') return nullptr;
+    if (xText != std::clamp(xText, 'a', 'h')) return nullptr;
     const int x = mapXtoInt.at(xText);
-    const int y = pos[1];
+    const int y = pos[1] - '0'; // is a trick to convert number char to int
     return getTileAt(x, y);
 }
 

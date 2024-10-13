@@ -6,17 +6,20 @@
 #include <iostream>
 
 ChessInstance::ChessInstance() {
-    ChessBoard *chessBoard = new ChessBoard();
-    _chessBoard = *chessBoard;
+    _chessBoard = *new ChessBoard();
 
     run();
 }
 
 void ChessInstance::run() {
     std::string input;
+    _chessBoard.updateBoard();
     while(true) {
         std::cin >> input;
         if (input == "quit") break;
+        else {
+            _chessBoard.handleMoveInput(input);
+        }
         _chessBoard.updateBoard();
     }
 }
