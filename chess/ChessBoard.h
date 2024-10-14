@@ -12,6 +12,7 @@
 constexpr int boardWidth = 8;
 constexpr int boardHeight = 8;
 
+using Pieces = std::vector<ChessTile*>;
 class ChessBoard {
 public:
     explicit ChessBoard();
@@ -21,32 +22,34 @@ public:
     void handleMoveInput(const std::string &input);
     void move(ChessTile *fromTile, ChessTile *toTile);
 
-    std::vector<ChessTile*> getPossibleMoves(const ChessTile * fromTile) const;
-    std::vector<ChessTile*> getPossibleMovesPawn(const ChessTile *fromTile) const;
-    std::vector<ChessTile*> getPossibleMovesBishop(const ChessTile *fromTile) const;
-    std::vector<ChessTile*> getPossibleMovesRook(const ChessTile *fromTile) const;
-    std::vector<ChessTile*> getPossibleMovesKnight(const ChessTile *fromTile) const;
-    std::vector<ChessTile*> getPossibleMovesQueen(const ChessTile *fromTile) const;
-    std::vector<ChessTile*> getPossibleMovesKing(const ChessTile *fromTile) const;
-    std::vector<ChessTile*> getPossibleMovesByDirection(const ChessTile *fromTile,
+    Pieces getPossibleMoves(const ChessTile * fromTile);
+    Pieces getPossibleMovesPawn(const ChessTile *fromTile) const;
+    Pieces getPossibleMovesBishop(const ChessTile *fromTile) const;
+    Pieces getPossibleMovesRook(const ChessTile *fromTile) const;
+    Pieces getPossibleMovesKnight(const ChessTile *fromTile) const;
+    Pieces getPossibleMovesQueen(const ChessTile *fromTile) const;
+    Pieces getPossibleMovesKing(const ChessTile *fromTile) const;
+    Pieces getPossibleMovesByDirection(const ChessTile *fromTile,
                                                          const std::vector<std::pair<int, int>> &directions) const;
-    std::vector<ChessTile*> getPossibleMovesByDirectionSingle(const ChessTile *fromTile,
+    Pieces getPossibleMovesByDirectionSingle(const ChessTile *fromTile,
                                       const std::vector<std::pair<int, int>> &directions) const;
-    std::vector<ChessTile*> getAllWhiteTiles() const;
-    std::vector<ChessTile*> getAllBlackTiles() const;
+    Pieces getAllWhiteTiles() const;
+    Pieces getAllBlackTiles() const;
+    void filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves);
 
-    bool isPossibleMove(bool fromTileWhite, ChessTile *toTile, std::vector<ChessTile*> &possibleMoves,
+    bool isPossibleMove(bool fromTileWhite, ChessTile *toTile, Pieces &possibleMoves,
                         bool isPawnSpecialMove = false) const;
-    bool isKingChecked();
+    bool isKingChecked(bool white);
     bool isKingCheckmate();
 
     ChessTile *getTileAt(const std::string &pos) const;
     ChessTile *getTileAt(int x,int y) const;
 
-    void mergePossVec(std::vector<ChessTile*> &possibleMoves, std::vector<ChessTile*> possibleMovesMerge) const;
+    void mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge) const;
 private:
-    std::vector<ChessTile*> board;
+    Pieces board;
     bool whitesTurn = true;
+    bool kingChecked = false;
     std::pair<bool, bool> whiteRookMoved = {false, false};
     std::pair<bool, bool> blackRookMoved = {false, false};
     int doublePawnMoveAt = -1; // says in what column a pawn move with two steps happened
