@@ -21,6 +21,9 @@ void ChessInstance::run() {
             _chessBoard.handleMoveInput(input);
         }
         _chessBoard.updateBoard();
+        if(_chessBoard.isKingCheckmate()) {
+            break;
+        }
     }
 }
 

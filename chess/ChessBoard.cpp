@@ -222,7 +222,7 @@ Pieces ChessBoard::getAllBlackTiles() const {
 }
 
 void ChessBoard::filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves) {
-    std::cout << "possible Moves size before filter" << possibleMoves.size() << std::endl;
+    std::cout << "possible Moves size before filter: " << possibleMoves.size() << std::endl;
     // check if the move would make the player checked which is an illegal move
     possibleMoves.erase(std::remove_if(possibleMoves.begin(), possibleMoves.end(),
                                        [fromTile, this](ChessTile *toTile) {
@@ -231,7 +231,7 @@ void ChessBoard::filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces 
                                            ChessTile *tmpFromTile =  const_cast<ChessTile*> (fromTile);
                                            tmpFromTile->piece = nullptr;
                                            toTile->piece = tmpPieceFrom;
-                                           const bool isChecked = isKingChecked(!whitesTurn);
+                                           const bool isChecked = isKingChecked(whitesTurn);
                                            tmpFromTile->piece = tmpPieceFrom;
                                            toTile->piece = tmpPieceTo;
                                            return isChecked;
@@ -258,10 +258,11 @@ bool ChessBoard::isPossibleMove(const bool fromTileWhite, ChessTile *toTile, Pie
 bool ChessBoard::isKingChecked(const bool white) {
     const Pieces pieceTiles = !white ? getAllWhiteTiles() : getAllBlackTiles();
     for (const ChessTile *tile: pieceTiles) {
-        for (const ChessTile *possMove: getPossibleMoves(tile)) {
+        const Pieces possMoves = getPossibleMoves(tile);
+        for (const ChessTile *possMove: possMoves) {
             if (possMove->piece == nullptr)
                 continue;
-            if (possMove->piece->getType() == King) {
+            if (possMove->piece->getType() == King && possMove->piece->isWhite() == white) {
                 return true;
             }
         }
@@ -269,7 +270,19 @@ bool ChessBoard::isKingChecked(const bool white) {
     return false;
 }
 
-bool ChessBoard::isKingCheckmate() {}
+bool ChessBoard::isKingCheckmate() {
+    const Pieces pieceTiles = whitesTurn ? getAllWhiteTiles() : getAllBlackTiles();
+    for (const ChessTile *tile: pieceTiles) {
+        Pieces possMoves = getPossibleMoves(tile);
+        filterPossibleMovesForChecks(tile, possMoves);
+        if (possMoves.size() > 0) {
+            return false;
+        }
+    }
+    std::cout << "yeah you won!" << std::endl;
+    return true;
+}
+
 
 void ChessBoard::handleMoveInput(const std::string &input) {
     if (input.length() != 5) {
@@ -293,10 +306,10 @@ void ChessBoard::handleMoveInput(const std::string &input) {
     // get all possible moves and filter them
     Pieces possibleMoves = getPossibleMoves(fromTile);
     filterPossibleMovesForChecks(fromTile, possibleMoves);
-    // std::cout << "the possible moves are:" << std::endl;
-    // for (const auto possMove: possibleMoves) {
-    //     std::cout << possMove->getX() << " " << possMove->getY() << std::endl;
-    // }
+    std::cout << "the possible moves are:" << std::endl;
+    for (const auto possMove: possibleMoves) {
+        std::cout << possMove->getX() << " " << possMove->getY() << std::endl;
+    }
     const auto itPossMove = std::find(possibleMoves.begin(), possibleMoves.end(), toTile);
     if (itPossMove == possibleMoves.end()) {
         std::cerr << "ChessBoard::handleMoveInput: that is not a possible move" << std::endl;
