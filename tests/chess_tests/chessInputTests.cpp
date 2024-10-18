@@ -26,7 +26,7 @@ TEST(basicChessTests, testPawnMovement) {
 }
 
 TEST(basicChessTests, testBishopMovement) {
-    const std::vector<std::string> inputs = {"b2:b3", "a7:a6", "c1:e3"};
+    const std::vector<std::string> inputs = {"b2:b3", "a7:a6", "c1:a3"};
     doMovements(inputs);
 }
 

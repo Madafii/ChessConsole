@@ -3,10 +3,10 @@
 //
 
 #include "ChessBoard.h"
-#include <iostream>
-#include <string>
 #include <algorithm>
 #include <cstdlib>
+#include <iostream>
+#include <string>
 
 ChessBoard::ChessBoard() {
     mapXtoInt['a'] = 0;
@@ -75,34 +75,35 @@ void ChessBoard::updateBoard() const {
             }
             std::cout << " " << getTileAt(x, y)->piece->getShortName() << " ";
         }
-        std::cout << "\x1b[0m" << std::endl;  // Reset to default color after each line
+        std::cout << "\x1b[0m" << std::endl; // Reset to default color after each line
     }
     std::cout << "    a  b  c  d  e  f  g  h " << std::endl;
 }
 
 Pieces ChessBoard::getPossibleMoves(const ChessTile *fromTile) {
     Pieces possibleMoves;
-    if (fromTile->piece == nullptr) return possibleMoves;
+    if (fromTile->piece == nullptr)
+        return possibleMoves;
     // const ChessPiece *piece = fromTile->piece;
-    switch(fromTile->piece->getType()) {
+    switch (fromTile->piece->getType()) {
         case Pawn:
             mergePossVec(possibleMoves, getPossibleMovesPawn(fromTile));
-        break;
+            break;
         case Rook:
             mergePossVec(possibleMoves, getPossibleMovesRook(fromTile));
-        break;
+            break;
         case Knight:
             mergePossVec(possibleMoves, getPossibleMovesKnight(fromTile));
-        break;
+            break;
         case Bishop:
             mergePossVec(possibleMoves, getPossibleMovesBishop(fromTile));
-        break;
+            break;
         case Queen:
             mergePossVec(possibleMoves, getPossibleMovesQueen(fromTile));
-        break;
+            break;
         case King:
             mergePossVec(possibleMoves, getPossibleMovesKing(fromTile));
-        break;
+            break;
         default:
             return possibleMoves;
     }
@@ -137,14 +138,12 @@ Pieces ChessBoard::getPossibleMovesPawn(const ChessTile *fromTile) const {
 }
 
 Pieces ChessBoard::getPossibleMovesBishop(const ChessTile *fromTile) const {
-    const std::vector directions = {std::pair(1, 1), std::pair(1, -1),
-                                    std::pair(-1, 1), std::pair(-1, -1)};
+    const std::vector directions = {std::pair(1, 1), std::pair(1, -1), std::pair(-1, 1), std::pair(-1, -1)};
     return getPossibleMovesByDirection(fromTile, directions);
 }
 
 Pieces ChessBoard::getPossibleMovesRook(const ChessTile *fromTile) const {
-    const std::vector directions = {std::pair(0, 1), std::pair(0, -1),
-                                    std::pair(-1, 0), std::pair(1, 0)};
+    const std::vector directions = {std::pair(0, 1), std::pair(0, -1), std::pair(-1, 0), std::pair(1, 0)};
     return getPossibleMovesByDirection(fromTile, directions);
 }
 
@@ -162,35 +161,36 @@ Pieces ChessBoard::getPossibleMovesKnight(const ChessTile *fromTile) const {
 
 Pieces ChessBoard::getPossibleMovesKing(const ChessTile *fromTile) const {
     Pieces possibleMoves;
-    const std::vector directions = {std::pair(0, 1), std::pair(0, -1), std::pair(1, 1), std::pair(1, -1),
+    const std::vector directions = {std::pair(0, 1), std::pair(0, -1), std::pair(1, 1),  std::pair(1, -1),
                                     std::pair(1, 1), std::pair(1, -1), std::pair(-1, 1), std::pair(-1, -1)};
     mergePossVec(possibleMoves, getPossibleMovesByDirectionSingle(fromTile, directions));
     return possibleMoves;
-    //TODO: castling
+    // TODO: castling
 }
 
 Pieces ChessBoard::getPossibleMovesByDirection(const ChessTile *fromTile,
-                                                                 const std::vector<std::pair<int, int>> &directions) const {
+                                               const std::vector<std::pair<int, int>> &directions) const {
     Pieces possibleMoves;
     const int x = fromTile->getX();
     const int y = fromTile->getY();
-    for (std::pair pair : directions) {
+    for (std::pair pair: directions) {
         const int xDirection = pair.first;
         const int yDirection = pair.second;
-        for (int i = 0; i < 8; i++) {
+        for (int i = 1; i < 8; i++) {
             ChessTile *nextTile = getTileAt(x + i * xDirection, y + i * yDirection);
-            if (!isPossibleMove(fromTile->piece->isWhite(), nextTile, possibleMoves)) break;
+            if (!isPossibleMove(fromTile->piece->isWhite(), nextTile, possibleMoves))
+                break;
         }
     }
     return possibleMoves;
 }
 
 Pieces ChessBoard::getPossibleMovesByDirectionSingle(const ChessTile *fromTile,
-                                                                       const std::vector<std::pair<int, int>> &directions) const {
+                                                     const std::vector<std::pair<int, int>> &directions) const {
     Pieces possibleMoves;
     const int x = fromTile->getX();
     const int y = fromTile->getY();
-    for (std::pair pair : directions) {
+    for (std::pair pair: directions) {
         const int xDirection = pair.first;
         const int yDirection = pair.second;
         ChessTile *nextTile = getTileAt(x + xDirection, y + yDirection);
@@ -201,49 +201,66 @@ Pieces ChessBoard::getPossibleMovesByDirectionSingle(const ChessTile *fromTile,
 
 Pieces ChessBoard::getAllWhiteTiles() const {
     Pieces whiteTiles;
-    for (ChessTile* tile : board) {
-        if (tile->piece == nullptr) continue;
-        if (tile->piece->isWhite()) whiteTiles.push_back(tile);
+    for (ChessTile *tile: board) {
+        if (tile->piece == nullptr)
+            continue;
+        if (tile->piece->isWhite())
+            whiteTiles.push_back(tile);
     }
     return whiteTiles;
 }
 
 Pieces ChessBoard::getAllBlackTiles() const {
     Pieces blackTiles;
-    for (ChessTile* tile : board) {
-        if (tile->piece == nullptr) continue;
-        if (!tile->piece->isWhite()) blackTiles.push_back(tile);
+    for (ChessTile *tile: board) {
+        if (tile->piece == nullptr)
+            continue;
+        if (!tile->piece->isWhite())
+            blackTiles.push_back(tile);
     }
     return blackTiles;
 }
 
 void ChessBoard::filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves) {
+    std::cout << "possible Moves size before filter" << possibleMoves.size() << std::endl;
     // check if the move would make the player checked which is an illegal move
-    possibleMoves.erase(std::remove_if(possibleMoves.begin(), possibleMoves.end(), [fromTile, this](ChessTile* toTile) {
-        ChessPiece *tmpPieceFrom = fromTile->piece;
-        ChessPiece *tmpPieceTo = toTile->piece;
-        toTile->piece = tmpPieceFrom;
-        const bool isChecked = isKingChecked(!whitesTurn);
-        toTile->piece = tmpPieceTo;
-        return isChecked;
-    }), possibleMoves.end());
+    possibleMoves.erase(std::remove_if(possibleMoves.begin(), possibleMoves.end(),
+                                       [fromTile, this](ChessTile *toTile) {
+                                           ChessPiece *tmpPieceFrom = fromTile->piece;
+                                           ChessPiece *tmpPieceTo = toTile->piece;
+                                           ChessTile *tmpFromTile =  const_cast<ChessTile*> (fromTile);
+                                           tmpFromTile->piece = nullptr;
+                                           toTile->piece = tmpPieceFrom;
+                                           const bool isChecked = isKingChecked(!whitesTurn);
+                                           tmpFromTile->piece = tmpPieceFrom;
+                                           toTile->piece = tmpPieceTo;
+                                           return isChecked;
+                                       }),
+                        possibleMoves.end());
+    std::cout << "possible moves size after filter: " << possibleMoves.size() << std::endl;
 }
 
-bool ChessBoard::isPossibleMove(const bool fromTileWhite, ChessTile *toTile,
-                                Pieces &possibleMoves, const bool isPawnSpecialMove) const {
-    if (toTile == nullptr) return false;
-    if (toTile->piece != nullptr && fromTileWhite == toTile->piece->isWhite()) return false;
-    if (isPawnSpecialMove && toTile->piece == nullptr) return false;
+bool ChessBoard::isPossibleMove(const bool fromTileWhite, ChessTile *toTile, Pieces &possibleMoves,
+                                const bool isPawnSpecialMove) const {
+    if (toTile == nullptr)
+        return false;
+    if (toTile->piece != nullptr) {
+        if (fromTileWhite != toTile->piece->isWhite())
+            possibleMoves.push_back(toTile);
+        return false;
+    }
+    if (isPawnSpecialMove && toTile->piece == nullptr)
+        return false;
     possibleMoves.push_back(toTile);
     return true;
 }
 
-// if king of bool white is checked in the current possition
 bool ChessBoard::isKingChecked(const bool white) {
     const Pieces pieceTiles = !white ? getAllWhiteTiles() : getAllBlackTiles();
-    for (const ChessTile* tile : pieceTiles) {
-        for (const ChessTile* possMove : getPossibleMoves(tile)) {
-            if (possMove->piece == nullptr) continue;
+    for (const ChessTile *tile: pieceTiles) {
+        for (const ChessTile *possMove: getPossibleMoves(tile)) {
+            if (possMove->piece == nullptr)
+                continue;
             if (possMove->piece->getType() == King) {
                 return true;
             }
@@ -252,9 +269,7 @@ bool ChessBoard::isKingChecked(const bool white) {
     return false;
 }
 
-bool ChessBoard::isKingCheckmate() {
-
-}
+bool ChessBoard::isKingCheckmate() {}
 
 void ChessBoard::handleMoveInput(const std::string &input) {
     if (input.length() != 5) {
@@ -275,12 +290,13 @@ void ChessBoard::handleMoveInput(const std::string &input) {
         std::cerr << "ChessBoard::handleMoveInput: trying to move a piece from the opponent or no piece" << std::endl;
         return;
     }
+    // get all possible moves and filter them
     Pieces possibleMoves = getPossibleMoves(fromTile);
     filterPossibleMovesForChecks(fromTile, possibleMoves);
-    std::cout << "the possible moves are:" << std::endl;
-    for (const auto possMove : possibleMoves) {
-        std::cout << possMove->getX() << " " << possMove->getY() << std::endl;
-    }
+    // std::cout << "the possible moves are:" << std::endl;
+    // for (const auto possMove: possibleMoves) {
+    //     std::cout << possMove->getX() << " " << possMove->getY() << std::endl;
+    // }
     const auto itPossMove = std::find(possibleMoves.begin(), possibleMoves.end(), toTile);
     if (itPossMove == possibleMoves.end()) {
         std::cerr << "ChessBoard::handleMoveInput: that is not a possible move" << std::endl;
@@ -301,18 +317,19 @@ ChessTile *ChessBoard::getTileAt(const std::string &pos) const {
         return nullptr;
     }
     const char xText = pos[0];
-    if (xText != std::clamp(xText, 'a', 'h')) return nullptr;
+    if (xText != std::clamp(xText, 'a', 'h'))
+        return nullptr;
     const int x = mapXtoInt.at(xText);
     const int y = pos[1] - '0'; // is a trick to convert number char to int
     return getTileAt(x, y);
 }
 
 ChessTile *ChessBoard::getTileAt(const int x, const int y) const {
-    if (x < 0 || x >= boardWidth || y < 0 || y >= boardHeight) return nullptr;
+    if (x < 0 || x >= boardWidth || y < 0 || y >= boardHeight)
+        return nullptr;
     return board[y * boardWidth + x];
 }
 
-void ChessBoard::mergePossVec(Pieces &possibleMoves,
-                              Pieces possibleMovesMerge) const {
+void ChessBoard::mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge) const {
     possibleMoves.insert(possibleMoves.end(), possibleMovesMerge.begin(), possibleMovesMerge.end());
 }
