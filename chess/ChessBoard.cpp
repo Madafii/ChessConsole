@@ -107,6 +107,8 @@ Pieces ChessBoard::getPossibleMoves(const ChessTile *fromTile) {
         default:
             return possibleMoves;
     }
+    // that move has to be set back after other party moved again.
+    doublePawnMoveAt = -1;
     return possibleMoves;
 }
 
@@ -127,7 +129,6 @@ Pieces ChessBoard::getPossibleMovesPawn(const ChessTile *fromTile) const {
     isPossibleMove(fromTile->piece->isWhite(), getTileAt(x - 1, y + white), possibleMoves, true);
     // get pawn move for that special pawn move that never happens
     if (doublePawnMoveAt != -1) {
-        // TODO: add weird pawn move
         if (x - 1 == doublePawnMoveAt) {
             possibleMoves.push_back(getTileAt(x - 1, y + white));
         } else if (x + 1 == doublePawnMoveAt) {
@@ -320,6 +321,18 @@ void ChessBoard::handleMoveInput(const std::string &input) {
 }
 
 void ChessBoard::move(ChessTile *fromTile, ChessTile *toTile) {
+    // some special rules for pawns
+    if (fromTile->piece->getType() == Pawn) {
+        // for that special pawn movement check if pawn moved more than two tiles.
+        if (abs(fromTile->getY() - toTile->getY()) >= 2) {
+            doublePawnMoveAt = toTile->getX();
+        }
+        // that special move happened so extra rule with capturing
+        if (fromTile->getX() != toTile->getX() && toTile->piece == nullptr ) {
+            const int whiteMove = whitesTurn ? -1 : 1;
+            getTileAt(toTile->getX(), toTile->getY() + whiteMove)->piece = nullptr;
+        }
+    }
     toTile->piece = fromTile->piece;
     fromTile->piece = nullptr;
 }

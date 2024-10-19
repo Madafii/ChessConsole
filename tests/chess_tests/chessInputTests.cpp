@@ -55,3 +55,8 @@ TEST(basicChessTests, testKingIsPinned) {
     const strvec input = {"f2:f3", "e7:e6", "g2:g3", "d8:h4", "g3:g4" };
     doMovements(input);
 }
+
+TEST(basicChessTests, testThatWeirdPawnMovement) {
+    const strvec input = {"e2:e4", "a7:a6", "e4:e5", "d7:d5", "e5:d6" };
+    doMovements(input);
+}
