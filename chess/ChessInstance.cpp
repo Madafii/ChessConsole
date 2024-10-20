@@ -17,9 +17,7 @@ void ChessInstance::run() {
     while(true) {
         std::cin >> input;
         if (input == "quit") break;
-        else {
-            _chessBoard.handleMoveInput(input);
-        }
+        _chessBoard.handleMoveInput(input);
         _chessBoard.updateBoard();
         if(_chessBoard.isKingCheckmate()) {
             break;

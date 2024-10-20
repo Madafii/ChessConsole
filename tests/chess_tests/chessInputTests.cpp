@@ -9,9 +9,9 @@
 using strvec = std::vector<std::string>;
 void doMovements(strvec moves) {
     ChessBoard board;
-    for (std::string move : moves) {
+    for (std::string move: moves) {
         board.handleMoveInput(move);
-        board.updateBoard();    // just enable for visualization
+        board.updateBoard(); // just enable for visualization
     }
 }
 
@@ -42,21 +42,37 @@ TEST(basicChessTests, testKnightMovements) {
 }
 
 TEST(basicChessTests, testKingIsCheckmate) {
-    const strvec input = {"f2:f3", "e7:e6", "g2:g4", "d8:h4", "a2:a3" };
+    const strvec input = {"f2:f3", "e7:e6", "g2:g4", "d8:h4", "a2:a3"};
     doMovements(input);
 }
 
 TEST(basicChessTests, testKingIsChecked) {
-    const strvec input = {"f2:f3", "e7:e6", "h2:h3", "d8:h4", "g2:g3" };
+    const strvec input = {"f2:f3", "e7:e6", "h2:h3", "d8:h4", "g2:g3"};
     doMovements(input);
 }
 
 TEST(basicChessTests, testKingIsPinned) {
-    const strvec input = {"f2:f3", "e7:e6", "g2:g3", "d8:h4", "g3:g4" };
+    const strvec input = {"f2:f3", "e7:e6", "g2:g3", "d8:h4", "g3:g4"};
     doMovements(input);
 }
 
 TEST(basicChessTests, testThatWeirdPawnMovement) {
-    const strvec input = {"e2:e4", "a7:a6", "e4:e5", "d7:d5", "e5:d6" };
+    const strvec input = {"e2:e4", "a7:a6", "e4:e5", "d7:d5", "e5:d6"};
+    doMovements(input);
+}
+
+TEST(basicChessTests, testCastling) {
+    const strvec input = {"g1:f3", "a7:a6", "g2:g3", "b7:b5", "f1:g2", "c7:c6", "e1:g1"};
+    doMovements(input);
+}
+
+TEST(basicChessTests, testCastlingRight) {
+    const strvec input = {"d2:d4", "a7:a6", "d1:d3", "b7:b5", "c1:d2", "c7:c6", "b1:c3", "d7:d5", "e1:c1"};
+    doMovements(input);
+}
+
+TEST(basicChessTests, testCastlingRightNotPossible) {
+    const strvec input = {"d2:d4", "a7:a6", "d1:d3", "b7:b5", "c1:d2", "c7:c6", "b1:c3",
+                          "d7:d5", "e2:e3", "e7:e6", "b2:b3", "f8:a3", "e1:c1"};
     doMovements(input);
 }

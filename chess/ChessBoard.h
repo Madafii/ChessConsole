@@ -24,7 +24,11 @@ public:
     bool isKingCheckmate();
 private:
     void move(ChessTile *fromTile, ChessTile *toTile);
+    void movePawn(ChessTile *fromTile, ChessTile *toTile);
+    void moveKing(const ChessTile *fromTile, const ChessTile *toTile);
+    void moveRook(const ChessTile *fromTile);
     void mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge) const;
+    void pawnWon(ChessTile *pawnTile) const;
 
     Pieces getPossibleMoves(const ChessTile * fromTile);
     Pieces getPossibleMovesPawn(const ChessTile *fromTile) const;
@@ -32,11 +36,13 @@ private:
     Pieces getPossibleMovesRook(const ChessTile *fromTile) const;
     Pieces getPossibleMovesKnight(const ChessTile *fromTile) const;
     Pieces getPossibleMovesQueen(const ChessTile *fromTile) const;
-    Pieces getPossibleMovesKing(const ChessTile *fromTile) const;
+    Pieces getPossibleMovesKing(const ChessTile *fromTile, bool castling = true);
     Pieces getPossibleMovesByDirection(const ChessTile *fromTile,
                                                          const std::vector<std::pair<int, int>> &directions) const;
     Pieces getPossibleMovesByDirectionSingle(const ChessTile *fromTile,
                                       const std::vector<std::pair<int, int>> &directions) const;
+    Pieces getPossibleMovesCastling(const ChessTile *fromTile);
+
     Pieces getAllWhiteTiles() const;
     Pieces getAllBlackTiles() const;
     void filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves);
@@ -44,6 +50,7 @@ private:
     bool isPossibleMove(bool fromTileWhite, ChessTile *toTile, Pieces &possibleMoves,
                         bool isPawnSpecialMove = false) const;
     bool isKingChecked(bool white);
+    bool isTileAttackedAndFree(bool white, const Pieces &tilesToCheck);
 
     ChessTile *getTileAt(const std::string &pos) const;
     ChessTile *getTileAt(int x,int y) const;
