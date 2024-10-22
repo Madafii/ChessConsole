@@ -107,8 +107,6 @@ Pieces ChessBoard::getPossibleMoves(const ChessTile *fromTile) {
         default:
             return possibleMoves;
     }
-    // that move has to be set back after other party moved again.
-    doublePawnMoveAt = -1;
     return possibleMoves;
 }
 
@@ -117,7 +115,9 @@ Pieces ChessBoard::getPossibleMovesPawn(const ChessTile *fromTile) const {
     const int x = fromTile->getX();
     const int y = fromTile->getY();
     const int white = fromTile->piece->isWhite() ? 1 : -1;
-    if (isPossibleMove(fromTile->piece->isWhite(), getTileAt(x, y + white), possibleMoves)) {
+    // some different rules for pawn applying again
+    if (getTileAt(x, y + white)->piece == nullptr) {
+        possibleMoves.push_back(getTileAt(x, y + white));
         if (white == 1 && y == 1 && getTileAt(x, y + 2 * white)->piece == nullptr) {
             possibleMoves.push_back(getTileAt(x, y + 2 * white));
         }
@@ -281,6 +281,22 @@ void ChessBoard::filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces 
     std::cout << "possible moves size after filter: " << possibleMoves.size() << std::endl;
 }
 
+bool ChessBoard::isInputMovePossible(const ChessTile *fromTile, const ChessTile *toTile) {
+    Pieces possibleMoves = getPossibleMoves(fromTile);
+    filterPossibleMovesForChecks(fromTile, possibleMoves);
+    // just for debugging
+    std::cout << "the possible moves are:" << std::endl;
+    for (const auto possMove: possibleMoves) {
+        std::cout << possMove->getX() << " " << possMove->getY() << std::endl;
+    }
+    const auto itPossMove = std::find(possibleMoves.begin(), possibleMoves.end(), toTile);
+    if (itPossMove == possibleMoves.end()) {
+        std::cerr << "ChessBoard::isInputMovePossible: that is not a possible move" << std::endl;
+        return false;
+    }
+    return true;
+}
+
 bool ChessBoard::isPossibleMove(const bool fromTileWhite, ChessTile *toTile, Pieces &possibleMoves,
                                 const bool isPawnSpecialMove) const {
     if (toTile == nullptr)
@@ -368,42 +384,17 @@ Pieces ChessBoard::getAllPossibleMoves(const bool white) {
 
 
 void ChessBoard::handleMoveInput(const std::string &input) {
-    if (input.length() != 5) {
-        std::cerr << "ChessBoard::handleMoveInput: Wrong input length, should be 5." << std::endl;
-        return;
+    // get the move tiles from the input
+    const auto moveTilePair = getMoveTilesFromInput(input);
+    if (!moveTilePair) {
+        std::cerr << "ChessBoard::handleMoveInput: invalid input: " << input << std::endl;
     }
-    std::string subStrFrom = input.substr(0, 2);
-    std::string subStrTo = input.substr(3);
-    subStrFrom[1] = subStrFrom[1] - 1;
-    subStrTo[1] = subStrTo[1] - 1;
-    ChessTile *fromTile = getTileAt(subStrFrom);
-    ChessTile *toTile = getTileAt(subStrTo);
-    if (fromTile == nullptr || toTile == nullptr) {
-        std::cerr << "ChessBoard::handleMoveInput: there is no tile like that" << std::endl;
-        return;
-    }
-    if (fromTile->piece == nullptr || fromTile->piece->isWhite() != whitesTurn) {
-        std::cerr << "ChessBoard::handleMoveInput: trying to move a piece from the opponent or no piece" << std::endl;
-        return;
-    }
-    // get all possible moves and filter them
-    Pieces possibleMoves = getPossibleMoves(fromTile);
-    filterPossibleMovesForChecks(fromTile, possibleMoves);
-    std::cout << "the possible moves are:" << std::endl;
-    for (const auto possMove: possibleMoves) {
-        std::cout << possMove->getX() << " " << possMove->getY() << std::endl;
-    }
-    const auto itPossMove = std::find(possibleMoves.begin(), possibleMoves.end(), toTile);
-    if (itPossMove == possibleMoves.end()) {
-        std::cerr << "ChessBoard::handleMoveInput: that is not a possible move" << std::endl;
-        return;
-    }
-    // make the move
+    ChessTile *fromTile = moveTilePair->first;
+    ChessTile *toTile = moveTilePair->second;
+    isInputMovePossible(fromTile, toTile);
     move(fromTile, toTile);
-    // pre move checks
-    if (toTile->piece->getType() == Pawn && toTile->getY() == 0 || toTile->getY() == 7) {
-        pawnWon(toTile);
-    }
+    // after move checks
+    afterMoveChecks(toTile);
     whitesTurn = !whitesTurn;
 }
 
@@ -531,4 +522,33 @@ void ChessBoard::pawnWon(ChessTile *pawnTile) const {
             break;
     }
     pawnTile->piece = newPawn;
+}
+
+void ChessBoard::afterMoveChecks(ChessTile *toTile) {
+    doublePawnMoveAt = -1;
+    if (toTile->piece->getType() == Pawn && toTile->getY() == 0 || toTile->getY() == 7) {
+        pawnWon(toTile);
+    }
+}
+
+std::optional<std::pair<ChessTile *, ChessTile *>> ChessBoard::getMoveTilesFromInput(const std::string &input) const {
+    if (input.length() != 5) {
+        std::cerr << "ChessBoard::getMoveTilesFromInput: Wrong input length, should be 5." << std::endl;
+        return std::nullopt;
+    }
+    std::string subStrFrom = input.substr(0, 2);
+    std::string subStrTo = input.substr(3);
+    subStrFrom[1] = subStrFrom[1] - 1;
+    subStrTo[1] = subStrTo[1] - 1;
+    ChessTile *fromTile = getTileAt(subStrFrom);
+    ChessTile *toTile = getTileAt(subStrTo);
+    if (fromTile == nullptr || toTile == nullptr) {
+        std::cerr << "ChessBoard::getMoveTilesFromInput: there is no tile like that" << std::endl;
+        return std::nullopt;
+    }
+    if (fromTile->piece == nullptr || fromTile->piece->isWhite() != whitesTurn) {
+        std::cerr << "ChessBoard::getMoveTilesFromInput: trying to move a piece from the opponent or no piece" << std::endl;
+        return std::nullopt;
+    }
+    return std::make_optional(std::make_pair(fromTile, toTile));
 }

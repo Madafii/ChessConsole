@@ -76,3 +76,9 @@ TEST(basicChessTests, testCastlingRightNotPossible) {
                           "d7:d5", "e2:e3", "e7:e6", "b2:b3", "f8:a3", "e1:c1"};
     doMovements(input);
 }
+
+TEST(basicChessTests, testPawnWon) {
+    const strvec input = {"a2:a4", "h7:h6", "a4:a5", "h6:h5", "a5:a6", "h5:h4", "a6:b7", "h4:h3", "b7:a8"};
+    doMovements(input);
+    std::cin;
+}

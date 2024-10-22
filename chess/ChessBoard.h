@@ -8,6 +8,7 @@
 #include "ChessPiece.h"
 #include <vector>
 #include <map>
+#include <optional>
 
 constexpr int boardWidth = 8;
 constexpr int boardHeight = 8;
@@ -32,6 +33,9 @@ private:
     void moveRook(const ChessTile *fromTile);
     void mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge) const;
     void pawnWon(ChessTile *pawnTile) const;
+    void afterMoveChecks(ChessTile *toTile);
+
+    std::optional<std::pair<ChessTile*, ChessTile*>> getMoveTilesFromInput(const std::string &input) const;
 
     Pieces getPossibleMoves(const ChessTile * fromTile);
     Pieces getPossibleMovesPawn(const ChessTile *fromTile) const;
@@ -50,6 +54,7 @@ private:
     Pieces getAllBlackTiles() const;
     void filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves);
 
+    bool isInputMovePossible(const ChessTile *fromTile, const ChessTile *toTile);
     bool isPossibleMove(bool fromTileWhite, ChessTile *toTile, Pieces &possibleMoves,
                         bool isPawnSpecialMove = false) const;
     bool isKingChecked(bool white);
