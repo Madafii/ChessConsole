@@ -22,9 +22,12 @@ public:
     void handleMoveInput(const std::string &input);
 
     bool isKingCheckmate();
+    bool isDraw();
+
+    Pieces getAllPossibleMoves(bool white);
 private:
     void move(ChessTile *fromTile, ChessTile *toTile);
-    void movePawn(ChessTile *fromTile, ChessTile *toTile);
+    void movePawn(const ChessTile *fromTile, const ChessTile *toTile);
     void moveKing(const ChessTile *fromTile, const ChessTile *toTile);
     void moveRook(const ChessTile *fromTile);
     void mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge) const;
@@ -60,6 +63,7 @@ private:
     std::pair<bool, bool> whiteRookMoved = {false, false};
     std::pair<bool, bool> blackRookMoved = {false, false};
     int doublePawnMoveAt = -1; // says in what column a pawn move with two steps happened
+    int movesSinceLastCapture = 0;
     std::map<char, int> mapXtoInt;
 };
 

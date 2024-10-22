@@ -346,6 +346,25 @@ bool ChessBoard::isKingCheckmate() {
     std::cout << "yeah you won!" << std::endl;
     return true;
 }
+bool ChessBoard::isDraw() {
+    // TODO: reset since last capture for pawn move
+    // TODO: draw when same position repeats three times
+    return getAllPossibleMoves(whitesTurn).size() <= 0 && !isKingChecked(whitesTurn) || movesSinceLastCapture >= 100;
+}
+
+Pieces ChessBoard::getAllPossibleMoves(const bool white) {
+    Pieces allPossibleMoves;
+    const Pieces pieceTiles = white ? getAllWhiteTiles() : getAllBlackTiles();
+    for (const ChessTile *tile: pieceTiles) {
+        if (tile->piece->getType() == King) {
+            mergePossVec(allPossibleMoves, getPossibleMovesKing(tile, false));
+            continue;
+        }
+        mergePossVec(allPossibleMoves, getPossibleMoves(tile));
+    }
+    return allPossibleMoves;
+}
+
 
 
 void ChessBoard::handleMoveInput(const std::string &input) {
@@ -379,7 +398,9 @@ void ChessBoard::handleMoveInput(const std::string &input) {
         std::cerr << "ChessBoard::handleMoveInput: that is not a possible move" << std::endl;
         return;
     }
+    // make the move
     move(fromTile, toTile);
+    // pre move checks
     if (toTile->piece->getType() == Pawn && toTile->getY() == 0 || toTile->getY() == 7) {
         pawnWon(toTile);
     }
@@ -399,13 +420,14 @@ void ChessBoard::move(ChessTile *fromTile, ChessTile *toTile) {
         moveKing(fromTile, toTile);
     }
     if (toTile->piece != nullptr) {
+        movesSinceLastCapture = 0;
         delete toTile->piece;
-    }
+    } else { movesSinceLastCapture++; }
     toTile->piece = fromTile->piece;
     fromTile->piece = nullptr;
 }
 
-void ChessBoard::movePawn(ChessTile *fromTile, ChessTile *toTile) {
+void ChessBoard::movePawn(const ChessTile *fromTile, const ChessTile *toTile) {
     // for that special pawn movement check if pawn moved more than two tiles.
     if (abs(fromTile->getY() - toTile->getY()) >= 2) {
         doublePawnMoveAt = toTile->getX();
@@ -416,6 +438,7 @@ void ChessBoard::movePawn(ChessTile *fromTile, ChessTile *toTile) {
         ChessTile *capturedPiece = getTileAt(toTile->getX(), toTile->getY() + whiteMove);
         delete capturedPiece->piece;
         capturedPiece->piece = nullptr;
+        movesSinceLastCapture = 0;
     }
 }
 
