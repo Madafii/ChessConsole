@@ -4,6 +4,7 @@
 
 #include "ChessPiece.h"
 
+// TODO: could make this constexpr?
 ChessPiece::ChessPiece(const ChessPieceType type, const bool white)
 : _type(type), _white(white) {
     switch (_type) {

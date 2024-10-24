@@ -7,12 +7,13 @@
 #include "ChessInstance.h"
 #include "gtest/gtest.h"
 using strvec = std::vector<std::string>;
-void doMovements(strvec moves) {
-    ChessBoard board;
+ChessBoard* doMovements(strvec moves) {
+    ChessBoard *board = new ChessBoard();
     for (std::string move: moves) {
-        board.handleMoveInput(move);
-        board.updateBoard(); // just enable for visualization
+        board->handleMoveInput(move);
+        board->updateBoard(); // just enable for visualization
     }
+    return board;
 }
 
 TEST(basicChessTests, testChessInput) {
@@ -66,7 +67,7 @@ TEST(basicChessTests, testCastling) {
     doMovements(input);
 }
 
-TEST(basicChessTests, testCastlingRight) {
+TEST(basicChessTests, testCastlingLeft) {
     const strvec input = {"d2:d4", "a7:a6", "d1:d3", "b7:b5", "c1:d2", "c7:c6", "b1:c3", "d7:d5", "e1:c1"};
     doMovements(input);
 }
@@ -78,7 +79,10 @@ TEST(basicChessTests, testCastlingRightNotPossible) {
 }
 
 TEST(basicChessTests, testPawnWon) {
-    const strvec input = {"a2:a4", "h7:h6", "a4:a5", "h6:h5", "a5:a6", "h5:h4", "a6:b7", "h4:h3", "b7:a8"};
+    const strvec input = {"a2:a4", "h7:h6", "a4:a5", "h6:h5", "a5:a6", "h5:h4", "a6:b7", "h4:h3", "b7:a8" };
+    const std::string newPawnType = "Q";
+    const std::istringstream iss(newPawnType);
+    std::cin.rdbuf(iss.rdbuf());
+
     doMovements(input);
-    std::cin;
 }

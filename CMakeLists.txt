@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13.0 FATAL_ERROR)
 project(chess_control)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 
 add_executable(chess_control main.cpp)
 

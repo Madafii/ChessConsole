@@ -391,7 +391,7 @@ void ChessBoard::handleMoveInput(const std::string &input) {
     }
     ChessTile *fromTile = moveTilePair->first;
     ChessTile *toTile = moveTilePair->second;
-    isInputMovePossible(fromTile, toTile);
+    if (!isInputMovePossible(fromTile, toTile)) return;
     move(fromTile, toTile);
     // after move checks
     afterMoveChecks(toTile);
@@ -498,7 +498,7 @@ void ChessBoard::pawnWon(ChessTile *pawnTile) const {
     std::cout << "Your pawn reached the end what should it become? (Q, R, B, N)" << std::endl;
     char newPawnTyp;
     std::cin >> newPawnTyp;
-    while (newPawnTyp != 'Q' || newPawnTyp != 'R' || newPawnTyp != 'B' || newPawnTyp != 'N') {
+    while (!(newPawnTyp == 'Q' || newPawnTyp == 'R' || newPawnTyp == 'B' || newPawnTyp == 'N')) {
         std::cout << "That is not a valid type try another one: " << std::endl;
         std::cin >> newPawnTyp;
     }
@@ -528,6 +528,9 @@ void ChessBoard::afterMoveChecks(ChessTile *toTile) {
     doublePawnMoveAt = -1;
     if (toTile->piece->getType() == Pawn && toTile->getY() == 0 || toTile->getY() == 7) {
         pawnWon(toTile);
+    }
+    if (getAllPossibleMoves(!whitesTurn).size() <= 0 && !isKingChecked(!whitesTurn)) {
+        std::cout << "this game is a draw!" << std::endl;
     }
 }
 
