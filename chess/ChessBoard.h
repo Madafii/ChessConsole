@@ -14,6 +14,7 @@ constexpr int boardWidth = 8;
 constexpr int boardHeight = 8;
 
 using Pieces = std::vector<ChessTile*>;
+using PiecePair = std::optional<std::pair<ChessTile*, ChessTile*>>;
 class ChessBoard {
 public:
     explicit ChessBoard();
@@ -26,6 +27,11 @@ public:
     bool isDraw();
 
     Pieces getAllPossibleMoves(bool white);
+    Pieces getAllPossibleMovesPiece(bool white, ChessPieceType piece);
+    Pieces getAllPiecesFor(bool white, ChessPieceType piece) const;
+
+    // move to private again later is jsut for testing
+    Pieces getPossibleMoves(const ChessTile * fromTile);
 private:
     void move(ChessTile *fromTile, ChessTile *toTile);
     void movePawn(const ChessTile *fromTile, const ChessTile *toTile);
@@ -35,9 +41,8 @@ private:
     void pawnWon(ChessTile *pawnTile) const;
     void afterMoveChecks(ChessTile *toTile);
 
-    std::optional<std::pair<ChessTile*, ChessTile*>> getMoveTilesFromInput(const std::string &input) const;
+    PiecePair getMoveTilesFromInput(const std::string &input) const;
 
-    Pieces getPossibleMoves(const ChessTile * fromTile);
     Pieces getPossibleMovesPawn(const ChessTile *fromTile) const;
     Pieces getPossibleMovesBishop(const ChessTile *fromTile) const;
     Pieces getPossibleMovesRook(const ChessTile *fromTile) const;
@@ -69,7 +74,6 @@ private:
     std::pair<bool, bool> blackRookMoved = {false, false};
     int doublePawnMoveAt = -1; // says in what column a pawn move with two steps happened
     int movesSinceLastCapture = 0;
-    std::map<char, int> mapXtoInt;
 };
 
 #endif //CHESSBOARD_H

@@ -9,14 +9,6 @@
 #include <string>
 
 ChessBoard::ChessBoard() {
-    mapXtoInt['a'] = 0;
-    mapXtoInt['b'] = 1;
-    mapXtoInt['c'] = 2;
-    mapXtoInt['d'] = 3;
-    mapXtoInt['e'] = 4;
-    mapXtoInt['f'] = 5;
-    mapXtoInt['g'] = 6;
-    mapXtoInt['h'] = 7;
 
     initBoard();
 }
@@ -381,6 +373,28 @@ Pieces ChessBoard::getAllPossibleMoves(const bool white) {
     return allPossibleMoves;
 }
 
+// TODO improve if I want to with better getAll.. but for single pieces not all of them
+Pieces ChessBoard::getAllPossibleMovesPiece(const bool white, const ChessPieceType piece) {
+    Pieces allPossibleMoves;
+    const Pieces colorPieceTiles = white ? getAllWhiteTiles() : getAllBlackTiles();
+    for (const ChessTile *tile: colorPieceTiles) {
+        if (tile->piece->getType() == piece) {
+            mergePossVec(allPossibleMoves, getPossibleMoves(tile));
+        }
+    }
+    return allPossibleMoves;
+}
+
+Pieces ChessBoard::getAllPiecesFor(const bool white, const ChessPieceType piece) const {
+    Pieces pieces;
+    const Pieces colorPieceTiles = white ? getAllWhiteTiles() : getAllBlackTiles();
+    for (ChessTile *tile: colorPieceTiles) {
+        if (tile->piece->getType() == piece) {
+            pieces.push_back(tile);
+        }
+    }
+    return pieces;
+}
 
 
 void ChessBoard::handleMoveInput(const std::string &input) {
@@ -478,7 +492,7 @@ ChessTile *ChessBoard::getTileAt(const std::string &pos) const {
     const char xText = pos[0];
     if (xText != std::clamp(xText, 'a', 'h'))
         return nullptr;
-    const int x = mapXtoInt.at(xText);
+    const int x = ChessTile::mapXtoInt.at(xText);
     const int y = pos[1] - '0'; // is a trick to convert number char to int
     return getTileAt(x, y);
 }
@@ -533,6 +547,7 @@ void ChessBoard::afterMoveChecks(ChessTile *toTile) {
         std::cout << "this game is a draw!" << std::endl;
     }
 }
+
 
 std::optional<std::pair<ChessTile *, ChessTile *>> ChessBoard::getMoveTilesFromInput(const std::string &input) const {
     if (input.length() != 5) {

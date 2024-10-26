@@ -4,6 +4,9 @@
 
 #ifndef CHESSTILE_H
 #define CHESSTILE_H
+#include <map>
+#include <unordered_map>
+
 #include "ChessPiece.h"
 
 
@@ -13,12 +16,15 @@ public:
 
     int getX() const {return _x;}
     int getY() const {return _y;}
+    std::string getMove() const;
     ChessPiece* piece;
+
+    static const std::unordered_map<char, int> mapXtoInt;
+    static const std::unordered_map<int, char> mapIntToX;
+
 private:
     int _x;
     int _y;
 };
-
-
 
 #endif //CHESSTILE_H
