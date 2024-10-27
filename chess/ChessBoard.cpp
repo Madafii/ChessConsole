@@ -283,7 +283,7 @@ bool ChessBoard::isInputMovePossible(const ChessTile *fromTile, const ChessTile 
     }
     const auto itPossMove = std::find(possibleMoves.begin(), possibleMoves.end(), toTile);
     if (itPossMove == possibleMoves.end()) {
-        std::cerr << "ChessBoard::isInputMovePossible: that is not a possible move" << std::endl;
+        std::cout << "ChessBoard::isInputMovePossible: that is not a possible move" << std::endl;
         return false;
     }
     return true;
@@ -401,7 +401,7 @@ void ChessBoard::handleMoveInput(const std::string &input) {
     // get the move tiles from the input
     const auto moveTilePair = getMoveTilesFromInput(input);
     if (!moveTilePair) {
-        std::cerr << "ChessBoard::handleMoveInput: invalid input: " << input << std::endl;
+        std::cout << "ChessBoard::handleMoveInput: invalid input: " << input << std::endl;
     }
     ChessTile *fromTile = moveTilePair->first;
     ChessTile *toTile = moveTilePair->second;
@@ -486,7 +486,7 @@ void ChessBoard::moveRook(const ChessTile *fromTile) {
 
 ChessTile *ChessBoard::getTileAt(const std::string &pos) const {
     if (pos.size() != 2) {
-        std::cerr << "ChessBoard::getTileAt: Wrong input length." << std::endl;
+        std::cout << "ChessBoard::getTileAt: Wrong input length." << std::endl;
         return nullptr;
     }
     const char xText = pos[0];
@@ -551,7 +551,7 @@ void ChessBoard::afterMoveChecks(ChessTile *toTile) {
 
 std::optional<std::pair<ChessTile *, ChessTile *>> ChessBoard::getMoveTilesFromInput(const std::string &input) const {
     if (input.length() != 5) {
-        std::cerr << "ChessBoard::getMoveTilesFromInput: Wrong input length, should be 5." << std::endl;
+        std::cout << "ChessBoard::getMoveTilesFromInput: Wrong input length, should be 5." << std::endl;
         return std::nullopt;
     }
     std::string subStrFrom = input.substr(0, 2);
@@ -561,11 +561,11 @@ std::optional<std::pair<ChessTile *, ChessTile *>> ChessBoard::getMoveTilesFromI
     ChessTile *fromTile = getTileAt(subStrFrom);
     ChessTile *toTile = getTileAt(subStrTo);
     if (fromTile == nullptr || toTile == nullptr) {
-        std::cerr << "ChessBoard::getMoveTilesFromInput: there is no tile like that" << std::endl;
+        std::cout << "ChessBoard::getMoveTilesFromInput: there is no tile like that" << std::endl;
         return std::nullopt;
     }
     if (fromTile->piece == nullptr || fromTile->piece->isWhite() != whitesTurn) {
-        std::cerr << "ChessBoard::getMoveTilesFromInput: trying to move a piece from the opponent or no piece" << std::endl;
+        std::cout << "ChessBoard::getMoveTilesFromInput: trying to move a piece from the opponent or no piece" << std::endl;
         return std::nullopt;
     }
     return std::make_optional(std::make_pair(fromTile, toTile));

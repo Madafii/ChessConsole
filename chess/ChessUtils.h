@@ -31,16 +31,19 @@ inline std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard
     switch (input[0]) {
         case 'K':
             typeToMove = King;
+            break;
         case 'Q':
             typeToMove = Queen;
+            break;
         case 'R':
             typeToMove = Rook;
+            break;
         case 'B':
             typeToMove = Bishop;
+            break;
         case 'N':
             typeToMove = Knight;
-            if (Leftovers.size() >= 1) extra = input.substr(1, 1);
-            if (Leftovers.size() >= 2) extra = input.substr(1, 2);
+            break;
         case 'O':
             if (input.size() == 3) {
                 if (white) {
@@ -54,8 +57,12 @@ inline std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard
             return "e8:c8";
         default: // pawns
             typeToMove = Pawn;
-            if (Leftovers.size() >= 1) extra = input.substr(0, 1);
             break;
+    }
+    if (Leftovers.size() >= 2) extra = input.substr(1, 1);
+    if (Leftovers.size() >= 3) extra = input.substr(1, 2);
+    if (typeToMove == Pawn) {
+        if (Leftovers.size() >= 1) extra = input.substr(0, 1);
     }
     // find the piece To move
     // Pieces pieces = board.getAllPossibleMovesPiece(white, typeToMove);
