@@ -87,6 +87,11 @@ TEST(basicChessTests, testPawnWon) {
     doMovements(input);
 }
 
+TEST(basicChessTests, testPawnWon2) {
+    const strvec input = {"a2:a4", "h7:h6", "a4:a5", "h6:h5", "a5:a6", "h5:h4", "a6:b7", "h4:h3", "b7:a8=N" };
+    doMovements(input);
+}
+
 TEST(basicChessTests, testPGNConverter) {
     ChessBoard board;
     bool whitesTurn = true;

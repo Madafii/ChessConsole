@@ -397,7 +397,13 @@ Pieces ChessBoard::getAllPiecesFor(const bool white, const ChessPieceType piece)
 }
 
 
-void ChessBoard::handleMoveInput(const std::string &input) {
+void ChessBoard::handleMoveInput(std::string input) {
+    char pawnChangeTo = '0'; // 0 is for no pawn change
+    // extra check for instant pawn change
+    if (input.length() == 7) {
+        pawnChangeTo = input[6];
+    }
+    input = input.substr(0, 5);
     // get the move tiles from the input
     const auto moveTilePair = getMoveTilesFromInput(input);
     if (!moveTilePair) {
@@ -408,7 +414,11 @@ void ChessBoard::handleMoveInput(const std::string &input) {
     if (!isInputMovePossible(fromTile, toTile)) return;
     move(fromTile, toTile);
     // after move checks
-    afterMoveChecks(toTile);
+    if (pawnChangeTo != '0') {
+        afterMoveChecks(toTile, pawnChangeTo);
+    } else {
+        afterMoveChecks(toTile);
+    }
     whitesTurn = !whitesTurn;
 }
 
@@ -507,11 +517,14 @@ void ChessBoard::mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge) 
     possibleMoves.insert(possibleMoves.end(), possibleMovesMerge.begin(), possibleMovesMerge.end());
 }
 
-void ChessBoard::pawnWon(ChessTile *pawnTile) const {
+void ChessBoard::pawnWon(ChessTile *pawnTile, const char pawnToPiece) const {
     updateBoard();
     std::cout << "Your pawn reached the end what should it become? (Q, R, B, N)" << std::endl;
     char newPawnTyp;
-    std::cin >> newPawnTyp;
+    if (pawnToPiece == '0')
+        std::cin >> newPawnTyp;
+    else
+        newPawnTyp = pawnToPiece;
     while (!(newPawnTyp == 'Q' || newPawnTyp == 'R' || newPawnTyp == 'B' || newPawnTyp == 'N')) {
         std::cout << "That is not a valid type try another one: " << std::endl;
         std::cin >> newPawnTyp;
@@ -538,10 +551,10 @@ void ChessBoard::pawnWon(ChessTile *pawnTile) const {
     pawnTile->piece = newPawn;
 }
 
-void ChessBoard::afterMoveChecks(ChessTile *toTile) {
+void ChessBoard::afterMoveChecks(ChessTile *toTile, const char pawnToPiece) {
     doublePawnMoveAt = -1;
     if (toTile->piece->getType() == Pawn && toTile->getY() == 0 || toTile->getY() == 7) {
-        pawnWon(toTile);
+        pawnWon(toTile, pawnToPiece);
     }
     if (getAllPossibleMoves(!whitesTurn).size() <= 0 && !isKingChecked(!whitesTurn)) {
         std::cout << "this game is a draw!" << std::endl;

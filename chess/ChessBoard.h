@@ -21,7 +21,7 @@ public:
 
     void initBoard();
     void updateBoard() const;
-    void handleMoveInput(const std::string &input);
+    void handleMoveInput(std::string input);
 
     bool isKingCheckmate();
     bool isDraw();
@@ -38,8 +38,8 @@ private:
     void moveKing(const ChessTile *fromTile, const ChessTile *toTile);
     void moveRook(const ChessTile *fromTile);
     void mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge) const;
-    void pawnWon(ChessTile *pawnTile) const;
-    void afterMoveChecks(ChessTile *toTile);
+    void pawnWon(ChessTile *pawnTile, char pawnToPiece = '0') const;
+    void afterMoveChecks(ChessTile *toTile, char pawnToPiece = '0');
 
     PiecePair getMoveTilesFromInput(const std::string &input) const;
 

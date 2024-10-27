@@ -24,6 +24,13 @@ inline std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard
     std::erase(input, '#');
     // Remove 'x' characters
     std::erase(input, 'x');
+    // extract '=' pawn to piece change
+    char pawnChange = 'L'; // L for no change
+    auto it = std::ranges::find(input, '=');
+    if (it != input.end()) {
+        ++it;
+        pawnChange = *it;
+    }
     ChessPieceType typeToMove;
     const std::string_view moveTo = input.substr(input.size() - 2, 2);
     const std::string_view Leftovers = input.substr(0, input.size() - 2);
@@ -96,7 +103,12 @@ inline std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard
             }
         }
     }
-    return foundFromTile->getMove() + ":" + std::string(moveTo);
+    std::string ret = foundFromTile->getMove() + ":" + std::string(moveTo);
+    // pawn piece got changed
+    if (pawnChange != 'L') {
+       ret.append("=" + pawnChange);
+    }
+    return ret;
 }
 
 #endif //CHESSUTILS_H
