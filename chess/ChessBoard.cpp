@@ -553,7 +553,7 @@ void ChessBoard::pawnWon(ChessTile *pawnTile, const char pawnToPiece) const {
 
 void ChessBoard::afterMoveChecks(ChessTile *toTile, const char pawnToPiece) {
     doublePawnMoveAt = -1;
-    if (toTile->piece->getType() == Pawn && toTile->getY() == 0 || toTile->getY() == 7) {
+    if (toTile->piece->getType() == Pawn && (toTile->getY() == 0 || toTile->getY() == 7)) {
         pawnWon(toTile, pawnToPiece);
     }
     if (getAllPossibleMoves(!whitesTurn).size() <= 0 && !isKingChecked(!whitesTurn)) {

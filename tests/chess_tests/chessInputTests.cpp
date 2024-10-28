@@ -7,13 +7,24 @@
 #include "ChessUtils.h"
 #include "gtest/gtest.h"
 using strvec = std::vector<std::string>;
-ChessBoard* doMovements(strvec moves) {
-    ChessBoard *board = new ChessBoard();
-    for (std::string move: moves) {
-        board->handleMoveInput(move);
-        board->updateBoard(); // just enable for visualization
+void doMovements(strvec moves) {
+    ChessBoard board;
+    for (const std::string move: moves) {
+        board.handleMoveInput(move);
+        board.updateBoard(); // just enable for visualization
     }
-    return board;
+}
+
+void doMovementsFromPGN(strvec moves, const bool whiteStarting) {
+    ChessBoard board;
+    bool whitesTurn = whiteStarting;
+    for (const std::string move: moves) {
+        std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, board, whitesTurn);
+        std::cout << "from: " << move << " to: " << inputMyChess << std::endl;
+        board.handleMoveInput(inputMyChess);
+        board.updateBoard();
+        whitesTurn = !whitesTurn;
+    }
 }
 
 TEST(basicChessTests, testChessInput) {
@@ -93,18 +104,15 @@ TEST(basicChessTests, testPawnWon2) {
 }
 
 TEST(basicChessTests, testPGNConverter) {
-    ChessBoard board;
-    bool whitesTurn = true;
     const strvec input = {
         "e4", "d5", "exd5", "Qxd5", "Nc3", "Qa5", "Nf3", "Nf6", "d4", "c6", "Bg5", "Ng8", "Bd2", "Nf6", "Ne4", "Qb6",
         "Nxf6+", "exf6", "Qe2+", "Be6", "O-O-O", "Be7", "g3", "Bxa2", "b3", "c5", "Kb2", "cxd4", "Kxa2", "Nc6", "Bf4",
-        "Qa5+", "Kb2", "Nb4", "Ra1", "Qf5", "Bd6", "Nd5", "Nxd4", "Qg6", "Bg2", "Qg5", "Bxd5", "Qxd5", "Qxe727#"
+        "Qa5+", "Kb2", "Nb4", "Ra1", "Qf5", "Bd6", "Nd5", "Nxd4", "Qg6", "Bg2", "Qg5", "Bxd5", "Qxd5", "Qxe7#"
     };
-    for (const std::string move: input) {
-        std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, board, whitesTurn);
-        std::cout << "from: " << move << " to: " << inputMyChess << std::endl;
-        board.handleMoveInput(inputMyChess);
-        board.updateBoard();
-        whitesTurn = !whitesTurn;
-    }
+    doMovementsFromPGN(input, true);
+}
+
+TEST(basicChessTests, testPGNConverterWin) {
+    const strvec input = { "e4", "d5", "exd5", "Qxd5", "Nc3", "Qa5", "Nf3", "Nf6", "d4", "c6", "Bg5", "Ng8", "Bd2", "Nf6", "Ne4", "Qb6", "Nxf6+", "exf6", "Qe2+", "Be6", "O-O-O", "Be7", "g3", "Bxa2", "b3", "c5", "Kb2", "cxd4", "Kxa2", "Nc6", "Bf4", "Qa5+", "Kb2", "Nb4", "Ra1", "Qf5", "Bd6", "Nd5", "Nxd4", "Qg6", "Bg2", "Qg5", "Bxd5", "Qxd5", "Qxe7#" };
+    doMovementsFromPGN(input, true);
 }
