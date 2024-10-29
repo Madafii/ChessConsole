@@ -108,7 +108,7 @@ Pieces ChessBoard::getPossibleMovesPawn(const ChessTile *fromTile) const {
     const int y = fromTile->getY();
     const int white = fromTile->piece->isWhite() ? 1 : -1;
     // some different rules for pawn applying again
-    if (getTileAt(x, y + white)->piece == nullptr) {
+    if (getTileAt(x, y + white) != nullptr && getTileAt(x, y + white)->piece == nullptr) {
         possibleMoves.push_back(getTileAt(x, y + white));
         if (white == 1 && y == 1 && getTileAt(x, y + 2 * white)->piece == nullptr) {
             possibleMoves.push_back(getTileAt(x, y + 2 * white));
@@ -157,7 +157,8 @@ Pieces ChessBoard::getPossibleMovesKing(const ChessTile *fromTile, const bool ca
     const std::vector directions = {std::pair(0, 1), std::pair(0, -1), std::pair(1, 1),  std::pair(1, -1),
                                     std::pair(1, 0), std::pair(-1, 0), std::pair(-1, 1), std::pair(-1, -1)};
     mergePossVec(possibleMoves, getPossibleMovesByDirectionSingle(fromTile, directions));
-    if (castling)
+    // TODO: filter moves where King checks himself and for all other pieces?
+    if (castling && !isKingChecked(whitesTurn))
         mergePossVec(possibleMoves, getPossibleMovesCastling(fromTile));
     return possibleMoves;
 }
@@ -257,19 +258,17 @@ Pieces ChessBoard::getAllBlackTiles() const {
 void ChessBoard::filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves) {
     std::cout << "possible Moves size before filter: " << possibleMoves.size() << std::endl;
     // check if the move would make the player checked which is an illegal move
-    possibleMoves.erase(std::remove_if(possibleMoves.begin(), possibleMoves.end(),
-                                       [fromTile, this](ChessTile *toTile) {
-                                           ChessPiece *tmpPieceFrom = fromTile->piece;
-                                           ChessPiece *tmpPieceTo = toTile->piece;
-                                           ChessTile *tmpFromTile =  const_cast<ChessTile*> (fromTile);
-                                           tmpFromTile->piece = nullptr;
-                                           toTile->piece = tmpPieceFrom;
-                                           const bool isChecked = isKingChecked(whitesTurn);
-                                           tmpFromTile->piece = tmpPieceFrom;
-                                           toTile->piece = tmpPieceTo;
-                                           return isChecked;
-                                       }),
-                        possibleMoves.end());
+    std::erase_if(possibleMoves, [fromTile, this](ChessTile *toTile) {
+                      ChessPiece *tmpPieceFrom = fromTile->piece;
+                      ChessPiece *tmpPieceTo = toTile->piece;
+                      ChessTile *tmpFromTile =  const_cast<ChessTile*> (fromTile);
+                      tmpFromTile->piece = nullptr;
+                      toTile->piece = tmpPieceFrom;
+                      const bool isChecked = isKingChecked(whitesTurn);
+                      tmpFromTile->piece = tmpPieceFrom;
+                      toTile->piece = tmpPieceTo;
+                      return isChecked;
+                  });
     std::cout << "possible moves size after filter: " << possibleMoves.size() << std::endl;
 }
 
@@ -281,7 +280,7 @@ bool ChessBoard::isInputMovePossible(const ChessTile *fromTile, const ChessTile 
     for (const auto possMove: possibleMoves) {
         std::cout << possMove->getX() << " " << possMove->getY() << std::endl;
     }
-    const auto itPossMove = std::find(possibleMoves.begin(), possibleMoves.end(), toTile);
+    const auto itPossMove = std::ranges::find(possibleMoves, toTile);
     if (itPossMove == possibleMoves.end()) {
         std::cout << "ChessBoard::isInputMovePossible: that is not a possible move" << std::endl;
         return false;
@@ -307,6 +306,7 @@ bool ChessBoard::isPossibleMove(const bool fromTileWhite, ChessTile *toTile, Pie
 bool ChessBoard::isKingChecked(const bool white) {
     const Pieces pieceTiles = !white ? getAllWhiteTiles() : getAllBlackTiles();
     for (const ChessTile *tile: pieceTiles) {
+        if (tile->piece->getType() == King) continue;
         const Pieces possMoves = getPossibleMoves(tile);
         for (const ChessTile *possMove: possMoves) {
             if (possMove->piece == nullptr)
@@ -334,7 +334,7 @@ bool ChessBoard::isTileAttackedAndFree(const bool white, const Pieces &tilesToCh
             possMoves = getPossibleMoves(tile);
         }
         for (const ChessTile *tileToCheck : tilesToCheck) {
-            if (std::find(possMoves.begin(), possMoves.end(), tileToCheck) != possMoves.end()) {
+            if (std::ranges::find(possMoves, tileToCheck) != possMoves.end()) {
                 return true;
             }
         }
@@ -357,7 +357,9 @@ bool ChessBoard::isKingCheckmate() {
 bool ChessBoard::isDraw() {
     // TODO: reset since last capture for pawn move
     // TODO: draw when same position repeats three times
-    return getAllPossibleMoves(whitesTurn).size() <= 0 && !isKingChecked(whitesTurn) || movesSinceLastCapture >= 100;
+    if (getAllPossibleMoves(!whitesTurn).size() <= 0 && !isKingChecked(!whitesTurn)) return true;
+    if (movesSinceLastCapture >= 100) return true;
+    return false;
 }
 
 Pieces ChessBoard::getAllPossibleMoves(const bool white) {
@@ -365,10 +367,14 @@ Pieces ChessBoard::getAllPossibleMoves(const bool white) {
     const Pieces pieceTiles = white ? getAllWhiteTiles() : getAllBlackTiles();
     for (const ChessTile *tile: pieceTiles) {
         if (tile->piece->getType() == King) {
-            mergePossVec(allPossibleMoves, getPossibleMovesKing(tile, false));
+            Pieces newPossibleMoves = getPossibleMovesKing(tile, false);
+            filterPossibleMovesForChecks(tile, newPossibleMoves);
+            mergePossVec(allPossibleMoves, newPossibleMoves);
             continue;
         }
-        mergePossVec(allPossibleMoves, getPossibleMoves(tile));
+        Pieces newPossibleMoves = getPossibleMoves(tile);
+        filterPossibleMovesForChecks(tile, newPossibleMoves);
+        mergePossVec(allPossibleMoves, newPossibleMoves);
     }
     return allPossibleMoves;
 }
@@ -396,14 +402,14 @@ Pieces ChessBoard::getAllPiecesFor(const bool white, const ChessPieceType piece)
     return pieces;
 }
 
-
-void ChessBoard::handleMoveInput(std::string input) {
+GameState ChessBoard::handleMoveInput(std::string input) {
     char pawnChangeTo = '0'; // 0 is for no pawn change
     // extra check for instant pawn change
     if (input.length() == 7) {
         pawnChangeTo = input[6];
     }
     input = input.substr(0, 5);
+
     // get the move tiles from the input
     const auto moveTilePair = getMoveTilesFromInput(input);
     if (!moveTilePair) {
@@ -411,15 +417,16 @@ void ChessBoard::handleMoveInput(std::string input) {
     }
     ChessTile *fromTile = moveTilePair->first;
     ChessTile *toTile = moveTilePair->second;
-    if (!isInputMovePossible(fromTile, toTile)) return;
+
+    if (!isInputMovePossible(fromTile, toTile)) return GameState::IN_PROGRESS;
     move(fromTile, toTile);
+
     // after move checks
-    if (pawnChangeTo != '0') {
-        afterMoveChecks(toTile, pawnChangeTo);
-    } else {
-        afterMoveChecks(toTile);
-    }
-    whitesTurn = !whitesTurn;
+    const GameState game_state = afterMoveChecks(toTile, pawnChangeTo);
+
+    // nothing else happening here because updating the screen
+    updateBoard();
+    return game_state;
 }
 
 void ChessBoard::move(ChessTile *fromTile, ChessTile *toTile) {
@@ -453,15 +460,18 @@ void ChessBoard::movePawn(const ChessTile *fromTile, const ChessTile *toTile) {
         ChessTile *capturedPiece = getTileAt(toTile->getX(), toTile->getY() + whiteMove);
         delete capturedPiece->piece;
         capturedPiece->piece = nullptr;
-        movesSinceLastCapture = 0;
     }
+    movesSinceLastCapture = 0; // also resets on any pawn move
 }
 
 void ChessBoard::moveKing(const ChessTile *fromTile, const ChessTile *toTile) {
-    whiteRookMoved.first = true;
-    whiteRookMoved.second = true;
-    blackRookMoved.first = true;
-    blackRookMoved.second = true;
+    if (fromTile->piece->isWhite() == true) {
+        whiteRookMoved.first = true;
+        whiteRookMoved.second = true;
+    } else {
+        blackRookMoved.first = true;
+        blackRookMoved.second = true;
+    }
     // do castling move for the rook
     if (abs(fromTile->getX() - toTile->getX()) >= 2) {
         const int x = toTile->getX();
@@ -551,16 +561,24 @@ void ChessBoard::pawnWon(ChessTile *pawnTile, const char pawnToPiece) const {
     pawnTile->piece = newPawn;
 }
 
-void ChessBoard::afterMoveChecks(ChessTile *toTile, const char pawnToPiece) {
+GameState ChessBoard::afterMoveChecks(ChessTile *toTile, const char pawnToPiece) {
+    static int count = 0;
+    count++;
     doublePawnMoveAt = -1;
     if (toTile->piece->getType() == Pawn && (toTile->getY() == 0 || toTile->getY() == 7)) {
         pawnWon(toTile, pawnToPiece);
     }
-    if (getAllPossibleMoves(!whitesTurn).size() <= 0 && !isKingChecked(!whitesTurn)) {
+    if (isDraw()) {
         std::cout << "this game is a draw!" << std::endl;
+        return GameState::DRAW;
     }
+    if (isKingCheckmate()) {
+        std::cout << "you won the game!" << std::endl;
+        return GameState::WON;
+    }
+    whitesTurn = !whitesTurn;
+    return GameState::IN_PROGRESS;
 }
-
 
 std::optional<std::pair<ChessTile *, ChessTile *>> ChessBoard::getMoveTilesFromInput(const std::string &input) const {
     if (input.length() != 5) {

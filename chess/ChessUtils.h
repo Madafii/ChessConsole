@@ -30,6 +30,7 @@ inline std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard
     if (it != input.end()) {
         ++it;
         pawnChange = *it;
+        input = input.substr(0, input.size() - 2);
     }
     ChessPieceType typeToMove;
     const std::string_view moveTo = input.substr(input.size() - 2, 2);
@@ -92,7 +93,7 @@ inline std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard
         // is like a move hint if there a multiple same pieces that have to to move as a possibility
         std::string_view tmpMoveTo = piece->getMove();
         if (extra.size() == 1) {
-            if (std::ranges::find(tmpMoveTo, extra[0])) {
+            if (std::ranges::find(tmpMoveTo, extra[0]) != tmpMoveTo.end()) {
                 foundFromTile = piece;
                 break;
             }
@@ -106,7 +107,7 @@ inline std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard
     std::string ret = foundFromTile->getMove() + ":" + std::string(moveTo);
     // pawn piece got changed
     if (pawnChange != 'L') {
-       ret.append("=" + pawnChange);
+       ret.append("=" + std::string(1, pawnChange));
     }
     return ret;
 }

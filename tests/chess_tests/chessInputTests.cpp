@@ -11,7 +11,6 @@ void doMovements(strvec moves) {
     ChessBoard board;
     for (const std::string move: moves) {
         board.handleMoveInput(move);
-        board.updateBoard(); // just enable for visualization
     }
 }
 
@@ -22,7 +21,6 @@ void doMovementsFromPGN(strvec moves, const bool whiteStarting) {
         std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, board, whitesTurn);
         std::cout << "from: " << move << " to: " << inputMyChess << std::endl;
         board.handleMoveInput(inputMyChess);
-        board.updateBoard();
         whitesTurn = !whitesTurn;
     }
 }
@@ -103,12 +101,8 @@ TEST(basicChessTests, testPawnWon2) {
     doMovements(input);
 }
 
-TEST(basicChessTests, testPGNConverter) {
-    const strvec input = {
-        "e4", "d5", "exd5", "Qxd5", "Nc3", "Qa5", "Nf3", "Nf6", "d4", "c6", "Bg5", "Ng8", "Bd2", "Nf6", "Ne4", "Qb6",
-        "Nxf6+", "exf6", "Qe2+", "Be6", "O-O-O", "Be7", "g3", "Bxa2", "b3", "c5", "Kb2", "cxd4", "Kxa2", "Nc6", "Bf4",
-        "Qa5+", "Kb2", "Nb4", "Ra1", "Qf5", "Bd6", "Nd5", "Nxd4", "Qg6", "Bg2", "Qg5", "Bxd5", "Qxd5", "Qxe7#"
-    };
+TEST(basicChessTests, testPGNConverterDraw) {
+    const strvec input = { "e4", "e5", "Nf3", "d6", "Bc4", "a5", "Nc3", "c6", "O-O", "b5", "Be2", "a4", "a3", "Be7", "d4", "exd4", "Nxd4", "Nf6", "Nf5", "Bxf5", "exf5", "d5", "Bf3", "Qc8", "Qe2", "Qxf5", "Re1", "O-O", "Qxe7", "Qd7", "Qxd7", "Nbxd7", "Bg5", "Ne8", "Rad1", "Nb6", "Be7", "Nc4", "Bxf8", "Kxf8", "b3", "axb3", "cxb3", "Nb2", "Ra1", "Nd3", "Re2", "Nc5", "b4", "Nb3", "Raa2", "g6", "Bg4", "d4", "Ne4", "Rd8", "Nd2", "Nc1", "Ne4", "d3", "Red2", "Nxa2", "Rxa2", "f5", "Bxf5", "gxf5", "Nd2", "f4", "a4", "bxa4", "Rxa4", "Nd6", "g3", "fxg3", "hxg3", "Rc8", "Ra6", "Nb5", "Ne4", "Nd4", "Nd6", "Rc7", "Ra8+", "Ke7", "Ne4", "Ke6", "Nc5+", "Kd5", "Nxd3", "c5", "bxc5", "Rxc5", "Nxc5", "Kxc5", "Rc8+", "Kb6", "Rh8", "Ne2+", "Kg2", "Kc5", "Rxh7", "Kd4", "Rh8", "Nc3", "Rh4+", "Kd3", "g4", "Ne4", "f3", "Ng5", "f4", "Ne4", "g5", "Ke3", "Rg4", "Nf2", "g6", "Nxg4", "g7", "Kxf4", "g8=Q", "Ne3+", "Kf2", "Ng4+", "Ke1", "Ke3", "Qxg4", "Kd3", "Qg3+", "Ke4", "Ke2", "Kd5", "Qg4", "Ke5", "Kd3", "Kf6", "Qf4+", "Ke6", "Kd4", "Ke7", "Qe5+", "Kf7", "Kd5", "Kg6", "Kd6", "Kh6", "Ke6", "Kg6", "Qf6+", "Kh5", "Kf5" };
     doMovementsFromPGN(input, true);
 }
 

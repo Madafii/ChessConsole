@@ -15,13 +15,19 @@ constexpr int boardHeight = 8;
 
 using Pieces = std::vector<ChessTile*>;
 using PiecePair = std::optional<std::pair<ChessTile*, ChessTile*>>;
+enum class GameState {
+    WON,
+    DRAW,
+    IN_PROGRESS
+};
+
 class ChessBoard {
 public:
     explicit ChessBoard();
 
     void initBoard();
     void updateBoard() const;
-    void handleMoveInput(std::string input);
+    GameState handleMoveInput(std::string input);
 
     bool isKingCheckmate();
     bool isDraw();
@@ -39,7 +45,7 @@ private:
     void moveRook(const ChessTile *fromTile);
     void mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge) const;
     void pawnWon(ChessTile *pawnTile, char pawnToPiece = '0') const;
-    void afterMoveChecks(ChessTile *toTile, char pawnToPiece = '0');
+    GameState afterMoveChecks(ChessTile *toTile, char pawnToPiece = '0');
 
     PiecePair getMoveTilesFromInput(const std::string &input) const;
 

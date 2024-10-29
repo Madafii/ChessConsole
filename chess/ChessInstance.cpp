@@ -13,13 +13,11 @@ ChessInstance::ChessInstance() {
 
 void ChessInstance::run() {
     std::string input;
-    _chessBoard.updateBoard();
     while(true) {
         std::cin >> input;
         if (input == "quit") break;
-        _chessBoard.handleMoveInput(input);
-        _chessBoard.updateBoard();
-        if(_chessBoard.isKingCheckmate()) {
+        const GameState game_state = _chessBoard.handleMoveInput(input);
+        if (game_state != GameState::IN_PROGRESS) {
             break;
         }
     }
