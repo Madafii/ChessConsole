@@ -66,8 +66,8 @@ private:
     void filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves);
 
     bool isInputMovePossible(const ChessTile *fromTile, const ChessTile *toTile);
-    bool isPossibleMove(bool fromTileWhite, ChessTile *toTile, Pieces &possibleMoves,
-                        bool isPawnSpecialMove = false) const;
+    bool isPossibleMove(const ChessTile *fromTile, ChessTile *toTile, Pieces &possibleMoves,
+                        bool isPawnSpecialMove = false);
     bool isKingChecked(bool white);
     bool isTileAttackedAndFree(bool white, const Pieces &tilesToCheck);
 

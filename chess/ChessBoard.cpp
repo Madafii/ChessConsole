@@ -9,7 +9,6 @@
 #include <string>
 
 ChessBoard::ChessBoard() {
-
     initBoard();
 }
 
@@ -76,7 +75,6 @@ Pieces ChessBoard::getPossibleMoves(const ChessTile *fromTile) {
     Pieces possibleMoves;
     if (fromTile->piece == nullptr)
         return possibleMoves;
-    // const ChessPiece *piece = fromTile->piece;
     switch (fromTile->piece->getType()) {
         case Pawn:
             mergePossVec(possibleMoves, getPossibleMovesPawn(fromTile));
@@ -288,18 +286,22 @@ bool ChessBoard::isInputMovePossible(const ChessTile *fromTile, const ChessTile 
     return true;
 }
 
-bool ChessBoard::isPossibleMove(const bool fromTileWhite, ChessTile *toTile, Pieces &possibleMoves,
-                                const bool isPawnSpecialMove) const {
-    if (toTile == nullptr)
+bool ChessBoard::isPossibleMove(const ChessTile *fromTile, ChessTile *toTile, Pieces &possibleMoves,
+                                const bool isPawnSpecialMove) {
+    if (toTile == nullptr) // tile does not exist
         return false;
-    if (toTile->piece != nullptr) {
-        if (fromTileWhite != toTile->piece->isWhite())
-            possibleMoves.push_back(toTile);
-        return false;
+    if (toTile->piece != nullptr) { // there is a piece
+        if (fromTile->piece->getType() == King && toTile->piece->getType() == King) { // can't attack king with a king
+            return false;
+        }
+        if (fromTile->piece->isWhite() != toTile->piece->isWhite()) // piece is different color so add it
+            if (!isKingChecked(!whitesTurn)) // and does not check his own king
+                possibleMoves.push_back(toTile);
+        return false; // piece is same color so don't add it
     }
-    if (isPawnSpecialMove && toTile->piece == nullptr)
+    if (isPawnSpecialMove && toTile->piece == nullptr) // for that pawn move
         return false;
-    possibleMoves.push_back(toTile);
+    possibleMoves.push_back(toTile); // tile is free to move on
     return true;
 }
 
