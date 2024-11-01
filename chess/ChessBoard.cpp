@@ -155,7 +155,6 @@ Pieces ChessBoard::getPossibleMovesKing(const ChessTile *fromTile, const bool ca
     const std::vector directions = {std::pair(0, 1), std::pair(0, -1), std::pair(1, 1),  std::pair(1, -1),
                                     std::pair(1, 0), std::pair(-1, 0), std::pair(-1, 1), std::pair(-1, -1)};
     mergePossVec(possibleMoves, getPossibleMovesByDirectionSingle(fromTile, directions));
-    // TODO: filter moves where King checks himself and for all other pieces?
     if (castling && !isKingChecked(whitesTurn))
         mergePossVec(possibleMoves, getPossibleMovesCastling(fromTile));
     return possibleMoves;
@@ -376,7 +375,6 @@ bool ChessBoard::isKingCheckmate() {
     return true;
 }
 bool ChessBoard::isDraw() {
-    // TODO: reset since last capture for pawn move
     // TODO: draw when same position repeats three times
     if (getAllPossibleMoves(!whitesTurn).size() <= 0 && !isKingChecked(!whitesTurn)) return true;
     if (movesSinceLastCapture >= 100) return true;
@@ -464,7 +462,11 @@ void ChessBoard::move(ChessTile *fromTile, ChessTile *toTile) {
     if (toTile->piece != nullptr) {
         movesSinceLastCapture = 0;
         delete toTile->piece;
-    } else { movesSinceLastCapture++; }
+    } else if (fromTile->piece->getType() == Pawn) {
+        movesSinceLastCapture = 0;
+    } else {
+        movesSinceLastCapture++;
+    }
     toTile->piece = fromTile->piece;
     fromTile->piece = nullptr;
 }
@@ -481,7 +483,6 @@ void ChessBoard::movePawn(const ChessTile *fromTile, const ChessTile *toTile) {
         delete capturedPiece->piece;
         capturedPiece->piece = nullptr;
     }
-    movesSinceLastCapture = 0; // also resets on any pawn move
 }
 
 void ChessBoard::moveKing(const ChessTile *fromTile, const ChessTile *toTile) {
