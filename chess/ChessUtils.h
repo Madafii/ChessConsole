@@ -90,7 +90,7 @@ inline std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard
         if (it == possibleMoves.end()) continue;
         foundFromTile = piece;
         if (extra.size() == 0) break;
-        // is like a move hint if there a multiple same pieces that have to to move as a possibility
+        // is like a move hint if there are multiple same pieces that have the to move as a possibility
         std::string_view tmpMoveTo = piece->getMove();
         if (extra.size() == 1) {
             if (std::ranges::find(tmpMoveTo, extra[0]) != tmpMoveTo.end()) {

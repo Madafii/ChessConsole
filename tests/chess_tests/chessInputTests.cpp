@@ -81,7 +81,7 @@ TEST(basicChessTests, testCastlingLeft) {
     doMovements(input);
 }
 
-TEST(basicChessTests, testCastlingRightNotPossible) {
+TEST(basicChessTests, testCastlingLeftNotPossible) {
     const strvec input = {"d2:d4", "a7:a6", "d1:d3", "b7:b5", "c1:d2", "c7:c6", "b1:c3",
                           "d7:d5", "e2:e3", "e7:e6", "b2:b3", "f8:a3", "e1:c1"};
     doMovements(input);

@@ -36,7 +36,7 @@ public:
     Pieces getAllPossibleMovesPiece(bool white, ChessPieceType piece);
     Pieces getAllPiecesFor(bool white, ChessPieceType piece) const;
 
-    // move to private again later is jsut for testing
+    // move to private again later is just for testing
     Pieces getPossibleMoves(const ChessTile * fromTile);
 private:
     void move(ChessTile *fromTile, ChessTile *toTile);
@@ -49,16 +49,16 @@ private:
 
     PiecePair getMoveTilesFromInput(const std::string &input) const;
 
-    Pieces getPossibleMovesPawn(const ChessTile *fromTile) const;
-    Pieces getPossibleMovesBishop(const ChessTile *fromTile) const;
-    Pieces getPossibleMovesRook(const ChessTile *fromTile) const;
-    Pieces getPossibleMovesKnight(const ChessTile *fromTile) const;
-    Pieces getPossibleMovesQueen(const ChessTile *fromTile) const;
+    Pieces getPossibleMovesPawn(const ChessTile *fromTile);
+    Pieces getPossibleMovesBishop(const ChessTile *fromTile);
+    Pieces getPossibleMovesRook(const ChessTile *fromTile);
+    Pieces getPossibleMovesKnight(const ChessTile *fromTile);
+    Pieces getPossibleMovesQueen(const ChessTile *fromTile);
     Pieces getPossibleMovesKing(const ChessTile *fromTile, bool castling = true);
     Pieces getPossibleMovesByDirection(const ChessTile *fromTile,
-                                                         const std::vector<std::pair<int, int>> &directions) const;
+                                                         const std::vector<std::pair<int, int>> &directions);
     Pieces getPossibleMovesByDirectionSingle(const ChessTile *fromTile,
-                                      const std::vector<std::pair<int, int>> &directions) const;
+                                      const std::vector<std::pair<int, int>> &directions);
     Pieces getPossibleMovesCastling(const ChessTile *fromTile);
 
     Pieces getAllWhiteTiles() const;
@@ -66,9 +66,10 @@ private:
     void filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves);
 
     bool isInputMovePossible(const ChessTile *fromTile, const ChessTile *toTile);
-    bool isPossibleMove(const ChessTile *fromTile, ChessTile *toTile, Pieces &possibleMoves,
-                        bool isPawnSpecialMove = false);
+    bool isPossibleMove(const ChessTile *fromTile, ChessTile *toTile, Pieces &possibleMoves);
+
     bool isKingChecked(bool white);
+    bool isKingChecked(const ChessTile *fromTile, ChessTile *toTile);
     bool isTileAttackedAndFree(bool white, const Pieces &tilesToCheck);
 
     ChessTile *getTileAt(const std::string &pos) const;
