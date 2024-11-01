@@ -281,9 +281,6 @@ bool ChessBoard::isPossibleMove(const ChessTile *fromTile, ChessTile *toTile, Pi
     if (toTile == nullptr) // tile does not exist
         return false;
     if (toTile->piece != nullptr) { // there is a piece
-        if (fromTile->piece->getType() == King && toTile->piece->getType() == King) { // can't attack king with a king
-            return false;
-        }
         if (fromTile->piece->getType() == Pawn && fromTile->getX() == toTile->getX()) { // pawn only piece that can't capture piece directly in its path
             return false;
         }
@@ -303,9 +300,11 @@ bool ChessBoard::isPossibleMove(const ChessTile *fromTile, ChessTile *toTile, Pi
 bool ChessBoard::isKingChecked(const bool white) {
     const Pieces pieceTiles = !white ? getAllWhiteTiles() : getAllBlackTiles();
     for (const ChessTile *tile: pieceTiles) {
+        Pieces possMoves;
         if (tile->piece->getType() == King)
-            continue;
-        const Pieces possMoves = getPossibleMoves(tile);
+            possMoves = getPossibleMovesKing(tile, false);
+        else
+            possMoves = getPossibleMoves(tile);
         for (const ChessTile *possMove: possMoves) {
             if (possMove->piece == nullptr)
                 continue;
@@ -388,13 +387,12 @@ Pieces ChessBoard::getAllPossibleMoves(const bool white) {
     Pieces allPossibleMoves;
     const Pieces pieceTiles = white ? getAllWhiteTiles() : getAllBlackTiles();
     for (const ChessTile *tile: pieceTiles) {
+        Pieces newPossibleMoves;
         if (tile->piece->getType() == King) {
-            Pieces newPossibleMoves = getPossibleMovesKing(tile, false);
-            filterPossibleMovesForChecks(tile, newPossibleMoves);
-            mergePossVec(allPossibleMoves, newPossibleMoves);
-            continue;
+            newPossibleMoves = getPossibleMovesKing(tile, false);
+        } else {
+            newPossibleMoves = getPossibleMoves(tile);
         }
-        Pieces newPossibleMoves = getPossibleMoves(tile);
         filterPossibleMovesForChecks(tile, newPossibleMoves);
         mergePossVec(allPossibleMoves, newPossibleMoves);
     }
