@@ -140,3 +140,9 @@ TEST(basicChessTests, testPGN50Moves) {
             "Rf6", "Rd3", "Re6", "Re3", "Rd6", "Rf3", "Rc6", "Rg3", "Rb6", "Rh3", "Ra6", "Rg3", "Rb6", "Rf3", "Rc6"};
     doMovementsFromPGN(input, true);
 }
+
+TEST(basicChessTests, testThreefoldRepetition) {
+    const strvec input = {
+            "a2:a4", "h7:h5", "a1:a2", "h8:h7", "a2:a1", "h7:h8", "a1:a2", "h8:h7", "a2:a1", "h7:h8", "a1:a2", "h8:h7", "a2:a1", "h7:h8"};
+    doMovements(input);
+}

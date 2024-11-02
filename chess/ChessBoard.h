@@ -31,10 +31,13 @@ public:
 
     bool isKingCheckmate();
     bool isDraw();
+    bool isWhitesTurn();
 
     Pieces getAllPossibleMoves(bool white);
     Pieces getAllPossibleMovesPiece(bool white, ChessPieceType piece);
     Pieces getAllPiecesFor(bool white, ChessPieceType piece) const;
+    Pieces getAllWhiteTiles() const;
+    Pieces getAllBlackTiles() const;
 
     // move to private again later is just for testing
     Pieces getPossibleMoves(const ChessTile * fromTile);
@@ -45,6 +48,7 @@ private:
     void moveRook(const ChessTile *fromTile);
     void mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge) const;
     void pawnWon(ChessTile *pawnTile, char pawnToPiece = '0') const;
+
     GameState afterMoveChecks(ChessTile *toTile, char pawnToPiece = '0');
 
     PiecePair getMoveTilesFromInput(const std::string &input) const;
@@ -60,17 +64,16 @@ private:
     Pieces getPossibleMovesByDirectionSingle(const ChessTile *fromTile,
                                       const std::vector<std::pair<int, int>> &directions);
     Pieces getPossibleMovesCastling(const ChessTile *fromTile);
-
-    Pieces getAllWhiteTiles() const;
-    Pieces getAllBlackTiles() const;
     void filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves);
+
+    std::string getStringFromBoard();
 
     bool isInputMovePossible(const ChessTile *fromTile, const ChessTile *toTile);
     bool isPossibleMove(const ChessTile *fromTile, ChessTile *toTile, Pieces &possibleMoves);
-
     bool isKingChecked(bool white);
     bool isKingChecked(const ChessTile *fromTile, ChessTile *toTile);
     bool isTileAttackedAndFree(bool white, const Pieces &tilesToCheck);
+    bool isThreefoldRepetition();
 
     ChessTile *getTileAt(const std::string &pos) const;
     ChessTile *getTileAt(int x,int y) const;
@@ -79,6 +82,7 @@ private:
     bool whitesTurn = true;
     std::pair<bool, bool> whiteRookMoved = {false, false};
     std::pair<bool, bool> blackRookMoved = {false, false};
+    std::vector<std::string> gameHistory;
     int doublePawnMoveAt = -1; // says in what column a pawn move with two steps happened
     int movesSinceLastCapture = 0;
 };

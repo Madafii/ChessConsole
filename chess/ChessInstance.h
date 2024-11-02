@@ -10,7 +10,10 @@
 class ChessInstance {
 public:
     explicit ChessInstance();
+
     void run();
+    void runRandom();
+
 private:
     ChessBoard _chessBoard;
 };

@@ -38,6 +38,8 @@ void ChessBoard::initBoard() {
     board.push_back(new ChessTile(new ChessPiece(Bishop, false), 5, 7));
     board.push_back(new ChessTile(new ChessPiece(Knight, false), 6, 7));
     board.push_back(new ChessTile(new ChessPiece(Rook, false), 7, 7));
+    // add initial board as first in the game history
+    gameHistory.push_back(getStringFromBoard());
 }
 
 void ChessBoard::updateBoard() const {
@@ -252,6 +254,17 @@ Pieces ChessBoard::getAllBlackTiles() const {
     }
     return blackTiles;
 }
+std::string ChessBoard::getStringFromBoard() {
+    std::string outMoves;
+    for (const ChessTile *tile: board) {
+        if (tile->piece == nullptr) {
+            outMoves += "_";
+            continue;
+        }
+        outMoves += tile->piece->getShortName();
+    }
+    return outMoves;
+}
 
 void ChessBoard::filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves) {
     // std::cout << "possible Moves size before filter: " << possibleMoves.size() << std::endl;
@@ -335,8 +348,9 @@ bool ChessBoard::isKingChecked(const ChessTile *fromTile, ChessTile *toTile) {
 
 // if passed tiles are attacked by white
 bool ChessBoard::isTileAttackedAndFree(const bool white, const Pieces &tilesToCheck) {
-    for (const ChessTile *tileToCheck : tilesToCheck) {
-        if (tileToCheck->piece != nullptr) return true;
+    for (const ChessTile *tileToCheck: tilesToCheck) {
+        if (tileToCheck->piece != nullptr)
+            return true;
     }
     const Pieces pieceTiles = white ? getAllWhiteTiles() : getAllBlackTiles();
     for (const ChessTile *tile: pieceTiles) {
@@ -347,11 +361,19 @@ bool ChessBoard::isTileAttackedAndFree(const bool white, const Pieces &tilesToCh
         } else {
             possMoves = getPossibleMoves(tile);
         }
-        for (const ChessTile *tileToCheck : tilesToCheck) {
+        for (const ChessTile *tileToCheck: tilesToCheck) {
             if (std::ranges::find(possMoves, tileToCheck) != possMoves.end()) {
                 return true;
             }
         }
+    }
+    return false;
+}
+
+bool ChessBoard::isThreefoldRepetition() {
+    // TODO: technically have to check if en passant was possible
+    for (const std::string boardStr : gameHistory) {
+        if (std::ranges::count(gameHistory, boardStr) >= 3) return true;
     }
     return false;
 }
@@ -375,10 +397,18 @@ bool ChessBoard::isKingCheckmate() {
     return true;
 }
 bool ChessBoard::isDraw() {
-    // TODO: draw when same position repeats three times
-    if (getAllPossibleMoves(!whitesTurn).size() <= 0 && !isKingChecked(!whitesTurn)) return true;
-    if (movesSinceLastCapture >= 100) return true;
+    if (isThreefoldRepetition())
+        return true; // self explaining :)
+    if (getAllPossibleMoves(!whitesTurn).size() <= 0 && !isKingChecked(!whitesTurn))
+        return true; // stalemate
+    if (movesSinceLastCapture >= 100)
+        return true; // 100 half turns with no capture or pawn move
+    // technically there is a dead position where nothing can be captured but that will just count as 50 moves rule
+    // because the outcome will be same
     return false;
+}
+bool ChessBoard::isWhitesTurn() {
+    return whitesTurn;
 }
 
 Pieces ChessBoard::getAllPossibleMoves(const bool white) {
@@ -469,6 +499,7 @@ void ChessBoard::move(ChessTile *fromTile, ChessTile *toTile) {
     }
     toTile->piece = fromTile->piece;
     fromTile->piece = nullptr;
+    gameHistory.push_back(getStringFromBoard());
 }
 
 void ChessBoard::movePawn(const ChessTile *fromTile, const ChessTile *toTile) {
