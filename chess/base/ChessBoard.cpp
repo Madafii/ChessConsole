@@ -11,31 +11,31 @@
 ChessBoard::ChessBoard() { initBoard(); }
 
 void ChessBoard::initBoard() {
-    board.push_back(new ChessTile(new ChessPiece(Rook, true), 0, 0));
-    board.push_back(new ChessTile(new ChessPiece(Knight, true), 1, 0));
-    board.push_back(new ChessTile(new ChessPiece(Bishop, true), 2, 0));
-    board.push_back(new ChessTile(new ChessPiece(Queen, true), 3, 0));
-    board.push_back(new ChessTile(new ChessPiece(King, true), 4, 0));
-    board.push_back(new ChessTile(new ChessPiece(Bishop, true), 5, 0));
-    board.push_back(new ChessTile(new ChessPiece(Knight, true), 6, 0));
-    board.push_back(new ChessTile(new ChessPiece(Rook, true), 7, 0));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Rook, true), 0, 0));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Knight, true), 1, 0));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Bishop, true), 2, 0));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Queen, true), 3, 0));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(King, true), 4, 0));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Bishop, true), 5, 0));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Knight, true), 6, 0));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Rook, true), 7, 0));
     for (int i = 0; i < boardWidth; i++) {
-        board.push_back(new ChessTile(new ChessPiece(Pawn, true), i, 1));
+        board.push_back(new ChessTile(std::make_unique<ChessPiece>(Pawn, true), i, 1));
     }
     for (int i = 0; i < boardWidth * 4; i++) {
         board.push_back(new ChessTile(nullptr, i % boardWidth, i / boardWidth + 2));
     }
     for (int i = 0; i < boardWidth; i++) {
-        board.push_back(new ChessTile(new ChessPiece(Pawn, false), i, 6));
+        board.push_back(new ChessTile(std::make_unique<ChessPiece>(Pawn, false), i, 6));
     }
-    board.push_back(new ChessTile(new ChessPiece(Rook, false), 0, 7));
-    board.push_back(new ChessTile(new ChessPiece(Knight, false), 1, 7));
-    board.push_back(new ChessTile(new ChessPiece(Bishop, false), 2, 7));
-    board.push_back(new ChessTile(new ChessPiece(Queen, false), 3, 7));
-    board.push_back(new ChessTile(new ChessPiece(King, false), 4, 7));
-    board.push_back(new ChessTile(new ChessPiece(Bishop, false), 5, 7));
-    board.push_back(new ChessTile(new ChessPiece(Knight, false), 6, 7));
-    board.push_back(new ChessTile(new ChessPiece(Rook, false), 7, 7));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Rook, false), 0, 7));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Knight, false), 1, 7));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Bishop, false), 2, 7));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Queen, false), 3, 7));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(King, false), 4, 7));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Bishop, false), 5, 7));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Knight, false), 6, 7));
+    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Rook, false), 7, 7));
     // add initial board as first in the game history
     gameHistory.push_back(getStringFromBoard());
 }
@@ -357,14 +357,12 @@ bool ChessBoard::isKingChecked(const bool white) {
 bool ChessBoard::isKingChecked(const ChessTile *fromTile, ChessTile *toTile) {
     // make the move then check the board.
     const bool white = fromTile->piece->isWhite();
-    ChessPiece *tmpPieceFrom = fromTile->piece;
-    ChessPiece *tmpPieceTo = toTile->piece;
-    ChessTile *tmpFromTile = const_cast<ChessTile *>(fromTile); // ok to do this because temporary? ...idk
-    tmpFromTile->piece = nullptr;
-    toTile->piece = tmpPieceFrom;
+    std::unique_ptr<ChessPiece> tmpPieceTo = std::move(toTile->piece);
+    ChessTile *tmpTile = const_cast<ChessTile*>(fromTile);
+    toTile->piece = std::move(tmpTile->piece);
     const bool isChecked = isKingChecked(white);
-    tmpFromTile->piece = tmpPieceFrom;
-    toTile->piece = tmpPieceTo;
+    tmpTile->piece = std::move(toTile->piece);
+    toTile->piece = std::move(tmpPieceTo);
     return isChecked;
 }
 
@@ -544,14 +542,12 @@ void ChessBoard::move(ChessTile *fromTile, ChessTile *toTile) {
     }
     if (toTile->piece != nullptr) {
         movesSinceLastCapture = 0;
-        delete toTile->piece;
     } else if (fromTile->piece->getType() == Pawn) {
         movesSinceLastCapture = 0;
     } else {
         movesSinceLastCapture++;
     }
-    toTile->piece = fromTile->piece;
-    fromTile->piece = nullptr;
+    toTile->piece = std::move(fromTile->piece);
     gameHistory.push_back(getStringFromBoard());
 }
 
@@ -564,8 +560,7 @@ void ChessBoard::movePawn(const ChessTile *fromTile, const ChessTile *toTile) {
     if (fromTile->getX() != toTile->getX() && toTile->piece == nullptr) {
         const int whiteMove = whitesTurn ? -1 : 1;
         ChessTile *capturedPiece = getTileAt(toTile->getX(), toTile->getY() + whiteMove);
-        delete capturedPiece->piece;
-        capturedPiece->piece = nullptr;
+        capturedPiece->piece.reset();
     }
 }
 
@@ -590,8 +585,7 @@ void ChessBoard::moveKing(const ChessTile *fromTile, const ChessTile *toTile) {
             rookTile = getTileAt(7, y);
             rookToTile = getTileAt(5, y);
         }
-        rookToTile->piece = rookTile->piece;
-        rookTile->piece = nullptr;
+        rookToTile->piece = std::move(rookTile->piece);
     }
 }
 
@@ -641,25 +635,25 @@ void ChessBoard::pawnWon(ChessTile *pawnTile, const char pawnToPiece) const {
         std::cin >> newPawnTyp;
     }
     const bool white = pawnTile->piece->isWhite();
-    ChessPiece *newPawn = nullptr;
+    std::unique_ptr<ChessPiece> newPawn;
     switch (newPawnTyp) {
         case 'Q':
-            newPawn = new ChessPiece(Queen, white);
+            newPawn = std::make_unique<ChessPiece>(Queen, white);
             break;
         case 'R':
-            newPawn = new ChessPiece(Rook, white);
+            newPawn = std::make_unique<ChessPiece>(Rook, white);
             break;
         case 'B':
-            newPawn = new ChessPiece(Bishop, white);
+            newPawn = std::make_unique<ChessPiece>(Bishop, white);
             break;
         case 'N':
-            newPawn = new ChessPiece(Knight, white);
+            newPawn = std::make_unique<ChessPiece>(Knight, white);
             break;
         default:
             std::cout << "you broke the game f u" << std::endl;
             break;
     }
-    pawnTile->piece = newPawn;
+    pawnTile->piece = std::move(newPawn);
 }
 
 GameState ChessBoard::afterMoveChecks(ChessTile *toTile, const char pawnToPiece) {

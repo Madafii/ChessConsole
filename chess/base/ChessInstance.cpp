@@ -37,6 +37,7 @@ ChessInstance::ChessInstance() {
         }
     }
 }
+
 ChessInstance::~ChessInstance() {
     delete _chessBoard;
 }

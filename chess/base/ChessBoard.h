@@ -7,7 +7,6 @@
 #include "ChessTile.h"
 #include "ChessPiece.h"
 #include <vector>
-#include <map>
 #include <optional>
 
 constexpr int boardWidth = 8;

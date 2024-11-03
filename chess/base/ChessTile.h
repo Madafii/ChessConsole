@@ -4,7 +4,7 @@
 
 #ifndef CHESSTILE_H
 #define CHESSTILE_H
-#include <map>
+#include <memory>
 #include <unordered_map>
 
 #include "ChessPiece.h"
@@ -12,12 +12,12 @@
 
 class ChessTile {
 public:
-    explicit ChessTile(ChessPiece *piece, int x, int y);
+    explicit ChessTile(std::unique_ptr<ChessPiece> piece, int x, int y);
 
     int getX() const {return _x;}
     int getY() const {return _y;}
     std::string getMove() const;
-    ChessPiece* piece;
+    std::unique_ptr<ChessPiece> piece;
 
     static const std::unordered_map<char, int> mapXtoInt;
     static const std::unordered_map<int, char> mapIntToX;

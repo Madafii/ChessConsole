@@ -4,9 +4,7 @@
 
 #include "ChessTile.h"
 
-#include <iostream>
-
-ChessTile::ChessTile(ChessPiece *piece, const int x, const int y) : piece(piece), _x(x), _y(y) {
+ChessTile::ChessTile(std::unique_ptr<ChessPiece> piece, const int x, const int y) : piece(std::move(piece)), _x(x), _y(y) {
 
 }
 
