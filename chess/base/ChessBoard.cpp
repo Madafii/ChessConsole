@@ -297,10 +297,10 @@ bool ChessBoard::isInputMovePossible(const ChessTile *fromTile, const ChessTile 
     Pieces possibleMoves = getPossibleMoves(fromTile);
     filterPossibleMovesForChecks(fromTile, possibleMoves);
     // just for debugging
-    std::cout << "the possible moves are:" << std::endl;
-    for (const auto possMove: possibleMoves) {
-        std::cout << possMove->getX() << " " << possMove->getY() << std::endl;
-    }
+    // std::cout << "the possible moves are:" << std::endl;
+    // for (const auto possMove: possibleMoves) {
+    //     std::cout << possMove->getX() << " " << possMove->getY() << std::endl;
+    // }
     const auto itPossMove = std::ranges::find(possibleMoves, toTile);
     if (itPossMove == possibleMoves.end()) {
         std::cout << "ChessBoard::isInputMovePossible: that is not a possible move" << std::endl;
@@ -411,8 +411,7 @@ bool ChessBoard::isKingCheckmate() {
         }
         filterPossibleMovesForChecks(tile, possMoves);
         if (possMoves.size() > 0) {
-            std::cout << tile->piece->getShortName() << "at: " << tile->getX() << " : " << tile->getY()
-                      << " still has possible Moves" << std::endl;
+            // std::cout << tile->piece->getShortName() << "at: " << tile->getX() << " : " << tile->getY() << " still has possible Moves" << std::endl;
             return false;
         }
     }
@@ -426,8 +425,40 @@ bool ChessBoard::isDraw() {
         return true; // stalemate
     if (movesSinceLastCapture >= 100)
         return true; // 100 half turns with no capture or pawn move
-    // technically there is a dead position where nothing can be captured but that will just count as 50 moves rule
-    // because the outcome will be same
+    // check for any other dead position where a win is not possible anymore
+    const Pieces whitePieces = getAllWhiteTiles();
+    const Pieces blackPieces = getAllBlackTiles();
+    if (whitePieces.size() > 2 || blackPieces.size() > 2) return false; // always still possible if more then two pieces
+    if (whitePieces.size() == 1 && blackPieces.size() == 1) return true; // only kings left
+
+    auto is_Bishop = [](const ChessTile *tile) {
+        if(tile->piece->getType() == Bishop) {
+            return true;
+        }
+        return false;
+    };
+
+    auto is_Knight = [](const ChessTile *tile) {
+        if(tile->piece->getType() == Knight) {
+            return true;
+        }
+        return false;
+    };
+
+    const auto itWhiteBishop = std::ranges::find_if(whitePieces, is_Bishop);
+    const auto itBlackBishop = std::ranges::find_if(blackPieces, is_Bishop);
+    const auto itWhiteKnight = std::ranges::find_if(whitePieces, is_Knight);
+    const auto itBlackKnight = std::ranges::find_if(blackPieces, is_Knight);
+    if (whitePieces.size() == 2 && blackPieces.size() == 2) {
+        // only if both are bishop and they are on the same color tile
+        if (itWhiteBishop == whitePieces.end()) return false;
+        if (itBlackBishop == blackPieces.end()) return false;
+        if ((*itWhiteBishop)->piece->isWhite() == (*itBlackBishop)->piece->isWhite()) return true;
+        return false;
+    }
+    // if the only other piece in the game is one of them also a dead position draw
+    if (itWhiteBishop != whitePieces.end() || itWhiteKnight != whitePieces.end() ||
+        itBlackBishop != blackPieces.end() || itBlackKnight != blackPieces.end()) return true;
     return false;
 }
 bool ChessBoard::isWhitesTurn() { return whitesTurn; }
@@ -472,10 +503,6 @@ Pieces ChessBoard::getAllPiecesFor(const bool white, const ChessPieceType piece)
 }
 
 GameState ChessBoard::handleMoveInput(std::string input) {
-    if (input == "resign") {
-        std::cout << "you won";
-        return GameState::WON;
-    }
     char pawnChangeTo = '0'; // 0 is for no pawn change
     // extra check for instant pawn change
     if (input.length() == 7) {

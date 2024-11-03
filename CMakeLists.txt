@@ -8,4 +8,4 @@ add_executable(chess_control main.cpp)
 add_subdirectory(chess)
 add_subdirectory(tests)
 
-target_link_libraries(chess_control PRIVATE chess)
+target_link_libraries(chess_control PRIVATE chessBase)
