@@ -8,9 +8,7 @@
 #include <iostream>
 #include <string>
 
-ChessBoard::ChessBoard() {
-    initBoard();
-}
+ChessBoard::ChessBoard() { initBoard(); }
 
 void ChessBoard::initBoard() {
     board.push_back(new ChessTile(new ChessPiece(Rook, true), 0, 0));
@@ -72,6 +70,25 @@ void ChessBoard::updateBoard() const {
     }
     std::cout << "    a  b  c  d  e  f  g  h " << std::endl;
 }
+GameState ChessBoard::handleInput(std::string input) {
+    const std::string color = whitesTurn ? "white " : "black ";
+    if (input == "resign") {
+        std::cout << color << "won" << std::endl;
+        return GameState::WON;
+    }
+    if (input == "draw") {
+        std::cout << color << "is offering a draw. Do you accept? Y or N." << std::endl;
+        std::string answer;
+        std::cin >> answer;
+        if (answer == "yes" || answer == "Yes" || answer == "y" || answer == "Y") {
+            // every answer besides this is a no.
+            return GameState::DRAW;
+        }
+        return GameState::IN_PROGRESS;
+    }
+    // should be a move input
+    return handleMoveInput(input);
+}
 
 Pieces ChessBoard::getPossibleMoves(const ChessTile *fromTile) {
     Pieces possibleMoves;
@@ -122,8 +139,10 @@ Pieces ChessBoard::getPossibleMovesPawn(const ChessTile *fromTile) {
     // get pawn move for that special pawn move that never happens
     if (doublePawnMoveAt != -1) {
         if (x - 1 == doublePawnMoveAt) {
+            enPassantPossibleLastMove = true;
             possibleMoves.push_back(getTileAt(x - 1, y + white));
         } else if (x + 1 == doublePawnMoveAt) {
+            enPassantPossibleLastMove = true;
             possibleMoves.push_back(getTileAt(x + 1, y + white));
         }
     }
@@ -197,15 +216,8 @@ Pieces ChessBoard::getPossibleMovesCastling(const ChessTile *fromTile) {
     Pieces possibleMoves;
     const int x = fromTile->getX();
     const int y = fromTile->getY();
-    const Pieces tilesToCheckLeft = {
-        getTileAt(x - 1, y),
-        getTileAt(x - 2, y),
-        getTileAt(x - 3, y)
-    };
-    const Pieces tilesToCheckRight = {
-        getTileAt(x + 1, y),
-        getTileAt(x + 2, y)
-    };
+    const Pieces tilesToCheckLeft = {getTileAt(x - 1, y), getTileAt(x - 2, y), getTileAt(x - 3, y)};
+    const Pieces tilesToCheckRight = {getTileAt(x + 1, y), getTileAt(x + 2, y)};
     if (whitesTurn) {
         if (whiteRookMoved.first == false) {
             if (!isTileAttackedAndFree(false, tilesToCheckLeft)) {
@@ -217,8 +229,7 @@ Pieces ChessBoard::getPossibleMovesCastling(const ChessTile *fromTile) {
                 possibleMoves.push_back(getTileAt(x + 2, y));
             }
         }
-    }
-    else {
+    } else {
         if (blackRookMoved.first == false) {
             if (!isTileAttackedAndFree(true, tilesToCheckLeft)) {
                 possibleMoves.push_back(getTileAt(x - 2, y));
@@ -254,6 +265,7 @@ Pieces ChessBoard::getAllBlackTiles() const {
     }
     return blackTiles;
 }
+
 std::string ChessBoard::getStringFromBoard() {
     std::string outMoves;
     for (const ChessTile *tile: board) {
@@ -261,7 +273,15 @@ std::string ChessBoard::getStringFromBoard() {
             outMoves += "_";
             continue;
         }
+        if (tile->piece->isWhite()) {
+            // white pieces in lower case
+            outMoves += std::tolower(tile->piece->getShortName());
+        }
+        // black pieces in upper case
         outMoves += tile->piece->getShortName();
+    }
+    if (enPassantPossibleLastMove) {
+        outMoves += "1";
     }
     return outMoves;
 }
@@ -293,14 +313,16 @@ bool ChessBoard::isPossibleMove(const ChessTile *fromTile, ChessTile *toTile, Pi
     if (toTile == nullptr) // tile does not exist
         return false;
     if (toTile->piece != nullptr) { // there is a piece
-        if (fromTile->piece->getType() == Pawn && fromTile->getX() == toTile->getX()) { // pawn only piece that can't capture piece directly in its path
+        if (fromTile->piece->getType() == Pawn &&
+            fromTile->getX() == toTile->getX()) { // pawn only piece that can't capture piece directly in its path
             return false;
         }
         if (fromTile->piece->isWhite() != toTile->piece->isWhite()) // piece is different color so add it
             possibleMoves.push_back(toTile);
         return false; // piece is same color so don't add it
     }
-    if (fromTile->piece->getType() == Pawn && fromTile->getX() != toTile->getX() && toTile->piece == nullptr) // for that pawn move
+    if (fromTile->piece->getType() == Pawn && fromTile->getX() != toTile->getX() &&
+        toTile->piece == nullptr) // for that pawn move
         return false;
     possibleMoves.push_back(toTile); // tile is free to move on
     return true;
@@ -337,7 +359,7 @@ bool ChessBoard::isKingChecked(const ChessTile *fromTile, ChessTile *toTile) {
     const bool white = fromTile->piece->isWhite();
     ChessPiece *tmpPieceFrom = fromTile->piece;
     ChessPiece *tmpPieceTo = toTile->piece;
-    ChessTile *tmpFromTile =  const_cast<ChessTile*> (fromTile); // ok to do this because temporary? ...idk
+    ChessTile *tmpFromTile = const_cast<ChessTile *>(fromTile); // ok to do this because temporary? ...idk
     tmpFromTile->piece = nullptr;
     toTile->piece = tmpPieceFrom;
     const bool isChecked = isKingChecked(white);
@@ -371,9 +393,9 @@ bool ChessBoard::isTileAttackedAndFree(const bool white, const Pieces &tilesToCh
 }
 
 bool ChessBoard::isThreefoldRepetition() {
-    // TODO: technically have to check if en passant was possible
-    for (const std::string boardStr : gameHistory) {
-        if (std::ranges::count(gameHistory, boardStr) >= 3) return true;
+    for (const std::string boardStr: gameHistory) {
+        if (std::ranges::count(gameHistory, boardStr) >= 3)
+            return true;
     }
     return false;
 }
@@ -389,7 +411,8 @@ bool ChessBoard::isKingCheckmate() {
         }
         filterPossibleMovesForChecks(tile, possMoves);
         if (possMoves.size() > 0) {
-            std::cout << tile->piece->getShortName() << "at: " << tile->getX() << " : " << tile->getY() << " still has possible Moves" << std::endl;
+            std::cout << tile->piece->getShortName() << "at: " << tile->getX() << " : " << tile->getY()
+                      << " still has possible Moves" << std::endl;
             return false;
         }
     }
@@ -407,9 +430,7 @@ bool ChessBoard::isDraw() {
     // because the outcome will be same
     return false;
 }
-bool ChessBoard::isWhitesTurn() {
-    return whitesTurn;
-}
+bool ChessBoard::isWhitesTurn() { return whitesTurn; }
 
 Pieces ChessBoard::getAllPossibleMoves(const bool white) {
     Pieces allPossibleMoves;
@@ -451,6 +472,10 @@ Pieces ChessBoard::getAllPiecesFor(const bool white, const ChessPieceType piece)
 }
 
 GameState ChessBoard::handleMoveInput(std::string input) {
+    if (input == "resign") {
+        std::cout << "you won";
+        return GameState::WON;
+    }
     char pawnChangeTo = '0'; // 0 is for no pawn change
     // extra check for instant pawn change
     if (input.length() == 7) {
@@ -466,7 +491,8 @@ GameState ChessBoard::handleMoveInput(std::string input) {
     ChessTile *fromTile = moveTilePair->first;
     ChessTile *toTile = moveTilePair->second;
 
-    if (!isInputMovePossible(fromTile, toTile)) return GameState::IN_PROGRESS;
+    if (!isInputMovePossible(fromTile, toTile))
+        return GameState::IN_PROGRESS;
     move(fromTile, toTile);
 
     // after move checks
@@ -533,8 +559,7 @@ void ChessBoard::moveKing(const ChessTile *fromTile, const ChessTile *toTile) {
         if (x < 4) {
             rookTile = getTileAt(0, y);
             rookToTile = getTileAt(3, y);
-        }
-        else {
+        } else {
             rookTile = getTileAt(7, y);
             rookToTile = getTileAt(5, y);
         }
@@ -575,9 +600,6 @@ ChessTile *ChessBoard::getTileAt(const int x, const int y) const {
     return board[y * boardWidth + x];
 }
 
-void ChessBoard::mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge) const {
-    possibleMoves.insert(possibleMoves.end(), possibleMovesMerge.begin(), possibleMovesMerge.end());
-}
 
 void ChessBoard::pawnWon(ChessTile *pawnTile, const char pawnToPiece) const {
     updateBoard();
@@ -593,7 +615,7 @@ void ChessBoard::pawnWon(ChessTile *pawnTile, const char pawnToPiece) const {
     }
     const bool white = pawnTile->piece->isWhite();
     ChessPiece *newPawn = nullptr;
-    switch(newPawnTyp) {
+    switch (newPawnTyp) {
         case 'Q':
             newPawn = new ChessPiece(Queen, white);
             break;
@@ -614,6 +636,7 @@ void ChessBoard::pawnWon(ChessTile *pawnTile, const char pawnToPiece) const {
 }
 
 GameState ChessBoard::afterMoveChecks(ChessTile *toTile, const char pawnToPiece) {
+    enPassantPossibleLastMove = false;
     doublePawnMoveAt = -1;
     if (toTile->piece->getType() == Pawn && (toTile->getY() == 0 || toTile->getY() == 7)) {
         pawnWon(toTile, pawnToPiece);
@@ -646,7 +669,8 @@ std::optional<std::pair<ChessTile *, ChessTile *>> ChessBoard::getMoveTilesFromI
         return std::nullopt;
     }
     if (fromTile->piece == nullptr || fromTile->piece->isWhite() != whitesTurn) {
-        std::cout << "ChessBoard::getMoveTilesFromInput: trying to move a piece from the opponent or no piece" << std::endl;
+        std::cout << "ChessBoard::getMoveTilesFromInput: trying to move a piece from the opponent or no piece"
+                  << std::endl;
         return std::nullopt;
     }
     return std::make_optional(std::make_pair(fromTile, toTile));

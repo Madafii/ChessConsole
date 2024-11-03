@@ -10,18 +10,16 @@ using strvec = std::vector<std::string>;
 void doMovements(strvec moves) {
     ChessBoard board;
     for (const std::string move: moves) {
-        board.handleMoveInput(move);
+        if (board.handleMoveInput(move) != GameState::IN_PROGRESS) break;
     }
 }
 
-void doMovementsFromPGN(strvec moves, const bool whiteStarting) {
+void doMovementsFromPGN(strvec moves) {
     ChessBoard board;
-    bool whitesTurn = whiteStarting;
     for (const std::string move: moves) {
-        std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, board, whitesTurn);
+        std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, board, true);
         std::cout << "from: " << move << " to: " << inputMyChess << std::endl;
         if (board.handleMoveInput(inputMyChess) != GameState::IN_PROGRESS) break;
-        whitesTurn = !whitesTurn;
     }
 }
 
@@ -115,7 +113,7 @@ TEST(basicChessTests, testPGNConverterDraw) {
             "Nxg4", "g7",   "Kxf4", "g8=Q", "Ne3+", "Kf2",   "Ng4+", "Ke1",  "Ke3",  "Qxg4", "Kd3",  "Qg3+", "Ke4",
             "Ke2",  "Kd5",  "Qg4",  "Ke5",  "Kd3",  "Kf6",   "Qf4+", "Ke6",  "Kd4",  "Ke7",  "Qe5+", "Kf7",  "Kd5",
             "Kg6",  "Kd6",  "Kh6",  "Ke6",  "Kg6",  "Qf6+",  "Kh5",  "Kf5"};
-    doMovementsFromPGN(input, true);
+    doMovementsFromPGN(input);
 }
 
 TEST(basicChessTests, testPGNConverterWin) {
@@ -123,7 +121,7 @@ TEST(basicChessTests, testPGNConverterWin) {
                           "Bd2", "Nf6", "Ne4",  "Qb6",  "Nxf6+", "exf6", "Qe2+", "Be6",  "O-O-O", "Be7", "g3",  "Bxa2",
                           "b3",  "c5",  "Kb2",  "cxd4", "Kxa2",  "Nc6",  "Bf4",  "Qa5+", "Kb2",   "Nb4", "Ra1", "Qf5",
                           "Bd6", "Nd5", "Nxd4", "Qg6",  "Bg2",   "Qg5",  "Bxd5", "Qxd5", "Qxe7#"};
-    doMovementsFromPGN(input, true);
+    doMovementsFromPGN(input);
 }
 
 TEST(basicChessTests, testPGN50Moves) {
@@ -138,7 +136,7 @@ TEST(basicChessTests, testPGN50Moves) {
             "Rg6", "Rc3", "Rf6", "Rd3", "Re6", "Re3", "Rd6", "Rf3", "Rc6", "Rg3", "Rb6", "Rh3", "Ra6", "Rg3", "Rb6",
             "Rf3", "Rc6", "Re3", "Rd6", "Rd3", "Re6", "Rc3", "Rf6", "Rb3", "Rg6", "Ra3", "Rh6", "Rb3", "Rg6", "Rc3",
             "Rf6", "Rd3", "Re6", "Re3", "Rd6", "Rf3", "Rc6", "Rg3", "Rb6", "Rh3", "Ra6", "Rg3", "Rb6", "Rf3", "Rc6"};
-    doMovementsFromPGN(input, true);
+    doMovementsFromPGN(input);
 }
 
 TEST(basicChessTests, testThreefoldRepetition) {
