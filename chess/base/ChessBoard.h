@@ -26,7 +26,7 @@ public:
 
     void initBoard();
     void updateBoard() const;
-    GameState handleInput(std::string input);
+    GameState handleInput(const std::string &input);
     GameState handleMoveInput(std::string input);
 
     bool isKingCheckmate();

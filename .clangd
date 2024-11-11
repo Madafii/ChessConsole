@@ -1,0 +1,2 @@
+CompileFlags: 
+  Add: [-std=c++26, -I/home/finnp/Documents/GitRepos/ChessConsole/chess/base]

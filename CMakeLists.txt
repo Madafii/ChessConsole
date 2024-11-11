@@ -3,6 +3,8 @@ project(chess_control)
 
 set(CMAKE_CXX_STANDARD 26)
 
+include_directories(${CMAKE_SOURCE_DIR}/chess/base)
+
 add_executable(chess_control main.cpp)
 
 add_subdirectory(chess)

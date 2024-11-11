@@ -6,5 +6,5 @@ add_library(chessBase
         ChessUtils.cpp ChessUtils.h
 )
 
-target_include_directories(chessBase PUBLIC ".")
+target_include_directories(chessBase PRIVATE ".")
 target_link_libraries(chessBase)
