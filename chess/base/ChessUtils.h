@@ -33,15 +33,14 @@ inline std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard
         input = input.substr(0, input.size() - 2);
     }
     ChessPieceType typeToMove;
-    const std::string_view moveTo = input.substr(input.size() - 2, 2);
-    const std::string_view Leftovers = input.substr(0, input.size() - 2);
+    const std::string moveTo = input.substr(input.size() - 2, 2);
+    const std::string Leftovers = input.substr(0, input.size() - 2);
     std::string extra = "";
     switch (input[0]) {
         case 'K':
             typeToMove = King;
             break;
-        case 'Q':
-            typeToMove = Queen;
+        case 'Q': typeToMove = Queen;
             break;
         case 'R':
             typeToMove = Rook;
@@ -91,14 +90,14 @@ inline std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard
         foundFromTile = piece;
         if (extra.size() == 0) break;
         // is like a move hint if there are multiple same pieces that have the to move as a possibility
-        std::string_view tmpMoveTo = piece->getMove();
+        std::string tmpMoveTo = piece->getMove();
         if (extra.size() == 1) {
             if (std::ranges::find(tmpMoveTo, extra[0]) != tmpMoveTo.end()) {
                 foundFromTile = piece;
                 break;
             }
         } else if (extra.size() == 2) {
-            if (std::ranges::find(tmpMoveTo, extra[0]) && std::ranges::find(tmpMoveTo, extra[1])) {
+            if (std::ranges::find(tmpMoveTo, extra[0]) != tmpMoveTo.end() && std::ranges::find(tmpMoveTo, extra[1]) != tmpMoveTo.end()) {
                 foundFromTile = piece;
                 break;
             }

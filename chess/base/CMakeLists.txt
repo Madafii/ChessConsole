@@ -4,6 +4,7 @@ add_library(chessBase
         ChessBoard.cpp ChessBoard.h
         ChessInstance.cpp ChessInstance.h
         ChessUtils.cpp ChessUtils.h
+        ChessData.cpp ChessData.h
 )
 
 target_include_directories(chessBase PRIVATE ".")

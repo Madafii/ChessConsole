@@ -6,22 +6,66 @@ def process_pgn_file(input_file, output_file):
     with open(input_file, 'r') as f:
         content = f.read()
 
-    games = content.strip().split('\n\n')
+    lines = content.strip().split('\n\n')
+    gameInfoPairs = [(lines[i], lines[i + 1]) for i in range(0, len(lines) - 1, 2)]
     formatted_games = []
 
-    for game in games:
-        move_list = game.split('\n')[-1]
-        moves = pgn_to_moves(move_list)
+    for game in gameInfoPairs:
+        info = game[0]
+        if '[Termination "Normal"]' not in info:
+            continue
+        moves = pgn_to_moves(game[1])
         formatted_moves = ', '.join(f'"{m}"' for m in moves)
-        formatted_games.append(f'{{ {formatted_moves} }}')
+        formatted_games.append((info, f'{{ {formatted_moves} }}'))
 
     with open(output_file, 'w') as f:
         for game in formatted_games:
-            f.write(game + '\n')
+            f.write(game[0] + ' : ' + game[1] + '\n')
 
 def main():
-    input_file = 'data/rawPGN/50MovesDrawGame.pgn'
-    output_file = 'data/outPGN/50MovesDrawGame.txt'
+    input_file = '../data/lichess/rawData/lichess_db_standard_rated_2013-01.pgn'
+    output_file = '../data/lichess/outData/lichess_db_standard.rated_2013-01.txt'
     process_pgn_file(input_file, output_file)
 
 main()
+
+# example 
+#
+# [Event "Rated Bullet tournament https://lichess.org/tournament/RCOPb6Bo"]
+# [Site "https://lichess.org/aSWMBMRI"]
+# [White "lunas"]
+# [Black "FrancoValussi"]
+# [Result "1-0"]
+# [UTCDate "2015.02.28"]
+# [UTCTime "23:00:02"]
+# [WhiteElo "1767"]
+# [BlackElo "1700"]
+# [WhiteRatingDiff "+9"]
+# [BlackRatingDiff "-14"]
+# [ECO "A40"]
+# [Opening "Modern Defense"]
+# [TimeControl "60+0"]
+# [Termination "Normal"]
+# [LichessId "aSWMBMRI"]
+#
+# 1. d4 g6 2. c4 Bg7 3. Nc3 e6 4. e4 a6 5. Nf3 Ne7 6. Bg5 Nbc6 7. Qd2 h6 8. Be3 O-O 9. Bxh6 Bxh6 10. Qxh6 d5 11. Ng5 Nf5 12. Qh7# 1-0
+#
+# [Event "Rated Blitz game"]
+# [Site "https://lichess.org/YmWK0unz"]
+# [White "zivkoj"]
+# [Black "Atlec"]
+# [Result "0-1"]
+# [UTCDate "2015.02.28"]
+# [UTCTime "23:00:04"]
+# [WhiteElo "1741"]
+# [BlackElo "1409"]
+# [WhiteRatingDiff "-19"]
+# [BlackRatingDiff "+20"]
+# [ECO "B20"]
+# [Opening "Sicilian Defense: Bowdler Attack"]
+# [TimeControl "300+0"]
+# [Termination "Time forfeit"]
+# [LichessId "YmWK0unz"]
+#
+# 1. e4 c5 2. Bc4 e6 3. a3 a6 4. d3 d5 5. exd5 exd5 6. Ba2 Nf6 7. h3 Bd6 8. Nf3 Nc6 9. O-O O-O 10. Bg5 h6 11. Bh4 Re8 12. Nbd2 Be7 13. Nh2 Nh7 14. Bxe7 Rxe7 15. c3 Bf5 16. Ndf3 Qd7 17. Nh4 Be6 18. d4 cxd4 19. cxd4 Rae8 20. Bb1 Nf6 21. Bc2 Qc7 22. Qd3 Nxd4 23. Rac1 Nxc2 24. Rxc2 Qd6 25. N2f3 Ne4 26. Nd4 Nc5 27. Qf3 Bd7 28. Nhf5 Bxf5 29. Nxf5 Qf6 30. Nxe7+ Qxe7 0-1
+#
