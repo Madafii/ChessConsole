@@ -13,7 +13,7 @@ enum class GameOptions {
 };
 
 ChessInstance::ChessInstance() {
-    _chessBoard = new ChessBoard();
+    chessBoard = new ChessBoard();
 
     std::string playOption;
     while (true) {
@@ -39,7 +39,7 @@ ChessInstance::ChessInstance() {
 }
 
 ChessInstance::~ChessInstance() {
-    delete _chessBoard;
+    delete chessBoard;
 }
 
 void ChessInstance::run() {
@@ -49,7 +49,7 @@ void ChessInstance::run() {
         std::cin >> input;
         if (input == "quit")
             break;
-        const GameState game_state = _chessBoard->handleInput(input);
+        const GameState game_state = chessBoard->handleInput(input);
         if (game_state != GameState::IN_PROGRESS) {
             break;
         }
@@ -60,14 +60,14 @@ void ChessInstance::runRandom() {
     std::random_device rd;
     std::mt19937 gen(rd());
     while (true) {
-        Pieces allPieces = _chessBoard->isWhitesTurn() ? _chessBoard->getAllWhiteTiles() : _chessBoard->getAllBlackTiles();
+        Pieces allPieces = chessBoard->isWhitesTurn() ? chessBoard->getAllWhiteTiles() : chessBoard->getAllBlackTiles();
         std::uniform_int_distribution<> distrFrom(0, allPieces.size() - 1);
         std::string input;
         Pieces possMoves;
         while (true) {
             const int rndFromPiece = distrFrom(gen);
             const ChessTile *fromTile = allPieces.at(rndFromPiece);
-            possMoves = _chessBoard->getPossibleMoves(fromTile);
+            possMoves = chessBoard->getPossibleMoves(fromTile);
             if (possMoves.size() != 0) {
                 input += fromTile->getMove() + ":";
                 break;
@@ -77,30 +77,31 @@ void ChessInstance::runRandom() {
         const int rndToPiece = distrTo(gen);
         const ChessTile *toTile = possMoves.at(rndToPiece);
         input += toTile->getMove();
-        const GameState game_state = _chessBoard->handleMoveInput(input);
+        const GameState game_state = chessBoard->handleMoveInput(input);
         if (game_state != GameState::IN_PROGRESS) {
             break;
         }
     }
 }
+
 void ChessInstance::runAgainstRandom(const bool white) {
     std::random_device rd;
     std::mt19937 gen(rd());
     while (true) {
         std::string input;
-        if (_chessBoard->isWhitesTurn() == white) {
+        if (chessBoard->isWhitesTurn() == white) {
             std::cin >> input;
             if (input == "quit") {
                 return;
             }
         } else {
-            Pieces allPieces = _chessBoard->isWhitesTurn() ? _chessBoard->getAllWhiteTiles() : _chessBoard->getAllBlackTiles();
+            Pieces allPieces = chessBoard->isWhitesTurn() ? chessBoard->getAllWhiteTiles() : chessBoard->getAllBlackTiles();
             std::uniform_int_distribution<> distrFrom(0, allPieces.size() - 1);
             Pieces possMoves;
             while (true) {
                 const int rndFromPiece = distrFrom(gen);
                 const ChessTile *fromTile = allPieces.at(rndFromPiece);
-                possMoves = _chessBoard->getPossibleMoves(fromTile);
+                possMoves = chessBoard->getPossibleMoves(fromTile);
                 if (possMoves.size() != 0) {
                     input += fromTile->getMove() + ":";
                     break;
@@ -111,7 +112,7 @@ void ChessInstance::runAgainstRandom(const bool white) {
             const ChessTile *toTile = possMoves.at(rndToPiece);
             input += toTile->getMove();
         }
-        const GameState game_state = _chessBoard->handleMoveInput(input);
+        const GameState game_state = chessBoard->handleMoveInput(input);
         if (game_state != GameState::IN_PROGRESS) {
             break;
         }

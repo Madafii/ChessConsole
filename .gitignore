@@ -38,4 +38,5 @@ data/
 .clang-format
 .clang-tidy
 .clangd
+.cache
 

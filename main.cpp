@@ -5,6 +5,6 @@
 #include "ChessInstance.h"
 
 int main() {
-  ChessInstance chess;
-  return 0;
+    ChessInstance chess;
+    return 0;
 }

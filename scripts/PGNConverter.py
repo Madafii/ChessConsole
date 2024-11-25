@@ -2,7 +2,16 @@ def pgn_to_moves(pgn):
     moves = [move for move in pgn.split() if move[0].isalpha()]
     return moves
 
-def process_pgn_file(input_file, output_file):
+def filter_info_data(info):
+    info_data_raw = info.split('\n')
+    info_map = dict()
+    for info_line in info_data_raw:
+        info_line = info_line.strip('[]')
+        splited_info = info_line.split(' ', 1)
+        info_map[splited_info[0]] = splited_info[1].strip('"')
+    return info_map
+
+def simplify_pgn_data(input_file, output_file):
     with open(input_file, 'r') as f:
         content = f.read()
 
@@ -22,10 +31,32 @@ def process_pgn_file(input_file, output_file):
         for game in formatted_games:
             f.write(game[0] + ' : ' + game[1] + '\n')
 
+def get_win_and_pgn_data(input_file, output_file):
+    with open(input_file, 'r') as f:
+        content = f.read()
+
+    lines = content.strip().split('\n\n')
+    gameInfoPairs = [(lines[i], lines[i + 1]) for i in range(0, len(lines) - 1, 2)]
+    formatted_games = []
+
+    for game in gameInfoPairs:
+        info = filter_info_data(game[0])
+        result = info['Result'].strip('"')
+        if 'Normal' not in info['Termination'] :
+            continue
+        moves = pgn_to_moves(game[1])
+        formatted_moves = ' '.join(f'{m}' for m in moves)
+        formatted_games.append((result, f'{formatted_moves}'))
+
+    with open(output_file, 'w') as f:
+        for game in formatted_games:
+            f.write(game[0] + ' : ' + game[1] + '\n')
+
 def main():
     input_file = '../data/lichess/rawData/lichess_db_standard_rated_2013-01.pgn'
     output_file = '../data/lichess/outData/lichess_db_standard.rated_2013-01.txt'
-    process_pgn_file(input_file, output_file)
+    get_win_and_pgn_data(input_file, output_file)
+    # simplify_pgn_data(input_file, output_file)
 
 main()
 

@@ -16,7 +16,7 @@ public:
     void runAgainstRandom(bool white);
 
 private:
-    ChessBoard *_chessBoard;
+    ChessBoard *chessBoard;
 };
 
 
