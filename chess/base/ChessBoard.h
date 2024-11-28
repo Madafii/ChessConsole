@@ -4,30 +4,34 @@
 
 #ifndef CHESSBOARD_H
 #define CHESSBOARD_H
-#include "ChessTile.h"
 #include "ChessPiece.h"
-#include <vector>
+#include "ChessTile.h"
 #include <optional>
+#include <vector>
 
 constexpr int boardWidth = 8;
 constexpr int boardHeight = 8;
 
-using Pieces = std::vector<ChessTile*>;
-using PiecePair = std::optional<std::pair<ChessTile*, ChessTile*>>;
-enum class GameState {
+using Pieces = std::vector<ChessTile *>;
+using PiecePair = std::optional<std::pair<ChessTile *, ChessTile *>>;
+enum class GameState
+{
     WON,
     DRAW,
     IN_PROGRESS
 };
 
-class ChessBoard {
-public:
+class ChessBoard
+{
+  public:
     explicit ChessBoard();
 
     void initBoard();
     void updateBoard() const;
     GameState handleInput(const std::string &input);
     GameState handleMoveInput(std::string input);
+
+    std::string getStringFromBoard();
 
     bool isKingCheckmate();
     bool isDraw();
@@ -41,7 +45,7 @@ public:
 
     Pieces getPossibleMoves(const ChessTile *fromTile);
 
-private:
+  private:
     void move(ChessTile *fromTile, ChessTile *toTile);
     void movePawn(const ChessTile *fromTile, const ChessTile *toTile);
     void moveKing(const ChessTile *fromTile, const ChessTile *toTile);
@@ -59,11 +63,10 @@ private:
     Pieces getPossibleMovesQueen(const ChessTile *fromTile);
     Pieces getPossibleMovesKing(const ChessTile *fromTile, bool castling = true);
     Pieces getPossibleMovesByDirection(const ChessTile *fromTile, const std::vector<std::pair<int, int>> &directions);
-    Pieces getPossibleMovesByDirectionSingle(const ChessTile *fromTile, const std::vector<std::pair<int, int>> &directions);
+    Pieces getPossibleMovesByDirectionSingle(const ChessTile *fromTile,
+                                             const std::vector<std::pair<int, int>> &directions);
     Pieces getPossibleMovesCastling(const ChessTile *fromTile);
     void filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves);
-
-    std::string getStringFromBoard();
 
     bool isInputMovePossible(const ChessTile *fromTile, const ChessTile *toTile);
     bool isPossibleMove(const ChessTile *fromTile, ChessTile *toTile, Pieces &possibleMoves);
@@ -87,8 +90,9 @@ private:
     int movesSinceLastCapture = 0;
 };
 
-inline void ChessBoard::mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge) {
+inline void ChessBoard::mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge)
+{
     possibleMoves.insert(possibleMoves.end(), possibleMovesMerge.begin(), possibleMovesMerge.end());
 }
 
-#endif //CHESSBOARD_H
+#endif // CHESSBOARD_H

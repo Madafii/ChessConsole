@@ -4,6 +4,7 @@
 
 #ifndef CHESSPIECE_H
 #define CHESSPIECE_H
+#include <iostream>
 #include <string>
 
 enum ChessPieceType {
@@ -12,7 +13,8 @@ enum ChessPieceType {
     Rook,
     Knight,
     Bishop,
-    Pawn
+    Pawn,
+    None
 };
 
 class ChessPiece {
@@ -25,6 +27,8 @@ public:
 
     std::string getFullName() const;
     char getShortName() const;
+
+    static ChessPieceType getTypeFromShort(const char &shortName);
 private:
     ChessPieceType _type;
     bool _white;
@@ -32,6 +36,31 @@ private:
     char _short;
 };
 
-
+inline ChessPieceType ChessPiece::getTypeFromShort(const char &shortName) {
+    switch (shortName) {
+        case 'K': {
+            return King;
+        }
+        case 'Q': {
+            return Queen;
+        }
+        case 'B': {
+            return Bishop;
+        }
+        case 'N': {
+            return Knight;
+        }
+        case 'R': {
+            return Rook;
+        }
+        case 'P': {
+            return  Pawn;
+        }
+        default: {
+            std::cout << "that is not a ChessPieceType" << std::endl;
+            return None;
+        }
+    }
+}
 
 #endif //CHESSPIECE_H

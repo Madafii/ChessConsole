@@ -14,6 +14,8 @@
 class ChessUtils {
 public:
     static std::string convertPGNToMyInput(std::string input, ChessBoard board, const bool &white);
+    /*static std::string getNextBoardFromPGN(const std::string &board, const std::string &pgnMove,*/
+    /*                                       const bool &white);*/
 };
 
 inline std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard board, const bool &white) {

@@ -3,18 +3,16 @@
 //
 
 #include "ChessInstance.h"
+#include "ChessData.h"
 #include <iostream>
 #include <random>
 
-enum class GameOptions {
-    NORMAL,
-    RANDOM,
-    AGAINST_RANDOM
-};
+enum class GameOptions { NORMAL, RANDOM, AGAINST_RANDOM };
 
 ChessInstance::ChessInstance() {
     chessBoard = new ChessBoard();
 
+    std::cout << "select the game you want to play: " << std::endl;
     std::string playOption;
     while (true) {
         std::cin >> playOption;
@@ -28,7 +26,9 @@ ChessInstance::ChessInstance() {
             do {
                 std::cin >> color;
             } while (color != "white" && color != "black");
-            runAgainstRandom(color=="white");
+            runAgainstRandom(color == "white");
+        } else if (playOption == "data") {
+            runWithChessData();
         } else if (playOption == "quit") {
             std::cout << "Quitting..." << std::endl;
             break;
@@ -38,9 +38,7 @@ ChessInstance::ChessInstance() {
     }
 }
 
-ChessInstance::~ChessInstance() {
-    delete chessBoard;
-}
+ChessInstance::~ChessInstance() { delete chessBoard; }
 
 void ChessInstance::run() {
     std::cout << "started a normal game";
@@ -60,7 +58,8 @@ void ChessInstance::runRandom() {
     std::random_device rd;
     std::mt19937 gen(rd());
     while (true) {
-        Pieces allPieces = chessBoard->isWhitesTurn() ? chessBoard->getAllWhiteTiles() : chessBoard->getAllBlackTiles();
+        Pieces allPieces = chessBoard->isWhitesTurn() ? chessBoard->getAllWhiteTiles()
+                                                      : chessBoard->getAllBlackTiles();
         std::uniform_int_distribution<> distrFrom(0, allPieces.size() - 1);
         std::string input;
         Pieces possMoves;
@@ -95,7 +94,8 @@ void ChessInstance::runAgainstRandom(const bool white) {
                 return;
             }
         } else {
-            Pieces allPieces = chessBoard->isWhitesTurn() ? chessBoard->getAllWhiteTiles() : chessBoard->getAllBlackTiles();
+            Pieces allPieces = chessBoard->isWhitesTurn() ? chessBoard->getAllWhiteTiles()
+                                                          : chessBoard->getAllBlackTiles();
             std::uniform_int_distribution<> distrFrom(0, allPieces.size() - 1);
             Pieces possMoves;
             while (true) {
@@ -117,4 +117,10 @@ void ChessInstance::runAgainstRandom(const bool white) {
             break;
         }
     }
+}
+
+void ChessInstance::runWithChessData() {
+    ChessData data;
+    const std::string filename = "data/lichess/outData/lichess_db_standard.rated_2013-01.txt";
+    data.readSimpleGames(filename);
 }

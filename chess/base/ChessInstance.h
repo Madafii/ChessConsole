@@ -7,18 +7,17 @@
 #include "ChessBoard.h"
 
 class ChessInstance {
-public:
+  public:
     explicit ChessInstance();
     ~ChessInstance();
 
     void run();
     void runRandom();
     void runAgainstRandom(bool white);
+    void runWithChessData();
 
-private:
+  private:
     ChessBoard *chessBoard;
 };
 
-
-
-#endif //CHESSINSTANCE_H
+#endif // CHESSINSTANCE_H
