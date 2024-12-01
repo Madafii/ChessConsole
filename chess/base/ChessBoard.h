@@ -25,6 +25,7 @@ class ChessBoard
 {
   public:
     explicit ChessBoard();
+    ~ChessBoard();
 
     void initBoard();
     void updateBoard() const;
@@ -44,6 +45,7 @@ class ChessBoard
     Pieces getAllBlackTiles() const;
 
     Pieces getPossibleMoves(const ChessTile *fromTile);
+    void filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves);
 
   private:
     void move(ChessTile *fromTile, ChessTile *toTile);
@@ -66,7 +68,6 @@ class ChessBoard
     Pieces getPossibleMovesByDirectionSingle(const ChessTile *fromTile,
                                              const std::vector<std::pair<int, int>> &directions);
     Pieces getPossibleMovesCastling(const ChessTile *fromTile);
-    void filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves);
 
     bool isInputMovePossible(const ChessTile *fromTile, const ChessTile *toTile);
     bool isPossibleMove(const ChessTile *fromTile, ChessTile *toTile, Pieces &possibleMoves);
@@ -82,11 +83,12 @@ class ChessBoard
 
     Pieces board;
     bool whitesTurn = true;
-    bool enPassantPossibleLastMove = false;
     std::pair<bool, bool> whiteRookMoved = {false, false};
     std::pair<bool, bool> blackRookMoved = {false, false};
     std::vector<std::string> gameHistory;
-    int doublePawnMoveAt = -1; // says in what column a pawn move with two steps happened
+    bool markTurnForEnPassant = false;
+    std::pair<int, int> doublePawnMoveAt = std::make_pair(-1, -1); // says in what column a pawn move with two steps happened
+    bool enPassantPossibleLastMove = false;
     int movesSinceLastCapture = 0;
 };
 

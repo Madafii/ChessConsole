@@ -121,6 +121,6 @@ void ChessInstance::runAgainstRandom(const bool white) {
 
 void ChessInstance::runWithChessData() {
     ChessData data;
-    const std::string filename = "data/lichess/outData/lichess_db_standard.rated_2013-01.txt";
+    const std::string filename = "/home/fpittermann/Documents/Projects/ChessConsole/data/lichessDatabase/outData/lichess_db_standard.rated_2013-01.txt";
     data.readSimpleGames(filename);
 }

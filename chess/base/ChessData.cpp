@@ -16,9 +16,9 @@ ChessData::ChessData() {}
 
 void ChessData::readSimpleGames(const std::string &filename) {
     std::ifstream file(filename);
-    std::string line;
 
     if (file.is_open()) {
+        std::string line;
         while (std::getline(file, line)) {
             std::istringstream iss(line);
             std::string pgnMove;
@@ -42,10 +42,9 @@ void ChessData::readSimpleGames(const std::string &filename) {
             bool whitesTurn = true;
             // get the first move for the root
             iss >> pgnMove; // the first move
-            const std::string firstMove =
-                ChessUtils::convertPGNToMyInput(pgnMove, board, whitesTurn);
-            board.handleMoveInput(firstMove);
-            const std::string boardStr = board.getStringFromBoard();
+            std::string boardMove = ChessUtils::convertPGNToMyInput(pgnMove, board, whitesTurn);
+            board.handleMoveInput(boardMove);
+            std::string boardStr = board.getStringFromBoard();
             const std::string key = ChessMove::createKey(whitesTurn, boardStr);
 
             // check if move already exists
@@ -54,7 +53,7 @@ void ChessData::readSimpleGames(const std::string &filename) {
                     return (move->getKey() == key);
                 });
             if (found == startMoves.end()) {
-                auto newMove = std::make_unique<ChessMove>(boardStr, pgnMove, firstMove, whitesTurn,
+                auto newMove = std::make_unique<ChessMove>(boardStr, pgnMove, boardMove, whitesTurn,
                                                            gameResult);
                 startMoves.push_back(std::move(newMove));
                 found = startMoves.end() - 1;
@@ -63,14 +62,12 @@ void ChessData::readSimpleGames(const std::string &filename) {
             }
             whitesTurn = false;
 
-            std::string convertedMove, keyMove, boardMove;
             ChessMove *lastMove = found->get();
             while (iss >> pgnMove) {
-                convertedMove = ChessUtils::convertPGNToMyInput(pgnMove, board, whitesTurn);
-                board.handleMoveInput(convertedMove);
-                boardMove = board.getStringFromBoard();
-                keyMove = ChessMove::createKey(whitesTurn, boardStr);
-                lastMove = lastMove->addNext(boardStr, pgnMove, pgnMove, gameResult, whitesTurn);
+                boardMove = ChessUtils::convertPGNToMyInput(pgnMove, board, whitesTurn);
+                board.handleMoveInput(boardMove);
+                boardStr = board.getStringFromBoard();
+                lastMove = lastMove->addNext(boardStr, pgnMove, boardMove, gameResult, whitesTurn);
                 whitesTurn = !whitesTurn;
             }
         }
@@ -78,6 +75,7 @@ void ChessData::readSimpleGames(const std::string &filename) {
     } else {
         std::cerr << "unable to open the file: " << filename << std::endl;
     }
+    std::cout << "done reading all the data" << std::endl;
 }
 
 // example data

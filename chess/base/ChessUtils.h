@@ -26,6 +26,9 @@ inline std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard
     std::erase(input, '#');
     // Remove 'x' characters
     std::erase(input, 'x');
+    // Remove analzyer characters
+    std::erase(input, '?');
+    std::erase(input, '!');
     // extract '=' pawn to piece change
     char pawnChange = 'L'; // L for no change
     auto it = std::ranges::find(input, '=');
@@ -81,6 +84,7 @@ inline std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard
     // Pieces::iterator it = pieces.begin();
     for (const auto &piece : pieces) {
         Pieces possibleMoves = board.getPossibleMoves(piece);
+        board.filterPossibleMovesForChecks(piece, possibleMoves);
         auto it = std::ranges::find_if(possibleMoves, [&](const ChessTile *tile) {
             if (piece->piece->getType() == typeToMove && tile->getX() == ChessTile::mapXtoInt.at(moveTo[0]) && tile->
                 getY() + 1 == moveTo[1] - '0') {

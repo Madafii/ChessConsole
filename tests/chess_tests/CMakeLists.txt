@@ -5,4 +5,4 @@ add_executable(runChessTests
 )
 
 target_link_libraries(runChessTests gtest gtest_main)
-target_link_libraries(runChessTests chess)
+target_link_libraries(runChessTests chessBase)

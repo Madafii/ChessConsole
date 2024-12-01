@@ -31,6 +31,9 @@
 *.out
 *.app
 
+# Qt
+CMakeLists.txt.user
+
 cmake-build-debug/
 build/
 data/

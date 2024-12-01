@@ -13,8 +13,8 @@ class ChessMove {
                        bool white, const RESULT &result);
     ~ChessMove();
 
-    ChessMove *addNext(const std::string &board, const std::string &pgn, const std::string &move,
-                       const RESULT &result, bool white);
+    ChessMove *addNext(const std::string &nextBoard, const std::string &nextPGN, const std::string &nextMove,
+                       const RESULT &result, bool nextWhite);
     void addResult(const RESULT &result);
     std::string getKey() const;
     static std::string createKey(const bool &white, const std::string &board);

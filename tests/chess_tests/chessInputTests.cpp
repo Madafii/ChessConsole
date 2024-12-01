@@ -4,9 +4,12 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <vector>
 #include "ChessUtils.h"
 #include "gtest/gtest.h"
+
 using strvec = std::vector<std::string>;
+
 void doMovements(strvec moves) {
     ChessBoard board;
     for (const std::string move: moves) {
@@ -16,10 +19,14 @@ void doMovements(strvec moves) {
 
 void doMovementsFromPGN(strvec moves) {
     ChessBoard board;
+    bool whitesTurn = true;
+    int count = 0;
     for (const std::string move: moves) {
-        std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, board, true);
+        std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, board, whitesTurn);
         std::cout << "from: " << move << " to: " << inputMyChess << std::endl;
         if (board.handleMoveInput(inputMyChess) != GameState::IN_PROGRESS) break;
+        whitesTurn = !whitesTurn;
+        count++;
     }
 }
 
@@ -143,4 +150,9 @@ TEST(basicChessTests, testThreefoldRepetition) {
     const strvec input = {
             "a2:a4", "h7:h5", "a1:a2", "h8:h7", "a2:a1", "h7:h8", "a1:a2", "h8:h7", "a2:a1", "h7:h8", "a1:a2", "h8:h7", "a2:a1", "h7:h8"};
     doMovements(input);
+}
+
+TEST(basicChessTests, testTmp) {
+    const strvec input = {"d4","d5","Bd2","Nc6","Nf3","Nf6","c4","dxc4","Nc3","Nxd4","Nxd4","Qxd4","e3","Qc5","Qa4","Bd7","Qxc4","Qxc4","Bxc4","e6","O-O","O-O-O","Be1","a6","e4","Bc6","f3","Bc5","Bf2","Nd7","Rad1","Bxf2","Kxf2","Nc5","Rxd8","Rxd8","Ke3","Bb5","Bxb5","axb5","Nxb5","Rd3","Ke2","Rd7","Rc1","b6","b4","Na6","Na7","Kb7","Nb5","Nxb4","a4","c6","Nc3","Ka6","Rb1","Ka5","h4","Nd3","g4","Nf4","Ke3","e5","h5","Rd3","Kf2","Rxc3","Rd1","Rc2","Kg3","Rg2","Kh4","f6","Rd6","h6","Rd7","g5", "hg6"};
+    doMovementsFromPGN(input);
 }

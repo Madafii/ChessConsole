@@ -1,25 +1,27 @@
 #include "ChessMove.h"
+
+#include <fcntl.h>
 #include <memory>
 
 ChessMove::ChessMove(const std::string &board, const std::string &pgn, const std::string &move,
                      bool white, const RESULT &result)
-    : board{board}, pgnName(pgn), moveName(move), white(white) {
+    : board{board}, pgnName(pgn), moveName(move), white(white), wins{0}, loses{0}, draws{0} {
     addResult(result);
 }
 
 ChessMove::~ChessMove() {}
 
-ChessMove *ChessMove::addNext(const std::string &board, const std::string &pgn,
-                              const std::string &move, const RESULT &result, const bool white) {
+ChessMove *ChessMove::addNext(const std::string &nextBoard, const std::string &nextPGN,
+                              const std::string &nextMove, const RESULT &result, const bool nextWhite) {
     ChessMove *next;
-    const std::string &key = getKey();
+    const std::string &key = createKey(nextWhite, nextBoard);
     if (nexts.contains(key)) {
         next = nexts.at(key).get();
         next->addResult(result);
     } else {
-        auto newMove = std::make_shared<ChessMove>(board, pgn, move, white, result);
-        nexts[ChessMove::createKey(white, board)] = std::move(newMove);
+        auto newMove = std::make_shared<ChessMove>(nextBoard, nextPGN, nextMove, nextWhite, result);
         next = newMove.get();
+        nexts[createKey(nextWhite, nextBoard)] = std::move(newMove);
     }
     return next;
 }
@@ -40,4 +42,4 @@ void ChessMove::addResult(const RESULT &result) {
     }
 }
 
-std::string ChessMove::getKey() const { return ChessMove::createKey(white, board); }
+std::string ChessMove::getKey() const { return createKey(white, board); }
