@@ -17,6 +17,7 @@ class ChessInstance {
     void runWithChessData();
 
   private:
+    // TODO: make unique pointer or don't have it as a member variable
     ChessBoard *chessBoard;
 };
 

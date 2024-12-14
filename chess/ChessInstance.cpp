@@ -1,11 +1,7 @@
-//
-// Created by fpittermann on 10/5/24.
-//
-
 #include "ChessInstance.h"
-#include "ChessData.h"
 #include <iostream>
 #include <random>
+#include "ChessData.h"
 
 enum class GameOptions { NORMAL, RANDOM, AGAINST_RANDOM };
 
@@ -58,8 +54,7 @@ void ChessInstance::runRandom() {
     std::random_device rd;
     std::mt19937 gen(rd());
     while (true) {
-        Pieces allPieces = chessBoard->isWhitesTurn() ? chessBoard->getAllWhiteTiles()
-                                                      : chessBoard->getAllBlackTiles();
+        Pieces allPieces = chessBoard->isWhitesTurn() ? chessBoard->getAllWhiteTiles() : chessBoard->getAllBlackTiles();
         std::uniform_int_distribution<> distrFrom(0, allPieces.size() - 1);
         std::string input;
         Pieces possMoves;
@@ -94,8 +89,8 @@ void ChessInstance::runAgainstRandom(const bool white) {
                 return;
             }
         } else {
-            Pieces allPieces = chessBoard->isWhitesTurn() ? chessBoard->getAllWhiteTiles()
-                                                          : chessBoard->getAllBlackTiles();
+            Pieces allPieces =
+                    chessBoard->isWhitesTurn() ? chessBoard->getAllWhiteTiles() : chessBoard->getAllBlackTiles();
             std::uniform_int_distribution<> distrFrom(0, allPieces.size() - 1);
             Pieces possMoves;
             while (true) {
@@ -121,6 +116,30 @@ void ChessInstance::runAgainstRandom(const bool white) {
 
 void ChessInstance::runWithChessData() {
     ChessData data;
-    const std::string filename = "/home/fpittermann/Documents/Projects/ChessConsole/data/lichessDatabase/outData/lichess_db_standard.rated_2013-01.txt";
+    const std::string filename =
+            "/home/fpittermann/Documents/Projects/ChessConsole/data/lichessDatabase/outData/lichess_db_test_50.txt";
     data.readSimpleGames(filename);
+    ChessLinkedListMoves *moves = data.getMoves();
+    moves->setMoveHead(moves->getMoveRoot()); // set it to the root before the game beginns
+
+    std::string input;
+    while (true) {
+        std::cin >> input;
+        if (input == "quit")
+            break;
+        // handle game input
+        const GameState game_state = chessBoard->handleInput(input);
+        // get info for the next moves
+        Move *move = moves->getAtMove(input);
+        if (move == nullptr) {
+            std::cout << "no more suggested moves" << std::endl;
+        } else {
+            // set the head to the newly played move
+            moves->setMoveHead(move);
+            std::cout << moves->getInfoNextMoves() << std::endl;
+        }
+        if (game_state != GameState::IN_PROGRESS) {
+            break;
+        }
+    }
 }

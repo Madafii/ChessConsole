@@ -25,6 +25,7 @@ class ChessBoard
 {
   public:
     explicit ChessBoard();
+    // explicit ChessBoard(const std::string &board, const bool &white);
     ~ChessBoard();
 
     void initBoard();

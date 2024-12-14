@@ -610,17 +610,20 @@ GameState ChessBoard::handleMoveInput(std::string input)
 
 void ChessBoard::move(ChessTile *fromTile, ChessTile *toTile)
 {
-    // some special rules for pawns
-    if (fromTile->piece->getType() == Pawn)
-        movePawn(fromTile, toTile);
-    // some special rules for rooks
-    else if (fromTile->piece->getType() == Rook) {
-        moveRook(fromTile);
+    switch (fromTile->piece->getType()) {
+        case Pawn:
+            movePawn(fromTile, toTile);
+            break;
+        case Rook:
+            moveRook(fromTile);
+            break;
+        case King:
+            moveKing(fromTile, toTile);
+        default:
+            break;
     }
-    // some special rules for kings
-    else if (fromTile->piece->getType() == King) {
-        moveKing(fromTile, toTile);
-    }
+
+    // for optional 50 moves draw rule
     if (toTile->piece != nullptr) {
         movesSinceLastCapture = 0;
     } else if (fromTile->piece->getType() == Pawn) {
@@ -628,6 +631,7 @@ void ChessBoard::move(ChessTile *fromTile, ChessTile *toTile)
     } else {
         movesSinceLastCapture++;
     }
+
     toTile->piece = std::move(fromTile->piece);
     gameHistory.push_back(getStringFromBoard());
 }
