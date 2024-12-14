@@ -14,42 +14,35 @@ ChessBoard::ChessBoard()
     initBoard();
 }
 
-ChessBoard::~ChessBoard()
-{
-    // for (const auto tile : board) {
-    //     delete tile;
-    // }
-    // board.clear();
-}
+ChessBoard::~ChessBoard() {}
 
 void ChessBoard::initBoard()
 {
-    // TODO: change to unique ptr later, but could take some time
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Rook, true), 0, 0));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Knight, true), 1, 0));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Bishop, true), 2, 0));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Queen, true), 3, 0));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(King, true), 4, 0));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Bishop, true), 5, 0));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Knight, true), 6, 0));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Rook, true), 7, 0));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Rook, true), 0, 0));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Knight, true), 1, 0));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Bishop, true), 2, 0));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Queen, true), 3, 0));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(King, true), 4, 0));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Bishop, true), 5, 0));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Knight, true), 6, 0));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Rook, true), 7, 0));
     for (int i = 0; i < boardWidth; i++) {
-        board.push_back(new ChessTile(std::make_unique<ChessPiece>(Pawn, true), i, 1));
+        board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Pawn, true), i, 1));
     }
     for (int i = 0; i < boardWidth * 4; i++) {
-        board.push_back(new ChessTile(nullptr, i % boardWidth, i / boardWidth + 2));
+        board.push_back(std::make_unique<ChessTile>(nullptr, i % boardWidth, i / boardWidth + 2));
     }
     for (int i = 0; i < boardWidth; i++) {
-        board.push_back(new ChessTile(std::make_unique<ChessPiece>(Pawn, false), i, 6));
+        board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Pawn, false), i, 6));
     }
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Rook, false), 0, 7));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Knight, false), 1, 7));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Bishop, false), 2, 7));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Queen, false), 3, 7));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(King, false), 4, 7));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Bishop, false), 5, 7));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Knight, false), 6, 7));
-    board.push_back(new ChessTile(std::make_unique<ChessPiece>(Rook, false), 7, 7));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Rook, false), 0, 7));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Knight, false), 1, 7));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Bishop, false), 2, 7));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Queen, false), 3, 7));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(King, false), 4, 7));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Bishop, false), 5, 7));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Knight, false), 6, 7));
+    board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Rook, false), 7, 7));
     // add initial board as first in the game history
     gameHistory.push_back(getStringFromBoard());
 }
@@ -276,11 +269,11 @@ Pieces ChessBoard::getPossibleMovesCastling(const ChessTile *fromTile)
 Pieces ChessBoard::getAllWhiteTiles() const
 {
     Pieces whiteTiles;
-    for (ChessTile *tile : board) {
+    for (const auto &tile : board) {
         if (tile->piece == nullptr)
             continue;
         if (tile->piece->isWhite())
-            whiteTiles.push_back(tile);
+            whiteTiles.push_back(tile.get());
     }
     return whiteTiles;
 }
@@ -288,11 +281,11 @@ Pieces ChessBoard::getAllWhiteTiles() const
 Pieces ChessBoard::getAllBlackTiles() const
 {
     Pieces blackTiles;
-    for (ChessTile *tile : board) {
+    for (const auto &tile : board) {
         if (tile->piece == nullptr)
             continue;
         if (!tile->piece->isWhite())
-            blackTiles.push_back(tile);
+            blackTiles.push_back(tile.get());
     }
     return blackTiles;
 }
@@ -300,7 +293,7 @@ Pieces ChessBoard::getAllBlackTiles() const
 std::string ChessBoard::getStringFromBoard()
 {
     std::string outMoves;
-    for (const ChessTile *tile : board) {
+    for (const auto &tile : board) {
         if (tile->piece == nullptr) {
             outMoves += "_";
             continue;
@@ -709,7 +702,7 @@ ChessTile *ChessBoard::getTileAt(const int x, const int y) const
 {
     if (x < 0 || x >= boardWidth || y < 0 || y >= boardHeight)
         return nullptr;
-    return board[y * boardWidth + x];
+    return board[y * boardWidth + x].get();
 }
 
 void ChessBoard::pawnWon(ChessTile *pawnTile, const char pawnToPiece) const

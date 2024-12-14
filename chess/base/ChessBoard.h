@@ -7,6 +7,7 @@
 #include "ChessPiece.h"
 #include "ChessTile.h"
 #include <optional>
+#include <memory>
 #include <vector>
 
 constexpr int boardWidth = 8;
@@ -27,6 +28,10 @@ class ChessBoard
     explicit ChessBoard();
     // explicit ChessBoard(const std::string &board, const bool &white);
     ~ChessBoard();
+
+    // breaks because of board can't be coppied
+    ChessBoard(const ChessBoard&) = delete;
+    ChessBoard& operator=(const ChessBoard&) = delete;
 
     void initBoard();
     void updateBoard() const;
@@ -72,7 +77,7 @@ class ChessBoard
 
     bool isInputMovePossible(const ChessTile *fromTile, const ChessTile *toTile);
     bool isPossibleMove(const ChessTile *fromTile, ChessTile *toTile, Pieces &possibleMoves);
-    bool isKingChecked(bool white);
+    bool isKingChecked(const bool white);
     bool isKingChecked(const ChessTile *fromTile, ChessTile *toTile);
     bool isTileAttackedAndFree(bool white, const Pieces &tilesToCheck);
     bool isThreefoldRepetition();
@@ -82,7 +87,7 @@ class ChessBoard
 
     static void mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge);
 
-    Pieces board;
+    std::vector<std::unique_ptr<ChessTile>> board;
     bool whitesTurn = true;
     std::pair<bool, bool> whiteRookMoved = {false, false};
     std::pair<bool, bool> blackRookMoved = {false, false};
