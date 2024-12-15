@@ -1,14 +1,13 @@
-//
-// Created by fpittermann on 10/5/24.
-//
-
 #ifndef CHESSBOARD_H
 #define CHESSBOARD_H
+
 #include "ChessPiece.h"
 #include "ChessTile.h"
 #include <optional>
 #include <memory>
 #include <vector>
+
+class ChessBoardDraw;
 
 constexpr int boardWidth = 8;
 constexpr int boardHeight = 8;
@@ -29,12 +28,12 @@ class ChessBoard
     // explicit ChessBoard(const std::string &board, const bool &white);
     ~ChessBoard();
 
-    // breaks because of board can't be coppied
+    // breaks because of board can't be coppied no copies of unique pointers
     ChessBoard(const ChessBoard&) = delete;
     ChessBoard& operator=(const ChessBoard&) = delete;
 
     void initBoard();
-    void updateBoard() const;
+
     GameState handleInput(const std::string &input);
     GameState handleMoveInput(std::string input);
 
@@ -96,11 +95,9 @@ class ChessBoard
     std::pair<int, int> doublePawnMoveAt = std::make_pair(-1, -1); // says in what column a pawn move with two steps happened
     bool enPassantPossibleLastMove = false;
     int movesSinceLastCapture = 0;
+
+    friend ChessBoardDraw;
 };
 
-inline void ChessBoard::mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge)
-{
-    possibleMoves.insert(possibleMoves.end(), possibleMovesMerge.begin(), possibleMovesMerge.end());
-}
 
 #endif // CHESSBOARD_H

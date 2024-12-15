@@ -47,38 +47,6 @@ void ChessBoard::initBoard()
     gameHistory.push_back(getStringFromBoard());
 }
 
-void ChessBoard::updateBoard() const
-{
-    // system("clear"); // disable for debugging
-    // Print the chessboard with characters
-    for (int y = 7; y >= 0; --y) {
-        std::cout << " " << y + 1 << " ";
-        for (int x = 0; x < 8; ++x) {
-            if ((y + x) % 2 == 0) {
-                // Black square
-                std::cout << "\x1b[48;5;0m";
-            } else {
-                // White square
-                std::cout << "\x1b[48;5;231m";
-            }
-            if (getTileAt(x, y)->piece == nullptr) {
-                std::cout << "   ";
-                continue;
-            }
-            if (getTileAt(x, y)->piece->isWhite()) {
-                // green
-                std::cout << "\x1b[38;5;22m";
-            } else {
-                // magenta
-                std::cout << "\x1b[38;5;126m";
-            }
-            std::cout << " " << getTileAt(x, y)->piece->getShortName() << " ";
-        }
-        std::cout << "\x1b[0m" << std::endl; // Reset to default color after each line
-    }
-    std::cout << "    a  b  c  d  e  f  g  h " << std::endl;
-}
-
 GameState ChessBoard::handleInput(const std::string &input)
 {
     const std::string color = whitesTurn ? "white " : "black ";
@@ -464,13 +432,9 @@ bool ChessBoard::isKingCheckmate()
         }
         filterPossibleMovesForChecks(tile, possMoves);
         if (!possMoves.empty()) {
-            // std::cout << tile->piece->getShortName() << "at: " <<
-            // tile->getX() << " : " << tile->getY() << " still has possible
-            // Moves" << std::endl;
             return false;
         }
     }
-    std::cout << "yeah you won!" << std::endl;
     return true;
 }
 bool ChessBoard::isDraw()
@@ -591,13 +555,11 @@ GameState ChessBoard::handleMoveInput(std::string input)
 
     if (!isInputMovePossible(fromTile, toTile))
         return GameState::IN_PROGRESS;
+    // make the move
     move(fromTile, toTile);
 
     // after move checks
     const GameState game_state = afterMoveChecks(toTile, pawnChangeTo);
-
-    // nothing else happening here because updating the screen
-    updateBoard();
     return game_state;
 }
 
@@ -670,18 +632,20 @@ void ChessBoard::moveKing(const ChessTile *fromTile, const ChessTile *toTile)
     }
 }
 
-void ChessBoard::moveRook(const ChessTile *fromTile)
+inline void ChessBoard::moveRook(const ChessTile *fromTile)
 {
     const int x = fromTile->getX();
     const int y = fromTile->getY();
-    if (x == 0 && y == 0)
-        whiteRookMoved.first = true;
-    if (x == 7 && y == 0)
-        whiteRookMoved.second = true;
-    if (x == 7 && y == 7)
-        blackRookMoved.second = true;
-    if (x == 0 && y == 7)
-        blackRookMoved.first = true;
+    if (x == 0)
+        if (y == 0)
+            whiteRookMoved.first = true;
+        if (y == 7)
+            blackRookMoved.first = true;
+    if (x == 7)
+        if (y == 0)
+            whiteRookMoved.second = true;
+        if (y == 7)
+            blackRookMoved.second = true;
 }
 
 ChessTile *ChessBoard::getTileAt(const std::string &pos) const
@@ -698,7 +662,7 @@ ChessTile *ChessBoard::getTileAt(const std::string &pos) const
     return getTileAt(x, y);
 }
 
-ChessTile *ChessBoard::getTileAt(const int x, const int y) const
+inline ChessTile *ChessBoard::getTileAt(const int x, const int y) const
 {
     if (x < 0 || x >= boardWidth || y < 0 || y >= boardHeight)
         return nullptr;
@@ -707,7 +671,6 @@ ChessTile *ChessBoard::getTileAt(const int x, const int y) const
 
 void ChessBoard::pawnWon(ChessTile *pawnTile, const char pawnToPiece) const
 {
-    updateBoard();
     std::cout << "Your pawn reached the end what should it become? (Q, R, B, N)" << std::endl;
     char newPawnTyp;
     if (pawnToPiece == '0')
@@ -761,7 +724,7 @@ GameState ChessBoard::afterMoveChecks(ChessTile *toTile, const char pawnToPiece)
     return GameState::IN_PROGRESS;
 }
 
-std::optional<std::pair<ChessTile *, ChessTile *>> ChessBoard::getMoveTilesFromInput(const std::string &input) const
+PiecePair ChessBoard::getMoveTilesFromInput(const std::string &input) const
 {
     if (input.length() != 5) {
         std::cout << "ChessBoard::getMoveTilesFromInput: Wrong input length, "
@@ -786,4 +749,9 @@ std::optional<std::pair<ChessTile *, ChessTile *>> ChessBoard::getMoveTilesFromI
         return std::nullopt;
     }
     return std::make_optional(std::make_pair(fromTile, toTile));
+}
+
+inline void ChessBoard::mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge)
+{
+    possibleMoves.insert(possibleMoves.end(), possibleMovesMerge.begin(), possibleMovesMerge.end());
 }

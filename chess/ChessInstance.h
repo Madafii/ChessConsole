@@ -18,7 +18,10 @@ class ChessInstance {
 
   private:
     // TODO: make unique pointer or don't have it as a member variable
-    ChessBoard *chessBoard;
+    // ChessBoard *chessBoard;
+    std::vector<std::string> gameOptions;
+
+    void printGameOptions();
 };
 
 #endif // CHESSINSTANCE_H
