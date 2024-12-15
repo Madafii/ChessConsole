@@ -4,64 +4,86 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <chrono>
 
 #include "ChessBoard.h"
+// #include "ChessBoardDraw.h"
 #include "ChessUtils.h"
 
 ChessData::ChessData() : movesLinkedList(std::make_unique<ChessLinkedListMoves>()) {}
 
 void ChessData::readSimpleGames(const std::string &filename) {
+    const auto start = std::chrono::high_resolution_clock::now();
+
     std::ifstream file(filename);
-
-    if (file.is_open()) {
-        std::string line;
-        while (std::getline(file, line)) {
-            // file reading
-            std::istringstream iss(line);
-            std::string pgnMove;
-
-            // get the game result for both colors
-            std::string result;
-            iss >> result;
-            RESULT gameResultWhite, gameResultBlack;
-            if (result == "1-0") {
-                gameResultWhite = RESULT::WIN;
-                gameResultBlack = RESULT::LOSE;
-            } else if (result == "0-1") {
-                gameResultWhite = RESULT::LOSE;
-                gameResultBlack = RESULT::WIN;
-            } else {
-                gameResultWhite = RESULT::DRAW;
-                gameResultBlack = RESULT::DRAW;
-            }
-
-            iss >> pgnMove; // skip second input
-
-            // play the game
-            ChessBoard board;
-            bool whitesTurn = true;
-            std::string boardMove, boardStr;
-
-            while (iss >> pgnMove) {
-                boardMove = ChessUtils::convertPGNToMyInput(pgnMove, board, whitesTurn);
-                board.handleMoveInput(boardMove);
-                boardStr = board.getStringFromBoard();
-                movesLinkedList->addMove(boardStr, pgnMove, boardMove, whitesTurn ? gameResultWhite : gameResultBlack,
-                                         whitesTurn);
-                whitesTurn = !whitesTurn;
-            }
-
-            // set the head back to the root for the next game
-            movesLinkedList->setMoveHead(movesLinkedList->getMoveRoot());
-        }
-        file.close();
-    } else {
+    if (!file.is_open()) {
         std::cerr << "unable to open the file: " << filename << std::endl;
+        return;
     }
-    std::cout << "done reading all the data" << std::endl;
+
+    std::string line;
+    while (std::getline(file, line)) {
+        processLine(line);
+    }
+
+    file.close();
+
+    const auto end = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<double> duration = end - start;
+
+    std::cout << "reading the games took: " << duration.count() << " seconds\n";
 }
 
 ChessLinkedListMoves *ChessData::getMoves() const { return movesLinkedList.get(); }
+
+ChessData::ResultPair ChessData::getResult(const std::string_view result) {
+    std::pair<RESULT, RESULT> gameResult;
+    if (result == "1-0") {
+        gameResult.first = RESULT::WIN;
+        gameResult.second = RESULT::LOSE;
+    } else if (result == "0-1") {
+        gameResult.first = RESULT::LOSE;
+        gameResult.second = RESULT::WIN;
+    } else {
+        gameResult.first = RESULT::DRAW;
+        gameResult.second = RESULT::DRAW;
+    }
+    return gameResult;
+}
+
+void ChessData::processLine(const std::string_view line) {
+    std::istringstream iss(line.data());
+    std::string pgnMove;
+
+    // get the game result for both colors
+    std::string result;
+    iss >> result;
+    std::pair<RESULT, RESULT> gameResult = getResult(result);
+
+    iss >> pgnMove; // skip second input
+
+    // play the game
+    ChessBoard board;
+    // ChessBoardDraw boardDraw;
+    bool whitesTurn = true;
+    while (iss >> pgnMove) {
+        addPGNMove(pgnMove, board, whitesTurn, gameResult);
+    }
+
+    // set the head back to the root for the next game
+    movesLinkedList->setMoveHead(movesLinkedList->getMoveRoot());
+}
+
+void ChessData::addPGNMove(const std::string &pgnMove, ChessBoard &board, bool &whitesTurn,
+                           const ResultPair &gameResult) {
+    const std::string boardMove = ChessUtils::convertPGNToMyInput(pgnMove, board, whitesTurn);
+    board.handleMoveInput(boardMove);
+    // boardDraw.draw(board); // for debugging
+    const std::string boardStr = board.getStringFromBoard();
+    movesLinkedList->addMove(boardStr, pgnMove, boardMove, whitesTurn ? gameResult.first : gameResult.second,
+                             whitesTurn);
+    whitesTurn = !whitesTurn;
+}
 
 // example data
 /*1-0 : e4 e6 d4 b6 a3 Bb7 Nc3 Nh6 Bxh6 gxh6 Be2 Qg5 Bg4 h5 Nf3 Qg6 Nh4 Qg5 Bxh5

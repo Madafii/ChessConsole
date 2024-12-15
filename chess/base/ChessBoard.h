@@ -34,6 +34,7 @@ class ChessBoard
 
     void initBoard();
 
+    // handle inputs to the game
     GameState handleInput(const std::string &input);
     GameState handleMoveInput(std::string input);
 

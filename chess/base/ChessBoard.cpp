@@ -131,26 +131,26 @@ Pieces ChessBoard::getPossibleMovesPawn(const ChessTile *fromTile)
     return possibleMoves;
 }
 
-Pieces ChessBoard::getPossibleMovesBishop(const ChessTile *fromTile)
+inline Pieces ChessBoard::getPossibleMovesBishop(const ChessTile *fromTile)
 {
     const std::vector directions = {std::pair(1, 1), std::pair(1, -1), std::pair(-1, 1), std::pair(-1, -1)};
     return getPossibleMovesByDirection(fromTile, directions);
 }
 
-Pieces ChessBoard::getPossibleMovesRook(const ChessTile *fromTile)
+inline Pieces ChessBoard::getPossibleMovesRook(const ChessTile *fromTile)
 {
     const std::vector directions = {std::pair(0, 1), std::pair(0, -1), std::pair(-1, 0), std::pair(1, 0)};
     return getPossibleMovesByDirection(fromTile, directions);
 }
 
-Pieces ChessBoard::getPossibleMovesQueen(const ChessTile *fromTile)
+inline Pieces ChessBoard::getPossibleMovesQueen(const ChessTile *fromTile)
 {
     Pieces possibleMoves = getPossibleMovesBishop(fromTile);
     mergePossVec(possibleMoves, getPossibleMovesRook(fromTile));
     return possibleMoves;
 }
 
-Pieces ChessBoard::getPossibleMovesKnight(const ChessTile *fromTile)
+inline Pieces ChessBoard::getPossibleMovesKnight(const ChessTile *fromTile)
 {
     const std::vector directions = {std::pair(2, 1), std::pair(2, -1), std::pair(-2, 1), std::pair(-2, -1),
                                     std::pair(1, 2), std::pair(-1, 2), std::pair(1, -2), std::pair(-1, -2)};
@@ -636,16 +636,18 @@ inline void ChessBoard::moveRook(const ChessTile *fromTile)
 {
     const int x = fromTile->getX();
     const int y = fromTile->getY();
-    if (x == 0)
+    if (x == 0) {
         if (y == 0)
             whiteRookMoved.first = true;
         if (y == 7)
             blackRookMoved.first = true;
-    if (x == 7)
+    }
+    if (x == 7) {
         if (y == 0)
             whiteRookMoved.second = true;
         if (y == 7)
             blackRookMoved.second = true;
+    }
 }
 
 ChessTile *ChessBoard::getTileAt(const std::string &pos) const
