@@ -9,7 +9,7 @@
 #include <iostream>
 #include <string>
 
-ChessBoard::ChessBoard()
+ChessBoard::ChessBoard(const bool doAfterMoveChecks) : doAfterMoveChecks(doAfterMoveChecks)
 {
     initBoard();
 }
@@ -47,7 +47,7 @@ void ChessBoard::initBoard()
     gameHistory.push_back(getStringFromBoard());
 }
 
-GameState ChessBoard::handleInput(const std::string &input)
+GameState ChessBoard::handleInput(const std::string_view input)
 {
     const std::string color = whitesTurn ? "white " : "black ";
     if (input == "resign") {
@@ -536,19 +536,18 @@ Pieces ChessBoard::getAllPiecesFor(const bool white, const ChessPieceType piece)
     return pieces;
 }
 
-GameState ChessBoard::handleMoveInput(std::string input)
-{
+GameState ChessBoard::handleMoveInput(const std::string_view input) {
     char pawnChangeTo = '0'; // 0 is for no pawn change
     // extra check for instant pawn change
     if (input.length() == 7) {
         pawnChangeTo = input[6];
     }
-    input = input.substr(0, 5);
+    const std::string inputMove(input.substr(0, 5));
 
     // get the move tiles from the input
-    const auto moveTilePair = getMoveTilesFromInput(input);
+    const auto moveTilePair = getMoveTilesFromInput(inputMove);
     if (!moveTilePair) {
-        std::cout << "ChessBoard::handleMoveInput: invalid input: " << input << std::endl;
+        std::cout << "ChessBoard::handleMoveInput: invalid input: " << inputMove << std::endl;
     }
     ChessTile *fromTile = moveTilePair->first;
     ChessTile *toTile = moveTilePair->second;
@@ -561,6 +560,32 @@ GameState ChessBoard::handleMoveInput(std::string input)
     // after move checks
     const GameState game_state = afterMoveChecks(toTile, pawnChangeTo);
     return game_state;
+}
+
+/// directly make a move without any checks if it is a illegal move or not. For reading large databases with correct
+/// input
+/// @param input the input move in from:to format
+/// @param enPassant if a enPassant is possible during this move
+void ChessBoard::handleMoveInputNoChecks(const std::string_view input, const bool enPassant) {
+    enPassantPossibleLastMove = enPassant;
+    char pawnChangeTo = '0'; // 0 is for no pawn change
+    // extra check for instant pawn change
+    if (input.length() == 7) {
+        pawnChangeTo = input[6];
+    }
+    std::string inputMove(input.substr(0, 5));
+
+    // get the tiles directly
+    inputMove[1] = inputMove[1] - 1;
+    inputMove[4] = inputMove[4] - 1;
+    ChessTile *fromTile = getTileAt(inputMove.substr(0, 2));
+    ChessTile *toTile = getTileAt(inputMove.substr(3));
+
+    // make the move
+    move(fromTile, toTile);
+
+    // after move checks
+    afterMoveChecks(toTile, pawnChangeTo);
 }
 
 void ChessBoard::move(ChessTile *fromTile, ChessTile *toTile)
@@ -650,7 +675,7 @@ inline void ChessBoard::moveRook(const ChessTile *fromTile)
     }
 }
 
-ChessTile *ChessBoard::getTileAt(const std::string &pos) const
+ChessTile *ChessBoard::getTileAt(const std::string_view pos) const
 {
     if (pos.size() != 2) {
         std::cout << "ChessBoard::getTileAt: Wrong input length." << std::endl;
@@ -673,7 +698,8 @@ inline ChessTile *ChessBoard::getTileAt(const int x, const int y) const
 
 void ChessBoard::pawnWon(ChessTile *pawnTile, const char pawnToPiece) const
 {
-    std::cout << "Your pawn reached the end what should it become? (Q, R, B, N)" << std::endl;
+    if (doAfterMoveChecks)
+        std::cout << "Your pawn reached the end what should it become? (Q, R, B, N)" << std::endl;
     char newPawnTyp;
     if (pawnToPiece == '0')
         std::cin >> newPawnTyp;
@@ -714,13 +740,16 @@ GameState ChessBoard::afterMoveChecks(ChessTile *toTile, const char pawnToPiece)
     if (toTile->piece->getType() == Pawn && (toTile->getY() == 0 || toTile->getY() == 7)) {
         pawnWon(toTile, pawnToPiece);
     }
-    if (isDraw()) {
-        std::cout << "this game is a draw!" << std::endl;
-        return GameState::DRAW;
-    }
-    if (isKingCheckmate()) {
-        std::cout << "you won the game!" << std::endl;
-        return GameState::WON;
+    // sometimes want to skip these for performance
+    if (doAfterMoveChecks) {
+        if (isDraw()) {
+            std::cout << "this game is a draw!" << std::endl;
+            return GameState::DRAW;
+        }
+        if (isKingCheckmate()) {
+            std::cout << "you won the game!" << std::endl;
+            return GameState::WON;
+        }
     }
     whitesTurn = !whitesTurn;
     return GameState::IN_PROGRESS;
@@ -729,9 +758,7 @@ GameState ChessBoard::afterMoveChecks(ChessTile *toTile, const char pawnToPiece)
 PiecePair ChessBoard::getMoveTilesFromInput(const std::string &input) const
 {
     if (input.length() != 5) {
-        std::cout << "ChessBoard::getMoveTilesFromInput: Wrong input length, "
-                     "should be 5."
-                  << std::endl;
+        std::cout << "ChessBoard::getMoveTilesFromInput: Wrong input length, should be 5." << std::endl;
         return std::nullopt;
     }
     std::string subStrFrom = input.substr(0, 2);
@@ -746,8 +773,7 @@ PiecePair ChessBoard::getMoveTilesFromInput(const std::string &input) const
     }
     if (fromTile->piece == nullptr || fromTile->piece->isWhite() != whitesTurn) {
         std::cout << "ChessBoard::getMoveTilesFromInput: trying to move a piece "
-                     "from the opponent or no piece"
-                  << std::endl;
+                     "from the opponent or no piece" << std::endl;
         return std::nullopt;
     }
     return std::make_optional(std::make_pair(fromTile, toTile));

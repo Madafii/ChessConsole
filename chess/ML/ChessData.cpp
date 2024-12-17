@@ -63,7 +63,7 @@ void ChessData::processLine(const std::string_view line) {
     iss >> pgnMove; // skip second input
 
     // play the game
-    ChessBoard board;
+    ChessBoard board(false);
     // ChessBoardDraw boardDraw;
     bool whitesTurn = true;
     while (iss >> pgnMove) {
@@ -77,7 +77,7 @@ void ChessData::processLine(const std::string_view line) {
 void ChessData::addPGNMove(const std::string &pgnMove, ChessBoard &board, bool &whitesTurn,
                            const ResultPair &gameResult) {
     const std::string boardMove = ChessUtils::convertPGNToMyInput(pgnMove, board, whitesTurn);
-    board.handleMoveInput(boardMove);
+    board.handleMoveInputNoChecks(boardMove, false);
     // boardDraw.draw(board); // for debugging
     const std::string boardStr = board.getStringFromBoard();
     movesLinkedList->addMove(boardStr, pgnMove, boardMove, whitesTurn ? gameResult.first : gameResult.second,

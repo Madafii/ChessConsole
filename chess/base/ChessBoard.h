@@ -8,6 +8,7 @@
 #include <vector>
 
 class ChessBoardDraw;
+class ChessMoveLogic;
 
 constexpr int boardWidth = 8;
 constexpr int boardHeight = 8;
@@ -24,19 +25,20 @@ enum class GameState
 class ChessBoard
 {
   public:
-    explicit ChessBoard();
+    explicit ChessBoard(bool doAfterMoveChecks = true);
     // explicit ChessBoard(const std::string &board, const bool &white);
     ~ChessBoard();
 
-    // breaks because of board can't be coppied no copies of unique pointers
+    // breaks because of board can't be coppied no copies of unique pointers, so TODO would be implement them
     ChessBoard(const ChessBoard&) = delete;
     ChessBoard& operator=(const ChessBoard&) = delete;
 
     void initBoard();
 
     // handle inputs to the game
-    GameState handleInput(const std::string &input);
-    GameState handleMoveInput(std::string input);
+    GameState handleInput(std::string_view input);
+    GameState handleMoveInput(std::string_view input);
+    void handleMoveInputNoChecks(std::string_view input, bool enPassant);
 
     std::string getStringFromBoard();
 
@@ -53,11 +55,17 @@ class ChessBoard
     Pieces getPossibleMoves(const ChessTile *fromTile);
     void filterPossibleMovesForChecks(const ChessTile *fromTile, Pieces &possibleMoves);
 
+    ChessTile *getTileAt(std::string_view pos) const;
+    ChessTile *getTileAt(int x, int y) const;
+
+    static void mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge);
+
   private:
     void move(ChessTile *fromTile, ChessTile *toTile);
     void movePawn(const ChessTile *fromTile, const ChessTile *toTile);
     void moveKing(const ChessTile *fromTile, const ChessTile *toTile);
     void moveRook(const ChessTile *fromTile);
+
     void pawnWon(ChessTile *pawnTile, char pawnToPiece = '0') const;
 
     GameState afterMoveChecks(ChessTile *toTile, char pawnToPiece = '0');
@@ -82,11 +90,6 @@ class ChessBoard
     bool isTileAttackedAndFree(bool white, const Pieces &tilesToCheck);
     bool isThreefoldRepetition();
 
-    ChessTile *getTileAt(const std::string &pos) const;
-    ChessTile *getTileAt(int x, int y) const;
-
-    static void mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge);
-
     std::vector<std::unique_ptr<ChessTile>> board;
     bool whitesTurn = true;
     std::pair<bool, bool> whiteRookMoved = {false, false};
@@ -97,7 +100,11 @@ class ChessBoard
     bool enPassantPossibleLastMove = false;
     int movesSinceLastCapture = 0;
 
+    // options for performance
+    bool doAfterMoveChecks;
+
     friend ChessBoardDraw;
+    friend ChessMoveLogic;
 };
 
 

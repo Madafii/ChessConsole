@@ -37,7 +37,7 @@ ChessInstance::ChessInstance() {
 ChessInstance::~ChessInstance() {}
 
 void ChessInstance::run() {
-    ChessBoard chessBoard;
+    ChessBoard chessBoard(false);
     ChessBoardDraw boardDraw;
 
     std::cout << "started a normal game..." << std::endl;
@@ -122,10 +122,10 @@ void ChessInstance::runAgainstRandom(const bool white) {
 }
 
 void ChessInstance::runWithChessData() {
-    ChessBoard chessBoard;
+    ChessBoard chessBoard(false);
     ChessData data;
     const std::string filename =
-            "/home/fpittermann/Documents/Projects/ChessConsole/data/lichessDatabase/outData/lichess_db_test_50.txt";
+            "/home/fpittermann/Documents/Projects/ChessConsole/data/lichessDatabase/outData/lichess_db_test.txt";
     data.readSimpleGames(filename);
     ChessLinkedListMoves *moves = data.getMoves();
     moves->setMoveHead(moves->getMoveRoot()); // set it to the root before the game beginns
