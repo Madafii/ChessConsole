@@ -5,12 +5,12 @@
 #ifndef CHESSUTILS_H
 #define CHESSUTILS_H
 
-#include <string>
 #include "ChessBoard.h"
+#include <string>
 
 class ChessUtils {
-public:
+  public:
     static std::string convertPGNToMyInput(std::string input, ChessBoard &board, const bool &white);
 };
 
-#endif //CHESSUTILS_H
+#endif // CHESSUTILS_H

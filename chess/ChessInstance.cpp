@@ -1,6 +1,7 @@
 #include "ChessInstance.h"
-#include "ChessData.h"
 #include "ChessBoardDraw.h"
+#include "ChessData.h"
+#include "ChessMoveLogic.h"
 #include <iostream>
 #include <random>
 
@@ -67,7 +68,7 @@ void ChessInstance::runRandom() {
         while (true) {
             const int rndFromPiece = distrFrom(gen);
             const ChessTile *fromTile = allPieces.at(rndFromPiece);
-            possMoves = chessBoard.getPossibleMoves(fromTile);
+            possMoves = ChessMoveLogic::getPossibleMoves(chessBoard, fromTile);
             if (possMoves.size() != 0) {
                 input += fromTile->getMove() + ":";
                 break;
@@ -96,14 +97,13 @@ void ChessInstance::runAgainstRandom(const bool white) {
                 return;
             }
         } else {
-            Pieces allPieces =
-                    chessBoard.isWhitesTurn() ? chessBoard.getAllWhiteTiles() : chessBoard.getAllBlackTiles();
+            Pieces allPieces = chessBoard.isWhitesTurn() ? chessBoard.getAllWhiteTiles() : chessBoard.getAllBlackTiles();
             std::uniform_int_distribution<> distrFrom(0, allPieces.size() - 1);
             Pieces possMoves;
             while (true) {
                 const int rndFromPiece = distrFrom(gen);
                 const ChessTile *fromTile = allPieces.at(rndFromPiece);
-                possMoves = chessBoard.getPossibleMoves(fromTile);
+                possMoves = ChessMoveLogic::getPossibleMoves(chessBoard, fromTile);
                 if (possMoves.size() != 0) {
                     input += fromTile->getMove() + ":";
                     break;
@@ -124,8 +124,8 @@ void ChessInstance::runAgainstRandom(const bool white) {
 void ChessInstance::runWithChessData() {
     ChessBoard chessBoard(false);
     ChessData data;
-    const std::string filename =
-            "/home/fpittermann/Documents/Projects/ChessConsole/data/lichessDatabase/outData/lichess_db_test.txt";
+    /*const std::string filename = "/home/fpittermann/Documents/Projects/ChessConsole/data/lichessDatabase/outData/lichess_db_test.txt";*/
+    const std::string filename = "../data/lichess/outData/lichess_db_standard.rated_2013-01.txt";
     data.readSimpleGames(filename);
     ChessLinkedListMoves *moves = data.getMoves();
     moves->setMoveHead(moves->getMoveRoot()); // set it to the root before the game beginns
