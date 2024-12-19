@@ -1,13 +1,13 @@
 #include "ChessData.h"
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <sstream>
-#include <chrono>
 
 #include "ChessBoard.h"
-// #include "ChessBoardDraw.h"
+#include "ChessBoardDraw.h"
 #include "ChessUtils.h"
 
 ChessData::ChessData() : movesLinkedList(std::make_unique<ChessLinkedListMoves>()) {}
@@ -77,14 +77,13 @@ void ChessData::processLine(const std::string_view line) {
     movesLinkedList->setMoveHead(movesLinkedList->getMoveRoot());
 }
 
-void ChessData::addPGNMove(const std::string &pgnMove, ChessBoard &board, bool &whitesTurn,
-                           const ResultPair &gameResult) {
+void ChessData::addPGNMove(const std::string &pgnMove, ChessBoard &board, bool &whitesTurn, const ResultPair &gameResult) {
     const std::string boardMove = ChessUtils::convertPGNToMyInput(pgnMove, board, whitesTurn);
     board.handleMoveInputNoChecks(boardMove, false);
+    // ChessBoardDraw boardDraw;
     // boardDraw.draw(board); // for debugging
     const std::string boardStr = board.getStringFromBoard();
-    movesLinkedList->addMove(boardStr, pgnMove, boardMove, whitesTurn ? gameResult.first : gameResult.second,
-                             whitesTurn);
+    movesLinkedList->addMove(boardStr, pgnMove, boardMove, whitesTurn ? gameResult.first : gameResult.second, whitesTurn);
     whitesTurn = !whitesTurn;
 }
 

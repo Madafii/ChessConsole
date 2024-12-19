@@ -123,19 +123,22 @@ void ChessInstance::runAgainstRandom(const bool white) {
 
 void ChessInstance::runWithChessData() {
     ChessBoard chessBoard(false);
+    ChessBoardDraw chessDraw;
     ChessData data;
     /*const std::string filename = "/home/fpittermann/Documents/Projects/ChessConsole/data/lichessDatabase/outData/lichess_db_test.txt";*/
-    const std::string filename = "../data/lichess/outData/lichess_db_standard.rated_2013-01.txt";
+    const std::string filename = "../data/lichess/outData/lichess_db_standard.rated_2013-01_backup.txt";
     data.readSimpleGames(filename);
     ChessLinkedListMoves *moves = data.getMoves();
     moves->setMoveHead(moves->getMoveRoot()); // set it to the root before the game beginns
 
     std::string input;
+    chessDraw.draw(chessBoard);
     while (true) {
         std::cin >> input;
         if (input == "quit") break;
         // handle game input
         const GameState game_state = chessBoard.handleInput(input);
+        chessDraw.draw(chessBoard);
         // get info for the next moves
         Move *move = moves->getAtMove(input);
         if (move == nullptr) {

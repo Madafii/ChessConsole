@@ -8,7 +8,7 @@
 
 ChessBoard::ChessBoard(const bool doAfterMoveChecks) : doAfterMoveChecks(doAfterMoveChecks) { initBoard(); }
 
-ChessBoard::~ChessBoard() {}
+ChessBoard::~ChessBoard() = default;
 
 void ChessBoard::initBoard() {
     board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Rook, true), 0, 0));

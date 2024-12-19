@@ -5,7 +5,7 @@
 #include <iostream>
 #include <utility>
 
-ChessMoveLogic::ChessMoveLogic() {}
+ChessMoveLogic::ChessMoveLogic() = default;
 
 Pieces ChessMoveLogic::getPossibleMoves(ChessBoard &board, const ChessTile *fromTile) {
     if (fromTile->piece == nullptr) return {};
@@ -259,10 +259,11 @@ bool ChessMoveLogic::isTileAttacked(ChessBoard &board, const bool white, const P
 }
 
 bool ChessMoveLogic::isTileFree(const ChessBoard &board, const Pieces &tilesToCheck) {
-    for (const ChessTile *tileToCheck : tilesToCheck) {
-        if (tileToCheck->piece != nullptr) return false;
-    }
-    return true;
+    return std::ranges::all_of(tilesToCheck, [](const ChessTile *tile) { return tile->piece == nullptr; });
+    /*for (const ChessTile *tileToCheck : tilesToCheck) {*/
+    /*    if (tileToCheck->piece != nullptr) return false;*/
+    /*}*/
+    /*return true;*/
 }
 
 ///
@@ -277,7 +278,7 @@ bool ChessMoveLogic::isKingChecked(ChessBoard &board, const bool white, const bo
         if (tile->piece->getType() == King) {
             possMoves = getPossibleMovesKingSingle(board, tile, cached);
         } else {
-            if (cached) {
+            if (!cached) {
                 possMoves = getPossibleMovesUncached(board, tile);
             } else {
                 possMoves = getPossibleMoves(board, tile);
