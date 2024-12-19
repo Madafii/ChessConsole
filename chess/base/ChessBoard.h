@@ -38,7 +38,7 @@ class ChessBoard {
     std::string getStringFromBoard();
 
     // basic callers
-    bool isWhitesTurn();
+    [[nodiscard]] bool isWhitesTurn() const;
 
     Pieces getAllPossibleMovesPiece(bool white, ChessPieceType piece);
     // get tiles

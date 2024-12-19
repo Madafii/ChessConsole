@@ -1,20 +1,21 @@
 #ifndef CHESSDATA_H
 #define CHESSDATA_H
 
-#include <string>
 #include "ChessLinkedListMoves.h"
+#include <string>
 
 class ChessBoard;
 
 class ChessData {
     using ResultPair = std::pair<RESULT, RESULT>;
-public:
+
+  public:
     explicit ChessData();
 
     void readSimpleGames(const std::string &filename);
-    ChessLinkedListMoves *getMoves() const;
+    [[nodiscard]] ChessLinkedListMoves *getMoves() const;
 
-private:
+  private:
     std::unique_ptr<ChessLinkedListMoves> movesLinkedList;
 
     ResultPair getResult(std::string_view result);

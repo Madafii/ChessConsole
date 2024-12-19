@@ -12,7 +12,7 @@ ChessLinkedListMoves::ChessLinkedListMoves() {
     head = root.get();
 }
 
-ChessLinkedListMoves::~ChessLinkedListMoves() {}
+ChessLinkedListMoves::~ChessLinkedListMoves() = default;
 
 /// Add a move and make it the new head
 /// @param nextBoard a text representation of the board after the move
@@ -20,8 +20,8 @@ ChessLinkedListMoves::~ChessLinkedListMoves() {}
 /// @param nextMove the played move in from:to format
 /// @param result end result of the currently played match
 /// @param nextWhite the color that played the move
-void ChessLinkedListMoves::addMove(const std::string &nextBoard, const std::string &nextPGN,
-                                   const std::string &nextMove, const RESULT &result, const bool nextWhite) {
+void ChessLinkedListMoves::addMove(const std::string &nextBoard, const std::string &nextPGN, const std::string &nextMove,
+                                   const RESULT &result, const bool nextWhite) {
     const std::string &key = createKey(nextWhite, nextBoard);
     if (head->nexts.contains(key)) {
         head = head->nexts.at(key).get();
@@ -50,17 +50,11 @@ void ChessLinkedListMoves::addResult(const RESULT &result) {
             break;
     }
 }
-void ChessLinkedListMoves::setMoveHead(Move *move) {
-    head = move;
-}
+void ChessLinkedListMoves::setMoveHead(Move *move) { head = move; }
 
-Move *ChessLinkedListMoves::getMoveHead() {
-    return head;
-}
+Move *ChessLinkedListMoves::getMoveHead() const { return head; }
 
-Move *ChessLinkedListMoves::getMoveRoot() {
-    return root.get();
-}
+Move *ChessLinkedListMoves::getMoveRoot() const { return root.get(); }
 
 std::string ChessLinkedListMoves::getKey() const { return createKey(head->white, head->board); }
 
@@ -73,9 +67,7 @@ Move *ChessLinkedListMoves::getAtKey(const std::string &key) const {
 }
 
 Move *ChessLinkedListMoves::getAtMove(const std::string &move) const {
-    const auto found = std::ranges::find_if(head->nexts, [&move](const auto &pair) {
-        return pair.second.get()->moveName == move;
-    });
+    const auto found = std::ranges::find_if(head->nexts, [&move](const auto &pair) { return pair.second.get()->moveName == move; });
     if (found == head->nexts.end()) {
         // std::cout << "ChessLinkedListMoves::getAtMove: move not found" << std::endl;
         return nullptr;
@@ -84,8 +76,7 @@ Move *ChessLinkedListMoves::getAtMove(const std::string &move) const {
 }
 
 Move *ChessLinkedListMoves::getAtPGN(const std::string &pgn) const {
-    const auto found =
-            std::ranges::find_if(head->nexts, [&pgn](const auto &pair) { return pair.second.get()->pgnName == pgn; });
+    const auto found = std::ranges::find_if(head->nexts, [&pgn](const auto &pair) { return pair.second.get()->pgnName == pgn; });
     if (found == head->nexts.end()) {
         // std::cout << "ChessLinkedListMoves::getAtPGN: pgn not found" << std::endl;
         return nullptr;
@@ -95,7 +86,7 @@ Move *ChessLinkedListMoves::getAtPGN(const std::string &pgn) const {
 
 std::vector<const Move *> ChessLinkedListMoves::getAllMoves() const {
     std::vector<const Move *> result;
-    for (const auto move : head->nexts | std::ranges::views::values) {
+    for (const auto &move : head->nexts | std::ranges::views::values) {
         result.push_back(move.get());
     }
     if (result.empty()) {
@@ -104,9 +95,7 @@ std::vector<const Move *> ChessLinkedListMoves::getAllMoves() const {
     return result;
 }
 
-std::string ChessLinkedListMoves::createKey(const bool &white, const std::string &board) {
-    return (white ? "W|" : "B|") + board;
-}
+std::string ChessLinkedListMoves::createKey(const bool &white, const std::string &board) { return (white ? "W|" : "B|") + board; }
 
 std::string ChessLinkedListMoves::getInfoMove(const Move *move) {
     std::string output;
@@ -125,14 +114,14 @@ std::string ChessLinkedListMoves::getInfoMove(const Move *move) {
 
 std::string ChessLinkedListMoves::getBasicInfo(const Move *move) {
     const Move *outputMove = move == nullptr ? head : move;
-    return std::format("move: {}, stats(w,l,d): {}, {}, {}\n", outputMove->moveName, outputMove->wins,
-                       outputMove->loses, outputMove->draws);
+    return std::format("move: {}, stats(w,l,d): {}, {}, {}\n", outputMove->moveName, outputMove->wins, outputMove->loses,
+                       outputMove->draws);
 }
 
 std::string ChessLinkedListMoves::getInfoNextMoves(const Move *move) {
     std::string output;
     const Move *outputMove = move == nullptr ? head : move;
-    for (const auto nextMove : outputMove->nexts | std::ranges::views::values) {
+    for (const auto &nextMove : outputMove->nexts | std::ranges::views::values) {
         output.append(getBasicInfo(nextMove.get()));
     }
     output.append(separatorLine);

@@ -10,11 +10,11 @@ class ChessPiece {
     explicit ChessPiece(ChessPieceType type, bool white);
     ~ChessPiece();
 
-    ChessPieceType getType() const;
-    bool isWhite() const;
+    [[nodiscard]] ChessPieceType getType() const;
+    [[nodiscard]] bool isWhite() const;
 
-    std::string getFullName() const;
-    char getShortName() const;
+    [[nodiscard]] std::string getFullName() const;
+    [[nodiscard]] char getShortName() const;
 
     static ChessPieceType getTypeFromShort(const char &shortName);
 
