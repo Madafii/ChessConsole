@@ -1,12 +1,6 @@
 #ifndef CHESSPEEPO_H
 #define CHESSPEEPO_H
 
+class ChessPeepo {};
 
-
-class ChessPeepo {
-
-};
-
-
-
-#endif //CHESSPEEPO_H
+#endif // CHESSPEEPO_H

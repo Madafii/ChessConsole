@@ -1,7 +1,3 @@
-//
-// Created by finnp on 10/26/24.
-//
-
 #ifndef CHESSUTILS_H
 #define CHESSUTILS_H
 

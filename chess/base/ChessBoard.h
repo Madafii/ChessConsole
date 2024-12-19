@@ -37,14 +37,14 @@ class ChessBoard {
 
     std::string getStringFromBoard();
 
+    // basic callers
     bool isWhitesTurn();
 
-    /*Pieces getAllPossibleMoves(bool white);*/
     Pieces getAllPossibleMovesPiece(bool white, ChessPieceType piece);
+    // get tiles
     Pieces getAllPiecesFor(bool white, ChessPieceType piece) const;
     Pieces getAllWhiteTiles() const;
     Pieces getAllBlackTiles() const;
-
     ChessTile *getTileAt(std::string_view pos) const;
     ChessTile *getTileAt(int x, int y) const;
 
@@ -52,7 +52,7 @@ class ChessBoard {
 
   private:
     std::vector<std::unique_ptr<ChessTile>> board;
-    std::unordered_map<const ChessPiece *, Pieces> possibleMovesCache; // TODO: still have to add this
+    std::unordered_map<const ChessTile *, Pieces> possibleMovesCache;
     bool whitesTurn = true;
     std::pair<bool, bool> whiteRookMoved = {false, false};
     std::pair<bool, bool> blackRookMoved = {false, false};

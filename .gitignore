@@ -38,7 +38,6 @@ cmake-build-debug/
 build/
 data/
 .idea/
-.clang-format
 .clang-tidy
 .clangd
 .cache

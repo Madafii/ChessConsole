@@ -4,7 +4,9 @@
 
 #ifndef CHESSINSTANCE_H
 #define CHESSINSTANCE_H
-#include "ChessBoard.h"
+
+#include <string>
+#include <vector>
 
 class ChessInstance {
   public:
@@ -17,8 +19,6 @@ class ChessInstance {
     void runWithChessData();
 
   private:
-    // TODO: make unique pointer or don't have it as a member variable
-    // ChessBoard *chessBoard;
     std::vector<std::string> gameOptions;
 
     void printGameOptions();

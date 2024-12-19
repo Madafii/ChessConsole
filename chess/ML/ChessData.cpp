@@ -21,9 +21,12 @@ void ChessData::readSimpleGames(const std::string &filename) {
         return;
     }
 
+    int lineCounter = 0;
     std::string line;
     while (std::getline(file, line)) {
         processLine(line);
+        ++lineCounter;
+        std::cout << "processed lines: " << lineCounter << std::endl;
     }
 
     file.close();

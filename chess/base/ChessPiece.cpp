@@ -1,65 +1,66 @@
-//
-// Created by fpittermann on 10/5/24.
-//
-
 #include "ChessPiece.h"
+#include <iostream>
 
 // TODO: could make this constexpr?
-ChessPiece::ChessPiece(const ChessPieceType type, const bool white)
-: _type(type), _white(white) {
+ChessPiece::ChessPiece(const ChessPieceType type, const bool white) : _type(type), _white(white) {
     switch (_type) {
-        case King: {
+        case King:
             _short = 'K';
             _long = "King";
             break;
-        }
-        case Queen: {
+        case Queen:
             _short = 'Q';
             _long = "Queen";
             break;
-        }
-        case Bishop: {
+        case Bishop:
             _short = 'B';
             _long = "Bishop";
             break;
-        }
-        case Knight: {
+        case Knight:
             _short = 'N';
             _long = "Knight";
             break;
-        }
-        case Rook: {
+        case Rook:
             _short = 'R';
             _long = "Rook";
             break;
-        }
-        case Pawn: {
+        case Pawn:
             _short = 'P';
             _long = "Pawn";
             break;
-        }
-        default: {
+        default:
             _short = '?';
             _long = "?";
             break;
-        }
     }
 }
 
 ChessPiece::~ChessPiece() {}
 
-ChessPieceType ChessPiece::getType() const {
-    return _type;
-}
+ChessPieceType ChessPiece::getType() const { return _type; }
 
-bool ChessPiece::isWhite() const {
-    return _white;
-}
+bool ChessPiece::isWhite() const { return _white; }
 
-std::string ChessPiece::getFullName() const {
-    return std::string("");
-}
+std::string ChessPiece::getFullName() const { return std::string(""); }
 
-char ChessPiece::getShortName() const {
-    return _short;
+char ChessPiece::getShortName() const { return _short; }
+
+inline ChessPieceType ChessPiece::getTypeFromShort(const char &shortName) {
+    switch (shortName) {
+        case 'K':
+            return King;
+        case 'Q':
+            return Queen;
+        case 'B':
+            return Bishop;
+        case 'N':
+            return Knight;
+        case 'R':
+            return Rook;
+        case 'P':
+            return Pawn;
+        default:
+            std::cout << "that is not a ChessPieceType" << std::endl;
+            return None;
+    }
 }

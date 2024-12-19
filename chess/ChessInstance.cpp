@@ -1,4 +1,5 @@
 #include "ChessInstance.h"
+#include "ChessBoard.h"
 #include "ChessBoardDraw.h"
 #include "ChessData.h"
 #include "ChessMoveLogic.h"
@@ -46,8 +47,7 @@ void ChessInstance::run() {
     boardDraw.draw(chessBoard);
     while (true) {
         std::cin >> input;
-        if (input == "quit")
-            break;
+        if (input == "quit") break;
         const GameState game_state = chessBoard.handleInput(input);
         boardDraw.draw(chessBoard);
         if (game_state != GameState::IN_PROGRESS) {
@@ -133,8 +133,7 @@ void ChessInstance::runWithChessData() {
     std::string input;
     while (true) {
         std::cin >> input;
-        if (input == "quit")
-            break;
+        if (input == "quit") break;
         // handle game input
         const GameState game_state = chessBoard.handleInput(input);
         // get info for the next moves
@@ -151,6 +150,7 @@ void ChessInstance::runWithChessData() {
         }
     }
 }
+
 inline void ChessInstance::printGameOptions() {
     std::cout << "The options are: " << std::endl;
     for (const std::string &option : gameOptions) {

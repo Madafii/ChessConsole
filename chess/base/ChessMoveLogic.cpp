@@ -2,28 +2,59 @@
 #include "ChessBoard.h"
 
 #include <algorithm>
+#include <iostream>
+#include <utility>
 
 ChessMoveLogic::ChessMoveLogic() {}
 
-Pieces ChessMoveLogic::getPossibleMoves(const ChessBoard &board, const ChessTile *fromTile) {
-    if (fromTile->piece == nullptr)
-        return {};
+Pieces ChessMoveLogic::getPossibleMoves(ChessBoard &board, const ChessTile *fromTile) {
+    if (fromTile->piece == nullptr) return {};
     switch (fromTile->piece->getType()) {
-    case Pawn:
-        return getPossibleMovesPawn(board, fromTile);
-    case Rook:
-        return getPossibleMovesRook(board, fromTile);
-    case Knight:
-        return getPossibleMovesKnight(board, fromTile);
-    case Bishop:
-        return getPossibleMovesBishop(board, fromTile);
-    case Queen:
-        return getPossibleMovesQueen(board, fromTile);
-    case King:
-        return getPossibleMovesKing(board, fromTile);
-    default:
-        return {};
+        case Pawn:
+            return getPossibleMovesCached(board, fromTile, getPossibleMovesPawn);
+        case Rook:
+            return getPossibleMovesCached(board, fromTile, getPossibleMovesRook);
+        case Knight:
+            return getPossibleMovesCached(board, fromTile, getPossibleMovesKnight);
+        case Bishop:
+            return getPossibleMovesCached(board, fromTile, getPossibleMovesBishop);
+        case Queen:
+            return getPossibleMovesCached(board, fromTile, getPossibleMovesQueen);
+        case King:
+            if (!board.possibleMovesCache.contains(fromTile)) {
+                board.possibleMovesCache.insert(std::make_pair(fromTile, getPossibleMovesKing(board, fromTile)));
+            }
+            return board.possibleMovesCache.at(fromTile);
+        default:
+            return {};
     }
+}
+
+Pieces ChessMoveLogic::getPossibleMovesUncached(ChessBoard &board, const ChessTile *fromTile) {
+    if (fromTile->piece == nullptr) return {};
+    switch (fromTile->piece->getType()) {
+        case Pawn:
+            return getPossibleMovesPawn(board, fromTile);
+        case Rook:
+            return getPossibleMovesRook(board, fromTile);
+        case Knight:
+            return getPossibleMovesKnight(board, fromTile);
+        case Bishop:
+            return getPossibleMovesBishop(board, fromTile);
+        case Queen:
+            return getPossibleMovesQueen(board, fromTile);
+        case King:
+            return getPossibleMovesKing(board, fromTile);
+        default:
+            return {};
+    }
+}
+
+Pieces ChessMoveLogic::getPossibleMovesCached(ChessBoard &board, const ChessTile *fromTile, possibleMovesFunc func) {
+    if (!board.possibleMovesCache.contains(fromTile)) {
+        board.possibleMovesCache.insert(std::make_pair(fromTile, func(board, fromTile)));
+    }
+    return board.possibleMovesCache.at(fromTile);
 }
 
 Pieces ChessMoveLogic::getPossibleMovesPawn(const ChessBoard &board, const ChessTile *fromTile) {
@@ -78,16 +109,27 @@ inline Pieces ChessMoveLogic::getPossibleMovesQueen(const ChessBoard &board, con
     return possibleMoves;
 }
 
-Pieces ChessMoveLogic::getPossibleMovesKing(const ChessBoard &board, const ChessTile *fromTile, const bool castling) {
-    static const std::vector directions = {std::pair(0, 1), std::pair(0, -1), std::pair(1, 1),  std::pair(1, -1),
-                                           std::pair(1, 0), std::pair(-1, 0), std::pair(-1, 1), std::pair(-1, -1)};
-    Pieces possibleMoves = getPossibleMovesByDirectionSingle(board, fromTile, directions);
-    if (castling && !isKingChecked(board, board.whitesTurn))
+Pieces ChessMoveLogic::getPossibleMovesKing(ChessBoard &board, const ChessTile *fromTile) {
+    Pieces possibleMoves = getPossibleMovesKingSingle(board, fromTile);
+    if (!isKingChecked(board, board.whitesTurn)) {
         ChessBoard::mergePossVec(possibleMoves, getPossibleMovesCastling(board, fromTile));
+    }
     return possibleMoves;
 }
 
-Pieces ChessMoveLogic::getPossibleMovesCastling(const ChessBoard &board, const ChessTile *fromTile) {
+Pieces ChessMoveLogic::getPossibleMovesKingSingle(ChessBoard &board, const ChessTile *fromTile, const bool cache) {
+    static const std::vector directions = {std::pair(0, 1), std::pair(0, -1), std::pair(1, 1),  std::pair(1, -1),
+                                           std::pair(1, 0), std::pair(-1, 0), std::pair(-1, 1), std::pair(-1, -1)};
+    if (!cache) {
+        return getPossibleMovesByDirectionSingle(board, fromTile, directions);
+    }
+    if (!board.possibleMovesCache.contains(fromTile)) {
+        board.possibleMovesCache.insert(std::make_pair(fromTile, getPossibleMovesByDirectionSingle(board, fromTile, directions)));
+    }
+    return board.possibleMovesCache.at(fromTile);
+}
+
+Pieces ChessMoveLogic::getPossibleMovesCastling(ChessBoard &board, const ChessTile *fromTile) {
     Pieces possibleMoves;
     const int x = fromTile->getX();
     const int y = fromTile->getY();
@@ -127,8 +169,7 @@ Pieces ChessMoveLogic::getPossibleMovesByDirection(const ChessBoard &board, cons
     for (const auto &[xDirection, yDirection] : directions) {
         for (int i = 1; i < 8; i++) {
             ChessTile *nextTile = board.getTileAt(x + i * xDirection, y + i * yDirection);
-            if (!addIfPossibleMove(fromTile, nextTile, possibleMoves))
-                break;
+            if (!addIfPossibleMove(fromTile, nextTile, possibleMoves)) break;
         }
     }
     return possibleMoves;
@@ -146,13 +187,13 @@ Pieces ChessMoveLogic::getPossibleMovesByDirectionSingle(const ChessBoard &board
     return possibleMoves;
 }
 
-Pieces ChessMoveLogic::getAllPossibleMoves(const ChessBoard &board, const bool white) {
+Pieces ChessMoveLogic::getAllPossibleMoves(ChessBoard &board, const bool white) {
     Pieces allPossibleMoves;
     const Pieces pieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
     for (const ChessTile *tile : pieceTiles) {
         Pieces newPossibleMoves;
         if (tile->piece->getType() == King) {
-            newPossibleMoves = getPossibleMovesKing(board, tile, false);
+            newPossibleMoves = getPossibleMovesKingSingle(board, tile);
         } else {
             newPossibleMoves = getPossibleMoves(board, tile);
         }
@@ -162,11 +203,11 @@ Pieces ChessMoveLogic::getAllPossibleMoves(const ChessBoard &board, const bool w
     return allPossibleMoves;
 }
 
-inline void ChessMoveLogic::filterPossibleMovesForChecks(const ChessBoard &board, const ChessTile *fromTile, Pieces &possibleMoves) {
+inline void ChessMoveLogic::filterPossibleMovesForChecks(ChessBoard &board, const ChessTile *fromTile, Pieces &possibleMoves) {
     std::erase_if(possibleMoves, [&board, &fromTile](ChessTile *toTile) { return isKingChecked(board, fromTile, toTile); });
 }
 
-bool ChessMoveLogic::isInputMovePossible(const ChessBoard &board, const ChessTile *fromTile, const ChessTile *toTile) {
+bool ChessMoveLogic::isInputMovePossible(ChessBoard &board, const ChessTile *fromTile, const ChessTile *toTile) {
     // get the possible moves for the from tile
     Pieces possibleMoves = getPossibleMoves(board, fromTile);
     filterPossibleMovesForChecks(board, fromTile, possibleMoves);
@@ -198,13 +239,13 @@ bool ChessMoveLogic::addIfPossibleMove(const ChessTile *fromTile, ChessTile *toT
 }
 
 // check if tile attacked by @param white that color
-bool ChessMoveLogic::isTileAttacked(const ChessBoard &board, const bool white, const Pieces &tilesToCheck) {
+bool ChessMoveLogic::isTileAttacked(ChessBoard &board, const bool white, const Pieces &tilesToCheck) {
     const Pieces pieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
     for (const ChessTile *tile : pieceTiles) {
         Pieces possMoves;
         // don't check castling otherwise will loop endlessly
         if (tile->piece->getType() == King) {
-            possMoves = getPossibleMovesKing(board, tile, false);
+            possMoves = getPossibleMovesKingSingle(board, tile);
         } else {
             possMoves = getPossibleMoves(board, tile);
         }
@@ -219,26 +260,31 @@ bool ChessMoveLogic::isTileAttacked(const ChessBoard &board, const bool white, c
 
 bool ChessMoveLogic::isTileFree(const ChessBoard &board, const Pieces &tilesToCheck) {
     for (const ChessTile *tileToCheck : tilesToCheck) {
-        if (tileToCheck->piece != nullptr)
-            return false;
+        if (tileToCheck->piece != nullptr) return false;
     }
     return true;
 }
 
 ///
+/// @param board the chess board to check this
 /// @param white The color to check for being checked
+/// @param cached if the cached positions should be checked
 /// @return if white is checked
-bool ChessMoveLogic::isKingChecked(const ChessBoard &board, const bool white) {
+bool ChessMoveLogic::isKingChecked(ChessBoard &board, const bool white, const bool cached) {
     const Pieces pieceTiles = !white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
     for (const ChessTile *tile : pieceTiles) {
         Pieces possMoves;
-        if (tile->piece->getType() == King)
-            possMoves = getPossibleMovesKing(board, tile, false);
-        else
-            possMoves = getPossibleMoves(board, tile);
+        if (tile->piece->getType() == King) {
+            possMoves = getPossibleMovesKingSingle(board, tile, cached);
+        } else {
+            if (cached) {
+                possMoves = getPossibleMovesUncached(board, tile);
+            } else {
+                possMoves = getPossibleMoves(board, tile);
+            }
+        }
         for (const ChessTile *possMove : possMoves) {
-            if (possMove->piece == nullptr)
-                continue;
+            if (possMove->piece == nullptr) continue;
             if (possMove->piece->getType() == King && possMove->piece->isWhite() == white) {
                 return true;
             }
@@ -251,10 +297,11 @@ bool ChessMoveLogic::isKingChecked(const ChessBoard &board, const bool white) {
 /// @param fromTile the tile to move from
 /// @param toTile the tile to move to
 /// @return if King is checked after that move
-bool ChessMoveLogic::isKingChecked(const ChessBoard &board, const ChessTile *fromTile, ChessTile *toTile) {
+bool ChessMoveLogic::isKingChecked(ChessBoard &board, const ChessTile *fromTile, ChessTile *toTile) {
     // make the move then check the board.
     const bool white = fromTile->piece->isWhite();
     // that special move happened so extra rule with capturing
+    // temporarily change the piece positions
     bool resetEnPassant = false;
     ChessTile *enPassantTile = nullptr;
     std::unique_ptr<ChessPiece> enPassantPiece = nullptr;
@@ -270,7 +317,11 @@ bool ChessMoveLogic::isKingChecked(const ChessBoard &board, const ChessTile *fro
     std::unique_ptr<ChessPiece> tmpPieceTo = std::move(toTile->piece);
     auto *tmpTile = const_cast<ChessTile *>(fromTile);
     toTile->piece = std::move(tmpTile->piece);
-    const bool isChecked = isKingChecked(board, white);
+
+    // do the check for the not cached state because this position is just temporary
+    const bool isChecked = isKingChecked(board, white, false);
+
+    // reset all the pieces
     tmpTile->piece = std::move(toTile->piece);
     toTile->piece = std::move(tmpPieceTo);
     if (resetEnPassant) {
@@ -279,12 +330,12 @@ bool ChessMoveLogic::isKingChecked(const ChessBoard &board, const ChessTile *fro
     return isChecked;
 }
 
-bool ChessMoveLogic::isKingCheckmate(const ChessBoard &board) {
+bool ChessMoveLogic::isKingCheckmate(ChessBoard &board) {
     const Pieces pieceTiles = !board.whitesTurn ? board.getAllWhiteTiles() : board.getAllBlackTiles();
     for (const ChessTile *tile : pieceTiles) {
         Pieces possMoves;
         if (tile->piece->getType() == King) {
-            possMoves = getPossibleMovesKing(board, tile, false);
+            possMoves = getPossibleMovesKingSingle(board, tile);
         } else {
             possMoves = getPossibleMoves(board, tile);
         }
@@ -296,11 +347,10 @@ bool ChessMoveLogic::isKingCheckmate(const ChessBoard &board) {
     return true;
 }
 
-bool ChessMoveLogic::isDraw(const ChessBoard &board) {
+bool ChessMoveLogic::isDraw(ChessBoard &board) {
     // if (isThreefoldRepetition()) // seems optional so deactivate for now
     // return true; // self explaining :)
-    if (getAllPossibleMoves(board, !board.whitesTurn).size() <= 0 && !isKingChecked(board, !board.whitesTurn))
-        return true; // stalemate
+    if (getAllPossibleMoves(board, !board.whitesTurn).size() <= 0 && !isKingChecked(board, !board.whitesTurn)) return true; // stalemate
     // if (movesSinceLastCapture > 100) // maybe that is optional too but leave like this for now
     // return true; // 100 half turns with no capture or pawn move
     // check for any other dead position where a win is not possible anymore
@@ -320,10 +370,8 @@ bool ChessMoveLogic::isDeadPosition(const ChessBoard &board) {
     const Pieces blackPieces = board.getAllBlackTiles();
     const size_t whiteSize = whitePieces.size();
     const size_t blackSize = blackPieces.size();
-    if (whiteSize > 2 || blackSize > 2)
-        return false; // always still possible if more then two pieces
-    if (whiteSize == 1 && blackSize == 1)
-        return true; // only kings left
+    if (whiteSize > 2 || blackSize > 2) return false;  // always still possible if more then two pieces
+    if (whiteSize == 1 && blackSize == 1) return true; // only kings left
 
     auto is_Bishop = [](const ChessTile *tile) {
         if (tile->piece->getType() == Bishop) {
@@ -345,12 +393,9 @@ bool ChessMoveLogic::isDeadPosition(const ChessBoard &board) {
     const auto itBlackKnight = std::ranges::find_if(blackPieces, is_Knight);
     if (whitePieces.size() == 2 && blackPieces.size() == 2) {
         // only if both are bishop and they are on the same color tile
-        if (itWhiteBishop == whitePieces.end())
-            return false;
-        if (itBlackBishop == blackPieces.end())
-            return false;
-        if ((*itWhiteBishop)->piece->isWhite() == (*itBlackBishop)->piece->isWhite())
-            return true;
+        if (itWhiteBishop == whitePieces.end()) return false;
+        if (itBlackBishop == blackPieces.end()) return false;
+        if ((*itWhiteBishop)->piece->isWhite() == (*itBlackBishop)->piece->isWhite()) return true;
         return false;
     }
     // if the only other piece in the game is one of them also a dead position

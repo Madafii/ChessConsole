@@ -1,7 +1,3 @@
-//
-// Created by finnp on 10/26/24.
-//
-
 #include "ChessUtils.h"
 #include "ChessMoveLogic.h"
 
@@ -29,43 +25,40 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard &board
     const std::string Leftovers = input.substr(0, input.size() - 2);
     std::string extra = "";
     switch (input[0]) {
-    case 'K':
-        typeToMove = King;
-        break;
-    case 'Q':
-        typeToMove = Queen;
-        break;
-    case 'R':
-        typeToMove = Rook;
-        break;
-    case 'B':
-        typeToMove = Bishop;
-        break;
-    case 'N':
-        typeToMove = Knight;
-        break;
-    case 'O':
-        if (input.size() == 3) {
-            if (white) {
-                return "e1:g1";
+        case 'K':
+            typeToMove = King;
+            break;
+        case 'Q':
+            typeToMove = Queen;
+            break;
+        case 'R':
+            typeToMove = Rook;
+            break;
+        case 'B':
+            typeToMove = Bishop;
+            break;
+        case 'N':
+            typeToMove = Knight;
+            break;
+        case 'O':
+            if (input.size() == 3) {
+                if (white) {
+                    return "e1:g1";
+                }
+                return "e8:g8";
             }
-            return "e8:g8";
-        }
-        if (white) {
-            return "e1:c1";
-        }
-        return "e8:c8";
-    default: // pawns
-        typeToMove = Pawn;
-        break;
+            if (white) {
+                return "e1:c1";
+            }
+            return "e8:c8";
+        default: // pawns
+            typeToMove = Pawn;
+            break;
     }
-    if (Leftovers.size() >= 2)
-        extra = input.substr(1, 1);
-    if (Leftovers.size() >= 3)
-        extra = input.substr(1, 2);
+    if (Leftovers.size() >= 2) extra = input.substr(1, 1);
+    if (Leftovers.size() >= 3) extra = input.substr(1, 2);
     if (typeToMove == Pawn) {
-        if (Leftovers.size() >= 1)
-            extra = input.substr(0, 1);
+        if (Leftovers.size() >= 1) extra = input.substr(0, 1);
     }
     // find the piece To move
     // Pieces pieces = board.getAllPossibleMovesPiece(white, typeToMove);
@@ -83,11 +76,9 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard &board
             }
             return false;
         });
-        if (it == possibleMoves.end())
-            continue;
+        if (it == possibleMoves.end()) continue;
         foundFromTile = piece;
-        if (extra.size() == 0)
-            break;
+        if (extra.size() == 0) break;
         // is like a move hint if there are multiple same pieces that have the to move as a possibility
         std::string tmpMoveTo = piece->getMove();
         if (extra.size() == 1) {

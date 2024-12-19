@@ -9,16 +9,15 @@ struct ChessBoardDrawSettings {
 };
 
 class ChessBoardDraw {
-public:
+  public:
     explicit ChessBoardDraw(ChessBoardDrawSettings settings = ChessBoardDrawSettings());
 
-    void draw(const ChessBoard& board);
+    void draw(const ChessBoard &board);
 
     ChessBoardDrawSettings &getSettings();
-private:
+
+  private:
     ChessBoardDrawSettings settings;
 };
 
-
-
-#endif //CHESSBOARDDRAW_H
+#endif // CHESSBOARDDRAW_H

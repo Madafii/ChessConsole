@@ -1,14 +1,11 @@
-//
-// Created by fpittermann on 12/14/24.
-//
-
 #include "ChessBoardDraw.h"
+
+#include <iostream>
 
 ChessBoardDraw::ChessBoardDraw(const ChessBoardDrawSettings settings) : settings(settings) {}
 
 void ChessBoardDraw::draw(const ChessBoard &board) {
-    if (settings.sysClear)
-        system("clear");
+    if (settings.sysClear) system("clear");
     // Print the chessboard with characters
     for (int y = 7; y >= 0; --y) {
         std::cout << " " << y + 1 << " ";
@@ -38,6 +35,4 @@ void ChessBoardDraw::draw(const ChessBoard &board) {
     std::cout << "    a  b  c  d  e  f  g  h " << std::endl;
 }
 
-inline ChessBoardDrawSettings &ChessBoardDraw::getSettings() {
-    return settings;
-}
+inline ChessBoardDrawSettings &ChessBoardDraw::getSettings() { return settings; }
