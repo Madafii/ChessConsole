@@ -102,8 +102,8 @@ void ChessBoard::handleMoveInputNoChecks(const std::string_view input, const boo
     std::string inputMove(input.substr(0, 5));
 
     // get the tiles directly
-    inputMove[1] = inputMove[1] - 1;
-    inputMove[4] = inputMove[4] - 1;
+    inputMove[1] = static_cast<char>(inputMove[1] - 1);
+    inputMove[4] = static_cast<char>(inputMove[4] - 1);
     ChessTile *fromTile = getTileAt(inputMove.substr(0, 2));
     ChessTile *toTile = getTileAt(inputMove.substr(3));
 
@@ -155,7 +155,7 @@ Pieces ChessBoard::getAllBlackTiles() const {
     return blackTiles;
 }
 
-bool ChessBoard::isWhitesTurn() { return whitesTurn; }
+bool ChessBoard::isWhitesTurn() const { return whitesTurn; }
 
 // TODO improve if I want to with better getAll.. but for single pieces not all
 // of them
@@ -196,9 +196,7 @@ void ChessBoard::move(ChessTile *fromTile, ChessTile *toTile) {
     }
 
     // for optional or 100 moves draw rule
-    if (toTile->piece != nullptr) {
-        movesSinceLastCapture = 0;
-    } else if (fromTile->piece->getType() == Pawn) {
+    if (toTile->piece != nullptr || fromTile->piece->getType() == Pawn) {
         movesSinceLastCapture = 0;
     } else {
         movesSinceLastCapture++;
@@ -343,15 +341,15 @@ PiecePair ChessBoard::getMoveTilesFromInput(const std::string &input) const {
     }
     std::string subStrFrom = input.substr(0, 2);
     std::string subStrTo = input.substr(3);
-    subStrFrom[1] = subStrFrom[1] - 1;
-    subStrTo[1] = subStrTo[1] - 1;
+    subStrFrom[1] = static_cast<char>(subStrFrom[1] - 1);
+    subStrTo[1] = static_cast<char>(subStrTo[1] - 1);
     ChessTile *fromTile = getTileAt(subStrFrom);
     ChessTile *toTile = getTileAt(subStrTo);
     if (fromTile == nullptr || toTile == nullptr) {
         std::cout << "ChessBoard::getMoveTilesFromInput: there is no tile like that" << std::endl;
         return std::nullopt;
     }
-    if (fromTile->piece.get() == nullptr || fromTile->piece->isWhite() != whitesTurn) {
+    if (fromTile->piece == nullptr || fromTile->piece->isWhite() != whitesTurn) {
         std::cout << "ChessBoard::getMoveTilesFromInput: trying to move a piece "
                      "from the opponent or no piece"
                   << std::endl;

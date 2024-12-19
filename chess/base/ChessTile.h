@@ -10,9 +10,9 @@ class ChessTile {
   public:
     explicit ChessTile(std::unique_ptr<ChessPiece> piece, int x, int y);
 
-    int getX() const { return _x; }
-    int getY() const { return _y; }
-    std::string getMove() const;
+    [[nodiscard]] int getX() const { return _x; }
+    [[nodiscard]] int getY() const { return _y; }
+    [[nodiscard]] std::string getMove() const;
     std::unique_ptr<ChessPiece> piece;
 
     static const std::unordered_map<char, int> mapXtoInt;
