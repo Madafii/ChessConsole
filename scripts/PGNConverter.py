@@ -2,20 +2,22 @@ def pgn_to_moves(pgn):
     moves = [move for move in pgn.split() if move[0].isalpha()]
     return moves
 
+
 def filter_info_data(info):
-    info_data_raw = info.split('\n')
+    info_data_raw = info.split("\n")
     info_map = dict()
     for info_line in info_data_raw:
-        info_line = info_line.strip('[]')
-        splited_info = info_line.split(' ', 1)
+        info_line = info_line.strip("[]")
+        splited_info = info_line.split(" ", 1)
         info_map[splited_info[0]] = splited_info[1].strip('"')
     return info_map
 
+
 def simplify_pgn_data(input_file, output_file):
-    with open(input_file, 'r') as f:
+    with open(input_file, "r") as f:
         content = f.read()
 
-    lines = content.strip().split('\n\n')
+    lines = content.strip().split("\n\n")
     gameInfoPairs = [(lines[i], lines[i + 1]) for i in range(0, len(lines) - 1, 2)]
     formatted_games = []
 
@@ -24,33 +26,35 @@ def simplify_pgn_data(input_file, output_file):
         if '[Termination "Normal"]' not in info:
             continue
         moves = pgn_to_moves(game[1])
-        formatted_moves = ', '.join(f'"{m}"' for m in moves)
-        formatted_games.append((info, f'{{ {formatted_moves} }}'))
+        formatted_moves = ", ".join(f'"{m}"' for m in moves)
+        formatted_games.append((info, f"{{ {formatted_moves} }}"))
 
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         for game in formatted_games:
-            f.write(game[0] + ' : ' + game[1] + '\n')
+            f.write(game[0] + " : " + game[1] + "\n")
+
 
 def get_win_and_pgn_data(input_file, output_file):
-    with open(input_file, 'r') as f:
+    with open(input_file, "r") as f:
         content = f.read()
 
-    lines = content.strip().split('\n\n')
+    lines = content.strip().split("\n\n")
     gameInfoPairs = [(lines[i], lines[i + 1]) for i in range(0, len(lines) - 1, 2)]
     formatted_games = []
 
     for game in gameInfoPairs:
         info = filter_info_data(game[0])
-        result = info['Result'].strip('"')
-        if 'Normal' not in info['Termination'] :
+        result = info["Result"].strip('"')
+        if "Normal" not in info["Termination"]:
             continue
         moves = pgn_to_moves(game[1])
-        formatted_moves = ' '.join(f'{m}' for m in moves)
-        formatted_games.append((result, f'{formatted_moves}'))
+        formatted_moves = " ".join(f"{m}" for m in moves)
+        formatted_games.append((result, f"{formatted_moves}"))
 
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         for game in formatted_games:
-            f.write(game[0] + ' : ' + game[1] + '\n')
+            f.write(game[0] + " : " + game[1] + "\n")
+
 
 def pgn_as_list(input):
     words = input.split()
@@ -58,16 +62,18 @@ def pgn_as_list(input):
     output_string = ",".join(quoted_words)
     return output_string
 
+
 def main():
-    # input_file = '../data/lichessDatabase/rawData/lichess_db_standard_rated_2013-01.pgn'
-    # output_file = '../data/lichessDatabase/outData/lichess_db_standard.rated_2013-01.txt'
-    # get_win_and_pgn_data(input_file, output_file)
+    input_file = "../data/lichess/rawData/lichess_db_standard_rated_2014-01.pgn"
+    output_file = "../data/lichess/outData/lichess_db_standard.rated_2014-01.txt"
+    get_win_and_pgn_data(input_file, output_file)
     # simplify_pgn_data(input_file, output_file)
-    print(pgn_as_list("d4 d5 Bd2 Nc6 Nf3 Nf6 c4 dxc4 Nc3 Nxd4 Nxd4 Qxd4 e3 Qc5 Qa4  Bd7 Qxc4 Qxc4 Bxc4 e6 O-O O-O-O Be1 a6 e4 Bc6 f3 Bc5  Bf2 Nd7 Rad1 Bxf2  Kxf2 Nc5 Rxd8  Rxd8 Ke3 Bb5 Bxb5 axb5 Nxb5 Rd3  Ke2 Rd7 Rc1 b6 b4 Na6 Na7  Kb7 Nb5 Nxb4 a4 c6 Nc3 Ka6 Rb1 Ka5 h4 Nd3 g4 Nf4  Ke3 e5 h5 Rd3  Kf2 Rxc3 Rd1 Rc2  Kg3 Rg2  Kh4 f6 Rd6 h6 Rd7 g5"))
+    # print(pgn_as_list("d4 d5 Bd2 Nc6 Nf3 Nf6 c4 dxc4 Nc3 Nxd4 Nxd4 Qxd4 e3 Qc5 Qa4  Bd7 Qxc4 Qxc4 Bxc4 e6 O-O O-O-O Be1 a6 e4 Bc6 f3 Bc5  Bf2 Nd7 Rad1 Bxf2  Kxf2 Nc5 Rxd8  Rxd8 Ke3 Bb5 Bxb5 axb5 Nxb5 Rd3  Ke2 Rd7 Rc1 b6 b4 Na6 Na7  Kb7 Nb5 Nxb4 a4 c6 Nc3 Ka6 Rb1 Ka5 h4 Nd3 g4 Nf4  Ke3 e5 h5 Rd3  Kf2 Rxc3 Rd1 Rc2  Kg3 Rg2  Kh4 f6 Rd6 h6 Rd7 g5"))
+
 
 main()
 
-# example 
+# example
 #
 # [Event "Rated Bullet tournament https://lichess.org/tournament/RCOPb6Bo"]
 # [Site "https://lichess.org/aSWMBMRI"]

@@ -3,11 +3,12 @@
 #include "ChessBoardDraw.h"
 #include "ChessData.h"
 #include "ChessMoveLogic.h"
+#include "ChessPeepo.h"
 #include <iostream>
 #include <random>
 
 ChessInstance::ChessInstance() {
-    gameOptions = {"normal", "random", "againstRandom", "data", "quit"};
+    gameOptions = {"normal", "random", "againstRandom", "data", "peepo", "quit"};
 
     std::cout << "Select the game you want to play: " << std::endl;
     printGameOptions();
@@ -28,6 +29,8 @@ ChessInstance::ChessInstance() {
         } else if (playOption == gameOptions[3]) {
             runWithChessData();
         } else if (playOption == gameOptions[4]) {
+            runAgainstPeepo();
+        } else if (playOption == gameOptions[5]) {
             std::cout << "Quitting..." << std::endl;
             break;
         } else {
@@ -36,7 +39,7 @@ ChessInstance::ChessInstance() {
     }
 }
 
-ChessInstance::~ChessInstance() {}
+ChessInstance::~ChessInstance() = default;
 
 void ChessInstance::run() {
     ChessBoard chessBoard(false);
@@ -62,7 +65,7 @@ void ChessInstance::runRandom() {
     std::mt19937 gen(rd());
     while (true) {
         Pieces allPieces = chessBoard.isWhitesTurn() ? chessBoard.getAllWhiteTiles() : chessBoard.getAllBlackTiles();
-        std::uniform_int_distribution<> distrFrom(0, allPieces.size() - 1);
+        std::uniform_int_distribution<> distrFrom(0, static_cast<int>(allPieces.size()) - 1);
         std::string input;
         Pieces possMoves;
         while (true) {
@@ -148,6 +151,44 @@ void ChessInstance::runWithChessData() {
             moves->setMoveHead(move);
             std::cout << moves->getInfoNextMoves() << std::endl;
         }
+        if (game_state != GameState::IN_PROGRESS) {
+            break;
+        }
+    }
+}
+
+void ChessInstance::runAgainstPeepo() {
+    ChessBoard chessBoard;
+    ChessBoardDraw chessDraw;
+
+    // get the data
+    ChessData data;
+    const std::string filename = "../data/lichess/outData/lichess_db_standard.rated_2014-01.txt";
+    data.readSimpleGames(filename);
+    ChessLinkedListMoves *moves = data.getMoves();
+    moves->setMoveHead(moves->getMoveRoot()); // set it to the root before the game beginns
+
+    // your opponent
+    ChessPeepo peepo(chessBoard, data);
+
+    std::string input;
+    chessDraw.draw(chessBoard);
+    while (true) {
+        std::cin >> input;
+        if (input == "quit") break;
+
+        // handle players move
+        const GameState game_state = chessBoard.handleInput(input);
+        // TODO: temp solution because head could get nullptr here so for now just do like that here
+        if (moves->getMoveHead() != nullptr) {
+            moves->setMoveHead(moves->getAtMove(input));
+        }
+        chessDraw.draw(chessBoard);
+
+        // peepos move
+        peepo.makeMostPlayedMove();
+        chessDraw.draw(chessBoard);
+
         if (game_state != GameState::IN_PROGRESS) {
             break;
         }

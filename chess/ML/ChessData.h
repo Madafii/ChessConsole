@@ -13,6 +13,7 @@ class ChessData {
     explicit ChessData();
 
     void readSimpleGames(const std::string &filename);
+    // TODO: save linked list and reader for that
     [[nodiscard]] ChessLinkedListMoves *getMoves() const;
 
   private:

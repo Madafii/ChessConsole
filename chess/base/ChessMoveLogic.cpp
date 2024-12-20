@@ -22,7 +22,8 @@ Pieces ChessMoveLogic::getPossibleMoves(ChessBoard &board, const ChessTile *from
             return getPossibleMovesCached(board, fromTile, getPossibleMovesQueen);
         case King:
             if (!board.possibleMovesCache.contains(fromTile)) {
-                board.possibleMovesCache.insert(std::make_pair(fromTile, getPossibleMovesKing(board, fromTile)));
+                // do insert and assign here because this will also include moves from castling which are not included sometimes
+                board.possibleMovesCache[fromTile] = getPossibleMovesKing(board, fromTile);
             }
             return board.possibleMovesCache.at(fromTile);
         default:

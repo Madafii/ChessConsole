@@ -1,6 +1,5 @@
 add_library(chess
     ChessInstance.h ChessInstance.cpp
-    ChessPeepo.h ChessPeepo.cpp
 )
 
 target_include_directories(chess PUBLIC ${CMAKE_CURRENT_LIST_DIR})

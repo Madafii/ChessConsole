@@ -50,6 +50,8 @@ void ChessLinkedListMoves::addResult(const RESULT &result) {
             break;
     }
 }
+
+// TODO: I think i don't want this to be able to be nullptr so fix that later
 void ChessLinkedListMoves::setMoveHead(Move *move) { head = move; }
 
 Move *ChessLinkedListMoves::getMoveHead() const { return head; }

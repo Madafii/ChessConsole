@@ -44,7 +44,7 @@ void ChessBoard::initBoard() {
 GameState ChessBoard::handleInput(const std::string_view input) {
     const std::string color = whitesTurn ? "white " : "black ";
     if (input == "resign") {
-        std::cout << color << "won" << std::endl;
+        std::cout << color << "resigned" << std::endl;
         return GameState::WON;
     }
     if (input == "draw") {
