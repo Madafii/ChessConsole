@@ -6,7 +6,7 @@ Rules
     - rooks and king have not been moved yet
 - that pawn thingy
     - can only happen in the next turn
- 
+
 Piece Names
  - King K
  - Queen Q
@@ -17,4 +17,10 @@ Piece Names
 
 Input
  - {from}:{to}
- - from, to = xy = e4 or f6 
+ - from, to = xy = e4 or f6
+
+Game modes
+ - normal
+ - random
+ - againstRandom
+ - data
