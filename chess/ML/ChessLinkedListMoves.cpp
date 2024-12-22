@@ -34,6 +34,8 @@ void ChessLinkedListMoves::addMove(const std::string &nextBoard, const std::stri
     addResult(result);
 }
 
+void ChessLinkedListMoves::addMoveCompressed(const std::string &nextMove, const RESULT &result, bool nextWhite) {}
+
 void ChessLinkedListMoves::addResult(const RESULT &result) {
     // TODO: watched video where atomic_ref was used could work here? When starting to use threads.
     switch (result) {
@@ -50,6 +52,8 @@ void ChessLinkedListMoves::addResult(const RESULT &result) {
             break;
     }
 }
+
+void ChessLinkedListMoves::addResultCompressed(const RESULT &result) {}
 
 // TODO: I think i don't want this to be able to be nullptr so fix that later
 void ChessLinkedListMoves::setMoveHead(Move *move) { head = move; }
@@ -97,8 +101,6 @@ std::vector<const Move *> ChessLinkedListMoves::getAllMoves() const {
     return result;
 }
 
-std::string ChessLinkedListMoves::createKey(const bool &white, const std::string &board) { return (white ? "W|" : "B|") + board; }
-
 std::string ChessLinkedListMoves::getInfoMove(const Move *move) {
     std::string output;
     const Move *outputMove = move == nullptr ? head : move;
@@ -137,3 +139,45 @@ std::string ChessLinkedListMoves::getFullInfo(const Move *move) {
     output.append(getInfoNextMoves(outputMove));
     return output;
 }
+
+std::string ChessLinkedListMoves::createKey(const bool &white, const std::string &board) { return (white ? "W|" : "B|") + board; }
+
+std::bitset<16> ChessLinkedListMoves::createData(const std::string &nextMove, bool nextWhite) {
+    std::bitset<16> outSet;
+    const std::bitset<3> firstLetter = xToBit.at(nextMove[0]);
+    const std::bitset<3> firstNumber = yToBit.at(nextMove[1]);
+    const std::bitset<3> secondLetter = xToBit.at(nextMove[2]);
+    const std::bitset<3> secondNumber = yToBit.at(nextMove[3]);
+    outSet.set(15, firstLetter[2]);
+    outSet.set(14, firstLetter[1]);
+    outSet.set(13, firstLetter[0]);
+    outSet.set(12, firstNumber[2]);
+    outSet.set(11, firstNumber[1]);
+    outSet.set(10, firstNumber[0]);
+    outSet.set(9, secondLetter[2]);
+    outSet.set(8, secondLetter[1]);
+    outSet.set(7, secondLetter[0]);
+    outSet.set(6, secondNumber[2]);
+    outSet.set(5, secondNumber[1]);
+    outSet.set(4, secondNumber[0]);
+    // if pawn won
+    if (nextMove.size() > 6) {
+        const std::bitset<2> pawnLetter = pawnToBit.at(nextMove[5]);
+        outSet.set(3, pawnLetter[1]);
+        outSet.set(2, pawnLetter[0]);
+    }
+    outSet.set(1, nextWhite);
+
+    return outSet;
+}
+
+const std::map<char, std::bitset<3>> ChessLinkedListMoves::xToBit{
+    {'a', std::bitset<3>("000")}, {'b', std::bitset<3>("001")}, {'c', std::bitset<3>("010")}, {'d', std::bitset<3>("011")},
+    {'e', std::bitset<3>("100")}, {'f', std::bitset<3>("101")}, {'g', std::bitset<3>("110")}, {'h', std::bitset<3>("111")}};
+
+const std::map<char, std::bitset<3>> ChessLinkedListMoves::yToBit{
+    {'1', std::bitset<3>("000")}, {'2', std::bitset<3>("001")}, {'3', std::bitset<3>("010")}, {'4', std::bitset<3>("011")},
+    {'5', std::bitset<3>("100")}, {'6', std::bitset<3>("101")}, {'7', std::bitset<3>("110")}, {'8', std::bitset<3>("111")}};
+
+const std::map<char, std::bitset<2>> ChessLinkedListMoves::pawnToBit {
+    {'Q', std::bitset<2>(""), {'R', std::bitset<2>("01")}, {'B', std::bitset<2>("10")}, {'N', std::bitset<2>("11")}};

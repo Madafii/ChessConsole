@@ -163,7 +163,7 @@ void ChessInstance::runAgainstPeepo() {
 
     // get the data
     ChessData data;
-    const std::string filename = "../data/lichess/outData/lichess_db_standard.rated_2014-01.txt";
+    const std::string filename = "../data/lichess/outData/lichess_db_standard.rated_2013-01_backup.txt";
     data.readSimpleGames(filename);
     ChessLinkedListMoves *moves = data.getMoves();
     moves->setMoveHead(moves->getMoveRoot()); // set it to the root before the game beginns

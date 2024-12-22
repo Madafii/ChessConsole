@@ -1,9 +1,12 @@
 #ifndef CHESSMOVE_H
 #define CHESSMOVE_H
 
+#include <bitset>
+#include <cstring>
 #include <map>
 #include <memory>
 #include <string>
+#include <sys/types.h>
 #include <utility>
 #include <vector>
 
@@ -14,8 +17,8 @@ enum class RESULT { LOSE = -1, DRAW = 0, WIN = 1 };
 // should only exist once in the whole tree but multiple branches could reach it (maybe solve it by merging
 // afterwards)
 struct Move {
-    Move(std::string board, std::string pgn, std::string move, const bool &white, const Move *previousMove)
-        : board(std::move(board)), pgnName(std::move(pgn)), moveName(std::move(move)), white(white), prev{previousMove} {}
+    Move(std::string board, std::string pgn, std::string move, const bool &white /*, const Move *previousMove*/)
+        : board(std::move(board)), pgnName(std::move(pgn)), moveName(std::move(move)), white(white) /*, prev{previousMove}*/ {}
     const std::string board;
     const std::string pgnName;
     const std::string moveName;
@@ -23,8 +26,17 @@ struct Move {
     u_int32_t wins = 0;
     u_int32_t loses = 0;
     u_int32_t draws = 0;
-    const Move *prev = nullptr;
+    /*const Move *prev = nullptr;*/
     std::map<const std::string, std::shared_ptr<Move>> nexts;
+};
+
+struct MoveCompressed {
+    explicit MoveCompressed(const std::bitset<16> inData) : data{inData} {};
+    const std::bitset<16> data;
+    u_int64_t wins_64t = 0;
+    u_int64_t loses_64t = 0;
+    u_int64_t draws_64t = 0;
+    std::vector<std::unique_ptr<MoveCompressed>> nexts;
 };
 
 class ChessLinkedListMoves {
@@ -35,8 +47,10 @@ class ChessLinkedListMoves {
     // adders
     void addMove(const std::string &nextBoard, const std::string &nextPGN, const std::string &nextMove, const RESULT &result,
                  bool nextWhite);
+    void addMoveCompressed(const std::string &nextMove, const RESULT &result, bool nextWhite);
 
     void addResult(const RESULT &result);
+    void addResultCompressed(const RESULT &result);
 
     // manually set the head to another move
     void setMoveHead(Move *move);
@@ -59,10 +73,15 @@ class ChessLinkedListMoves {
 
     // statics
     static std::string createKey(const bool &white, const std::string &board);
+    static std::bitset<16> createData(const std::string &nextMove, bool nextWhite);
 
   private:
-    Move *head = nullptr;
-    std::unique_ptr<Move> root;
+    MoveCompressed *head = nullptr;
+    std::unique_ptr<MoveCompressed> root;
+
+    static const std::map<char, std::bitset<3>> xToBit;
+    static const std::map<int, std::bitset<3>> yToBit;
+    static const std::map<int, std::bitset<2>> pawnToBit;
 };
 
 #endif
