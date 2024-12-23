@@ -7,34 +7,49 @@
 const std::string separatorLine = "------------------------------------------------------------------------------------------\n";
 
 ChessLinkedListMoves::ChessLinkedListMoves() {
-    // create the root and set the head to that. TODO: set the original boardStr for the root
-    root = std::make_unique<Move>("", "", "", true, nullptr);
+    // create the root and set the head to that.
+    constexpr std::bitset<16> emptyInData;
+    root = std::make_unique<MoveCompressed>(emptyInData);
     head = root.get();
 }
 
 ChessLinkedListMoves::~ChessLinkedListMoves() = default;
 
-/// Add a move and make it the new head
-/// @param nextBoard a text representation of the board after the move
-/// @param nextPGN the played move in pgn format
-/// @param nextMove the played move in from:to format
-/// @param result end result of the currently played match
-/// @param nextWhite the color that played the move
-void ChessLinkedListMoves::addMove(const std::string &nextBoard, const std::string &nextPGN, const std::string &nextMove,
-                                   const RESULT &result, const bool nextWhite) {
-    const std::string &key = createKey(nextWhite, nextBoard);
-    if (head->nexts.contains(key)) {
-        head = head->nexts.at(key).get();
+// /// Add a move and make it the new head
+// /// @param nextBoard a text representation of the board after the move
+// /// @param nextPGN the played move in pgn format
+// /// @param nextMove the played move in from:to format
+// /// @param result end result of the currently played match
+// /// @param nextWhite the color that played the move
+// void ChessLinkedListMoves::addMove(const std::string &nextBoard, const std::string &nextPGN, const std::string &nextMove,
+//                                    const RESULT &result, const bool nextWhite) {
+//     const std::string &key = createKey(nextWhite, nextBoard);
+//     if (head->nexts.contains(key)) {
+//         head = head->nexts.at(key).get();
+//         addResult(result);
+//         return;
+//     }
+//     auto newMove = std::make_shared<Move>(nextBoard, nextPGN, nextMove, nextWhite, head);
+//     head->nexts[key] = std::move(newMove);
+//     head = head->nexts.at(key).get();
+//     addResult(result);
+// }
+
+void ChessLinkedListMoves::addMoveCompressed(const std::string &nextMove, const RESULT &result, bool nextWhite) {
+    const std::bitset<16> inData = createData(nextMove, nextWhite);
+    const auto findData = std::ranges::find_if(head->nexts, [&inData](auto &move) {
+        return move->data == inData;
+    });
+    if (findData != head->nexts.end()) {
+        head = findData->get();
         addResult(result);
         return;
     }
-    auto newMove = std::make_shared<Move>(nextBoard, nextPGN, nextMove, nextWhite, head);
-    head->nexts[key] = std::move(newMove);
-    head = head->nexts.at(key).get();
+    auto newCompressedMove = std::make_unique<MoveCompressed>(inData);
+    head->nexts.push_back(std::move(newCompressedMove));
+    head = head->nexts.back().get();
     addResult(result);
 }
-
-void ChessLinkedListMoves::addMoveCompressed(const std::string &nextMove, const RESULT &result, bool nextWhite) {}
 
 void ChessLinkedListMoves::addResult(const RESULT &result) {
     // TODO: watched video where atomic_ref was used could work here? When starting to use threads.
@@ -52,8 +67,6 @@ void ChessLinkedListMoves::addResult(const RESULT &result) {
             break;
     }
 }
-
-void ChessLinkedListMoves::addResultCompressed(const RESULT &result) {}
 
 // TODO: I think i don't want this to be able to be nullptr so fix that later
 void ChessLinkedListMoves::setMoveHead(Move *move) { head = move; }
@@ -179,5 +192,29 @@ const std::map<char, std::bitset<3>> ChessLinkedListMoves::yToBit{
     {'1', std::bitset<3>("000")}, {'2', std::bitset<3>("001")}, {'3', std::bitset<3>("010")}, {'4', std::bitset<3>("011")},
     {'5', std::bitset<3>("100")}, {'6', std::bitset<3>("101")}, {'7', std::bitset<3>("110")}, {'8', std::bitset<3>("111")}};
 
-const std::map<char, std::bitset<2>> ChessLinkedListMoves::pawnToBit {
-    {'Q', std::bitset<2>(""), {'R', std::bitset<2>("01")}, {'B', std::bitset<2>("10")}, {'N', std::bitset<2>("11")}};
+const std::map<char, std::bitset<2>> ChessLinkedListMoves::pawnToBit{
+    {'Q', std::bitset<2>("00")}, {'R', std::bitset<2>("01")}, {'B', std::bitset<2>("10")}, {'N', std::bitset<2>("11")}};
+
+const std::map<std::bitset<3>, char> ChessLinkedListMoves::BitToX = []() {
+    std::map<std::bitset<3>, char> outMap;
+    for (const auto &[letter, bits] : xToBit) {
+        outMap[bits] = letter;
+    }
+    return outMap;
+}();
+
+const std::map<std::bitset<3>, char> ChessLinkedListMoves::BitToY = []() {
+    std::map<std::bitset<3>, char> outMap;
+    for (const auto &[letter, bits] : yToBit) {
+        outMap[bits] = letter;
+    }
+    return outMap;
+}();
+
+const std::map<std::bitset<2>, char> ChessLinkedListMoves::BitToPawn = []() {
+    std::map<std::bitset<2>, char> outMap;
+    for (const auto &[letter, bits] : pawnToBit) {
+        outMap[bits] = letter;
+    }
+    return outMap;
+}();
