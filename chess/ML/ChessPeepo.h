@@ -3,6 +3,7 @@
 
 #include "ChessBoard.h"
 #include "ChessData.h"
+#include "ChessLinkedListMoves.h"
 #include <ranges>
 #include <sys/types.h>
 
@@ -27,10 +28,10 @@ class ChessPeepo {
     /*std::vector<std::string> getSmartMoveSelection();*/
     /*std::vector<std::string> getMoveSelection();*/
 
-    Move *getMostPlayedMove(std::ranges::range auto moves);
+    MoveCompressed *getMostPlayedMove(const std::vector<std::unique_ptr<MoveCompressed>> &moves);
     std::string getRandomInputMove();
 
-    u_int64_t playedMoves(const Move *move);
+    u_int64_t playedMoves(const MoveCompressed *move);
 };
 
 #endif // CHESSPEEPO_H

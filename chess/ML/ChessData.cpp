@@ -83,7 +83,7 @@ void ChessData::addPGNMove(const std::string &pgnMove, ChessBoard &board, bool &
     // ChessBoardDraw boardDraw;
     // boardDraw.draw(board); // for debugging
     const std::string boardStr = board.getStringFromBoard();
-    movesLinkedList->addMove(boardStr, pgnMove, boardMove, whitesTurn ? gameResult.first : gameResult.second, whitesTurn);
+    movesLinkedList->addMoveCompressed(boardMove, whitesTurn ? gameResult.first : gameResult.second, whitesTurn);
     whitesTurn = !whitesTurn;
 }
 

@@ -1,22 +1,24 @@
 #include "ChessPeepo.h"
 #include "ChessBoard.h"
+#include "ChessLinkedListMoves.h"
 #include "ChessMoveLogic.h"
 #include <iostream>
+#include <memory>
 #include <random>
 
 ChessPeepo::ChessPeepo(ChessBoard &chessBoard, ChessData &chessData) : board(chessBoard), data(chessData) {}
 
 GameState ChessPeepo::makeMostPlayedMove() {
     // get the move random or most played
-    const Move *moveHead = data.getMoves()->getMoveHead();
+    const MoveCompressed *moveHead = data.getMoves()->getMoveHead();
     std::string inputMove;
     if (moveHead == nullptr || moveHead->nexts.empty()) {
         std::cout << "no more suggestions for moves, next move will be random" << std::endl;
         inputMove = getRandomInputMove();
     } else {
-        Move *mostPlayedMove = getMostPlayedMove(moveHead->nexts | std::views::values);
+        MoveCompressed *mostPlayedMove = getMostPlayedMove(moveHead->nexts);
         data.getMoves()->setMoveHead(mostPlayedMove);
-        inputMove = mostPlayedMove->moveName;
+        inputMove = ChessLinkedListMoves::getMoveFromData(mostPlayedMove->data);
     }
     // play the move
     // TODO: enPassant thing probaply should be checked inside ChessBoard so could remove that parameter later
@@ -35,8 +37,8 @@ void ChessPeepo::makeRandomMove() {}
 // some random checks
 bool ChessPeepo::isBoardDataOnSync() {}
 
-Move *ChessPeepo::getMostPlayedMove(std::ranges::range auto moves) {
-    Move *mostPlayedMove = nullptr;
+MoveCompressed *ChessPeepo::getMostPlayedMove(const std::vector<std::unique_ptr<MoveCompressed>> &moves) {
+    MoveCompressed *mostPlayedMove = nullptr;
     u_int64_t currPlays = 0;
     for (const auto &move : moves) {
         const u_int64_t plays = playedMoves(move.get());
@@ -76,4 +78,4 @@ std::string ChessPeepo::getRandomInputMove() {
     return input;
 }
 
-inline u_int64_t ChessPeepo::playedMoves(const Move *move) { return move->wins + move->loses + move->draws; }
+inline u_int64_t ChessPeepo::playedMoves(const MoveCompressed *move) { return move->wins + move->loses + move->draws; }
