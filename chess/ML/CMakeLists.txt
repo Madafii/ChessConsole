@@ -5,4 +5,4 @@ add_library(chessML
 )
 
 target_include_directories(chessML PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(chessML chessBase)
+target_link_libraries(chessML chessBase chessAnalyzer)
