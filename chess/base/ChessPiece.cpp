@@ -2,6 +2,7 @@
 #include <iostream>
 
 // TODO: could make this constexpr?
+
 ChessPiece::ChessPiece(const ChessPieceType type, const bool white) : _type(type), _white(white) {
     switch (_type) {
         case King:
@@ -35,13 +36,13 @@ ChessPiece::ChessPiece(const ChessPieceType type, const bool white) : _type(type
     }
 }
 
-ChessPiece::~ChessPiece() {}
+ChessPiece::~ChessPiece() = default;
 
 ChessPieceType ChessPiece::getType() const { return _type; }
 
 bool ChessPiece::isWhite() const { return _white; }
 
-std::string ChessPiece::getFullName() const { return std::string(""); }
+std::string ChessPiece::getFullName() const { return _long; }
 
 char ChessPiece::getShortName() const { return _short; }
 

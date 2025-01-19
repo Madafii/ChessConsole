@@ -43,6 +43,10 @@ void ChessBoard::initBoard() {
 
 ChessBoard::ChessBoard(const ChessBoard &otherBoard) {
     for (const auto &otherTile : otherBoard.board) {
+        if (otherTile->piece == nullptr) {
+            board.push_back(std::make_unique<ChessTile>(nullptr, otherTile->getX(), otherTile->getY()));
+            continue;
+        }
         board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(otherTile->piece->getType(), otherTile->piece->isWhite()),
                                                     otherTile->getX(), otherTile->getY()));
     }
@@ -153,6 +157,12 @@ std::string ChessBoard::getStringFromBoard() {
         outMoves += "1";
     }
     return outMoves;
+}
+
+std::string ChessBoard::getMoveName(const ChessTile *fromTile, const ChessTile *toTile) {
+    const std::string fromStr = ChessTile::mapIntToX.at(fromTile->getX()) + std::to_string(fromTile->getY() + 1);
+    const std::string toStr = ChessTile::mapIntToX.at(toTile->getX()) + std::to_string(toTile->getY() + 1);
+    return fromStr + ":" + toStr;
 }
 
 Pieces ChessBoard::getAllWhiteTiles() const {

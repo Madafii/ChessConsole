@@ -37,8 +37,9 @@ class ChessBoard {
     std::string getStringFromBoard();
 
     // basic callers
-    [[nodiscard]] inline bool isWhitesTurn() const { return whitesTurn; }
-    [[nodiscard]] inline std::vector<std::string> getGameHistory() const { return gameHistory; }
+    [[nodiscard]] bool isWhitesTurn() const { return whitesTurn; }
+    [[nodiscard]] std::vector<std::string> getGameHistory() const { return gameHistory; }
+    [[nodiscard]] static std::string getMoveName(const ChessTile *fromTile, const ChessTile *toTile);
 
     Pieces getAllPossibleMovesPiece(bool white, ChessPieceType piece);
     // get tiles
