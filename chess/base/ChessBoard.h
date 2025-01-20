@@ -40,6 +40,7 @@ class ChessBoard {
     [[nodiscard]] bool isWhitesTurn() const { return whitesTurn; }
     [[nodiscard]] std::vector<std::string> getGameHistory() const { return gameHistory; }
     [[nodiscard]] static std::string getMoveName(const ChessTile *fromTile, const ChessTile *toTile);
+    [[nodiscard]] std::vector<ChessTile *> getBoard() const;
 
     Pieces getAllPossibleMovesPiece(bool white, ChessPieceType piece);
     // get tiles

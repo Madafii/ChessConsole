@@ -2,6 +2,8 @@
 #define CHESSMOVELOGIC_H
 
 #include "ChessBoard.h"
+#include <array>
+#include <cstdint>
 #include <functional>
 
 using possibleMovesFunc = std::function<Pieces(const ChessBoard &board, const ChessTile *fromTile)>;

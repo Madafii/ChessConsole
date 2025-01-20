@@ -3,6 +3,7 @@
 
 #include "ChessBoard.h"
 #include "ChessPiece.h"
+#include <cstdint>
 #include <map>
 #include <vector>
 
@@ -18,14 +19,16 @@
 class ChessAnalyzer {
   public:
     using oStrVec = std::optional<std::vector<std::string_view>>;
-    // a matrix with a list for each tile with attacked by pointers to pieces
-    using attackMatrix = std::vector<std::pair<std::vector<ChessTile *>, std::vector<ChessTile *>>>;
+    using boardMatrix = std::vector<std::pair<std::vector<ChessTile *>, std::vector<ChessTile *>>>;
+    using int8Pair = std::pair<int8_t, int8_t>;
+
     explicit ChessAnalyzer(ChessBoard &aboard);
 
     oStrVec getForcedCheckmate(int depth);
-    oStrVec getFreePieces(const attackMatrix &matr, bool white);
+    oStrVec getFreePieces(const boardMatrix &matr, bool white);
 
-    attackMatrix getAttackedMatrix();
+    boardMatrix getAttackedMatrix();
+    boardMatrix getDefendedMatrix();
 
     double evalCurrPosition(bool white);
     double evalPawnStruct(bool white);
@@ -35,8 +38,22 @@ class ChessAnalyzer {
     const std::map<ChessPieceType, int> pieceValue = {{ChessPieceType::King, 100000}, {ChessPieceType::Queen, 9},
                                                       {ChessPieceType::Rook, 5},      {ChessPieceType::Bishop, 3},
                                                       {ChessPieceType::Knight, 3},    {ChessPieceType::Pawn, 1}};
+    const std::vector<int8Pair> directionsBishop = {std::pair(1, 1), std::pair(1, -1), std::pair(-1, 1), std::pair(-1, -1)};
+    const std::vector<int8Pair> directionsKnight = {std::pair(2, 1), std::pair(2, -1), std::pair(-2, 1), std::pair(-2, -1),
+                                                    std::pair(1, 2), std::pair(-1, 2), std::pair(1, -2), std::pair(-1, -2)};
+    const std::vector<int8Pair> directionsRook = {std::pair(0, 1), std::pair(0, -1), std::pair(-1, 0), std::pair(1, 0)};
+    const std::vector<int8Pair> directionsQueen = {std::pair(0, 1), std::pair(0, -1), std::pair(1, 1),  std::pair(1, -1),
+                                                   std::pair(1, 0), std::pair(-1, 0), std::pair(-1, 1), std::pair(-1, -1)};
 
-    void addToAttackedMatrix(attackMatrix &attackedBy, bool white);
+    void addToAttackedMatrix(boardMatrix &attackedBy, bool white);
+    void addToDefendMatrix(boardMatrix &defendedBy, bool white);
+
+    // helper functions for getting defender matrix.
+    Pieces getDefendedPieces(const ChessTile *fromTile);
+    Pieces getDefendedPiecesPawn(const ChessTile *fromTile);
+    Pieces getDefendedPiecesByDirection(const ChessTile *fromTile, const std::vector<int8Pair> &directions);
+    Pieces getDefendedPiecesByDirectionSingle(const ChessTile *fromTile, const std::vector<int8Pair> &directions);
+    static bool addIfDefending(const ChessTile *fromTile, ChessTile *toTile, Pieces &defendingMoves);
 };
 
 #endif

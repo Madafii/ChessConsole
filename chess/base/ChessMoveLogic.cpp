@@ -103,9 +103,9 @@ inline Pieces ChessMoveLogic::getPossibleMovesRook(const ChessBoard &board, cons
 }
 
 inline Pieces ChessMoveLogic::getPossibleMovesQueen(const ChessBoard &board, const ChessTile *fromTile) {
-    Pieces possibleMoves = getPossibleMovesBishop(board, fromTile);
-    ChessBoard::mergePossVec(possibleMoves, getPossibleMovesRook(board, fromTile));
-    return possibleMoves;
+    static const std::vector directions = {std::pair(0, 1), std::pair(0, -1), std::pair(1, 1),  std::pair(1, -1),
+                                           std::pair(1, 0), std::pair(-1, 0), std::pair(-1, 1), std::pair(-1, -1)};
+    return getPossibleMovesByDirection(board, fromTile, directions);
 }
 
 Pieces ChessMoveLogic::getPossibleMovesKing(ChessBoard &board, const ChessTile *fromTile) {
