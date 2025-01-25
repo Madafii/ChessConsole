@@ -47,8 +47,8 @@ class ChessLinkedListMoves {
     ~ChessLinkedListMoves();
 
     // adders
-    void addMove(const std::string &nextBoard, const std::string &nextPGN, const std::string &nextMove, const RESULT &result,
-                 bool nextWhite);
+    // void addMove(const std::string &nextBoard, const std::string &nextPGN, const std::string &nextMove, const RESULT &result,
+    //              bool nextWhite);
     void addMoveCompressed(const std::string &nextMove, const RESULT &result, bool nextWhite);
 
     void addResult(const RESULT &result);
@@ -78,8 +78,6 @@ class ChessLinkedListMoves {
     static const std::unordered_map<char, std::bitset<3>> xToBit;
     static const std::unordered_map<char, std::bitset<3>> yToBit;
     static const std::unordered_map<char, std::bitset<2>> pawnToBit;
-
-    // reverse maps
     static const std::unordered_map<std::bitset<3>, char> BitToX;
     static const std::unordered_map<std::bitset<3>, char> BitToY;
     static const std::unordered_map<std::bitset<2>, char> BitToPawn;
