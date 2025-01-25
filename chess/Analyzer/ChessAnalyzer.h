@@ -32,9 +32,9 @@ class ChessAnalyzer {
 
   private:
     ChessBoard &origBoard;
-    const std::map<ChessPieceType, int> pieceValue = {{ChessPieceType::King, 100000}, {ChessPieceType::Queen, 9},
-                                                      {ChessPieceType::Rook, 5},      {ChessPieceType::Bishop, 3},
-                                                      {ChessPieceType::Knight, 3},    {ChessPieceType::Pawn, 1}};
+    const std::map<ChessPieceType, int> pieceValue = {{King, 100000}, {Queen, 9},
+                                                      {Rook, 5},      {Bishop, 3},
+                                                      {Knight, 3},    {Pawn, 1}};
 
     void addToAttackedMatrix(attackMatrix &attackedBy, bool white);
 };
