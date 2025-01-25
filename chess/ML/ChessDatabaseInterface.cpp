@@ -57,5 +57,5 @@ void ChessDatabaseInterface::printNodes() const {
 }
 
 std::vector<std::unique_ptr<MoveCompressed>> ChessDatabaseInterface::getMoves() const{
-    const char* sqlSelect = "SELECT * FROM"
+    const char* sqlSelect = "SELECT * FROM";
 }

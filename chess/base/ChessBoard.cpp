@@ -4,11 +4,12 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
+#include <iterator>
+#include <memory>
+#include <ranges>
 #include <string>
 
 ChessBoard::ChessBoard(const bool doAfterMoveChecks) : doAfterMoveChecks(doAfterMoveChecks) { initBoard(); }
-
-ChessBoard::~ChessBoard() = default;
 
 void ChessBoard::initBoard() {
     board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Rook, true), 0, 0));
@@ -38,6 +39,27 @@ void ChessBoard::initBoard() {
     board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(Rook, false), 7, 7));
     // add initial board as first in the game history
     gameHistory.push_back(getStringFromBoard());
+}
+
+ChessBoard::ChessBoard(const ChessBoard &otherBoard) {
+    for (const auto &otherTile : otherBoard.board) {
+        if (otherTile->piece == nullptr) {
+            board.push_back(std::make_unique<ChessTile>(nullptr, otherTile->getX(), otherTile->getY()));
+            continue;
+        }
+        board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(otherTile->piece->getType(), otherTile->piece->isWhite()),
+                                                    otherTile->getX(), otherTile->getY()));
+    }
+    possibleMovesCache = otherBoard.possibleMovesCache;
+    whitesTurn = otherBoard.whitesTurn;
+    whiteRookMoved = otherBoard.whiteRookMoved;
+    blackRookMoved = otherBoard.blackRookMoved;
+    gameHistory = otherBoard.gameHistory;
+    markTurnForEnPassant = otherBoard.markTurnForEnPassant;
+    doublePawnMoveAt = otherBoard.doublePawnMoveAt;
+    enPassantPossibleLastMove = otherBoard.enPassantPossibleLastMove;
+    movesSinceLastCapture = otherBoard.movesSinceLastCapture;
+    doAfterMoveChecks = otherBoard.doAfterMoveChecks;
 }
 
 // handles input usually by a user with checks for wrong inputs
@@ -137,6 +159,12 @@ std::string ChessBoard::getStringFromBoard() {
     return outMoves;
 }
 
+std::string ChessBoard::getMoveName(const ChessTile *fromTile, const ChessTile *toTile) {
+    const std::string fromStr = ChessTile::mapIntToX.at(fromTile->getX()) + std::to_string(fromTile->getY() + 1);
+    const std::string toStr = ChessTile::mapIntToX.at(toTile->getX()) + std::to_string(toTile->getY() + 1);
+    return fromStr + ":" + toStr;
+}
+
 Pieces ChessBoard::getAllWhiteTiles() const {
     Pieces whiteTiles;
     for (const auto &tile : board) {
@@ -154,8 +182,6 @@ Pieces ChessBoard::getAllBlackTiles() const {
     }
     return blackTiles;
 }
-
-bool ChessBoard::isWhitesTurn() const { return whitesTurn; }
 
 // TODO improve if I want to with better getAll.. but for single pieces not all
 // of them

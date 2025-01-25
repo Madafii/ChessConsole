@@ -1,14 +1,16 @@
 #include "ChessInstance.h"
+#include "ChessAnalyzer.h"
 #include "ChessBoard.h"
 #include "ChessBoardDraw.h"
 #include "ChessData.h"
 #include "ChessMoveLogic.h"
 #include "ChessPeepo.h"
 #include <iostream>
+#include <optional>
 #include <random>
 
 ChessInstance::ChessInstance() {
-    gameOptions = {"normal", "random", "againstRandom", "data", "peepo", "quit"};
+    gameOptions = {"normal", "random", "againstRandom", "data", "peepo", "analyzer", "quit"};
 
     std::cout << "Select the game you want to play: " << std::endl;
     printGameOptions();
@@ -31,6 +33,8 @@ ChessInstance::ChessInstance() {
         } else if (playOption == gameOptions[4]) {
             runAgainstPeepo();
         } else if (playOption == gameOptions[5]) {
+            runWithAnalyzer();
+        } else if (playOption == gameOptions[6]) {
             std::cout << "Quitting..." << std::endl;
             break;
         } else {
@@ -128,11 +132,10 @@ void ChessInstance::runWithChessData() {
     // ChessBoard chessBoard(false);
     // ChessBoardDraw chessDraw;
     // ChessData data;
-    // /*const std::string filename = "/home/fpittermann/Documents/Projects/ChessConsole/data/lichessDatabase/outData/lichess_db_test.txt";*/
-    // const std::string filename = "../data/lichess/outData/lichess_db_standard.rated_2013-01_backup.txt";
-    // data.readSimpleGames(filename);
-    // ChessLinkedListMoves *moves = data.getMoves();
-    // moves->setMoveHead(moves->getMoveRoot()); // set it to the root before the game beginns
+    // /*const std::string filename =
+    // "/home/fpittermann/Documents/Projects/ChessConsole/data/lichessDatabase/outData/lichess_db_test.txt";*/ const std::string filename =
+    // "../data/lichess/outData/lichess_db_standard.rated_2013-01_backup.txt"; data.readSimpleGames(filename); ChessLinkedListMoves *moves =
+    // data.getMoves(); moves->setMoveHead(moves->getMoveRoot()); // set it to the root before the game beginns
     //
     // std::string input;
     // chessDraw.draw(chessBoard);
@@ -199,5 +202,25 @@ inline void ChessInstance::printGameOptions() {
     std::cout << "The options are: " << std::endl;
     for (const std::string &option : gameOptions) {
         std::cout << "\t" << option << std::endl;
+    }
+}
+
+void ChessInstance::runWithAnalyzer() {
+    ChessBoard chessBoard(false);
+    ChessAnalyzer boardAnalyzer(chessBoard);
+    ChessBoardDraw boardDraw;
+
+    std::cout << "started a game with the analyzer..." << std::endl;
+    std::string input;
+    boardDraw.draw(chessBoard);
+    while (true) {
+        std::cin >> input;
+        if (input == "quit") break;
+        const GameState game_state = chessBoard.handleInput(input);
+        boardDraw.draw(chessBoard);
+        auto getAnalyzedBoard = boardAnalyzer.getAttackedMatrix();
+        if (game_state != GameState::IN_PROGRESS) {
+            break;
+        }
     }
 }

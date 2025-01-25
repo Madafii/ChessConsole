@@ -20,12 +20,11 @@ enum class GameState { WON, DRAW, IN_PROGRESS };
 class ChessBoard {
   public:
     explicit ChessBoard(bool doAfterMoveChecks = true);
-    // explicit ChessBoard(const std::string &board, const bool &white);
-    ~ChessBoard();
+    ~ChessBoard() = default;
 
-    // breaks because of board can't be coppied no copies of unique pointers, so TODO would be implement them
-    ChessBoard(const ChessBoard &) = delete;
-    ChessBoard &operator=(const ChessBoard &) = delete;
+    ChessBoard(const ChessBoard &otherBoard);
+    // breaks because of board can't be coppied no copies of unique pointers, so TODO: would be implement them
+    ChessBoard &operator=(const ChessBoard &otherBoard) = delete;
 
     // create the board
     void initBoard();
@@ -38,7 +37,9 @@ class ChessBoard {
     std::string getStringFromBoard();
 
     // basic callers
-    [[nodiscard]] bool isWhitesTurn() const;
+    [[nodiscard]] bool isWhitesTurn() const { return whitesTurn; }
+    [[nodiscard]] std::vector<std::string> getGameHistory() const { return gameHistory; }
+    [[nodiscard]] static std::string getMoveName(const ChessTile *fromTile, const ChessTile *toTile);
 
     Pieces getAllPossibleMovesPiece(bool white, ChessPieceType piece);
     // get tiles
@@ -63,7 +64,7 @@ class ChessBoard {
     int movesSinceLastCapture = 0;
 
     // options for performance
-    bool doAfterMoveChecks;
+    bool doAfterMoveChecks{false};
 
     // moves
     void move(ChessTile *fromTile, ChessTile *toTile);

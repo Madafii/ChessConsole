@@ -8,12 +8,12 @@ using possibleMovesFunc = std::function<Pieces(const ChessBoard &board, const Ch
 
 class ChessMoveLogic {
   public:
-    ChessMoveLogic();
+    ChessMoveLogic() = default;
 
     // finds possible moves
     static Pieces getPossibleMoves(ChessBoard &board, const ChessTile *fromTile);
     static Pieces getPossibleMovesUncached(ChessBoard &board, const ChessTile *fromTile);
-    static Pieces getAllPossibleMoves(ChessBoard &board, const bool white);
+    static Pieces getAllPossibleMoves(ChessBoard &board, bool white);
 
     // manipulate a possible moves list
     static void filterPossibleMovesForChecks(ChessBoard &board, const ChessTile *fromTile, Pieces &possibleMoves);
@@ -23,8 +23,8 @@ class ChessMoveLogic {
     static bool isInputMovePossible(ChessBoard &board, const ChessTile *fromTile, const ChessTile *toTile);
     static bool isTileAttacked(ChessBoard &board, bool white, const Pieces &tilesToCheck);
     static bool isTileFree(const ChessBoard &board, const Pieces &tilesToCheck);
-    static bool isKingChecked(ChessBoard &board, const bool white, const bool cached = true);
-    static bool isKingChecked(ChessBoard &board, const ChessTile *fromTile, ChessTile *toTile);
+    static bool isKingChecked(ChessBoard &board, bool white, bool cached = true);
+    static bool isKingCheckedAfterMove(ChessBoard &board, const ChessTile *fromTile, ChessTile *toTile);
     static bool isKingCheckmate(ChessBoard &board);
     static bool isDraw(ChessBoard &board);
     static bool isThreefoldRepetition(const ChessBoard &board);
@@ -32,7 +32,7 @@ class ChessMoveLogic {
 
   private:
     // helpers for find possible moves
-    static Pieces getPossibleMovesCached(ChessBoard &board, const ChessTile *fromTile, possibleMovesFunc func);
+    static Pieces getPossibleMovesCached(ChessBoard &board, const ChessTile *fromTile, const possibleMovesFunc &func);
     static Pieces getPossibleMovesPawn(const ChessBoard &board, const ChessTile *fromTile);
     static Pieces getPossibleMovesBishop(const ChessBoard &board, const ChessTile *fromTile);
     static Pieces getPossibleMovesKnight(const ChessBoard &board, const ChessTile *fromTile);

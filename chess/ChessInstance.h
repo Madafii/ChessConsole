@@ -18,6 +18,7 @@ class ChessInstance {
     void runAgainstRandom(bool white);
     void runWithChessData();
     void runAgainstPeepo();
+    void runWithAnalyzer();
 
   private:
     std::vector<std::string> gameOptions;
