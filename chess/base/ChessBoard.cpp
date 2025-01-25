@@ -159,6 +159,14 @@ std::string ChessBoard::getStringFromBoard() {
     return outMoves;
 }
 
+std::vector<ChessTile *> ChessBoard::getBoard() const {
+    std::vector<ChessTile *> out(board.size());
+    for (const auto &tile : board) {
+        out.push_back(tile.get());
+    }
+    return out;
+}
+
 std::string ChessBoard::getMoveName(const ChessTile *fromTile, const ChessTile *toTile) {
     const std::string fromStr = ChessTile::mapIntToX.at(fromTile->getX()) + std::to_string(fromTile->getY() + 1);
     const std::string toStr = ChessTile::mapIntToX.at(toTile->getX()) + std::to_string(toTile->getY() + 1);
