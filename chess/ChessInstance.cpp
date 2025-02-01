@@ -5,6 +5,8 @@
 #include "ChessData.h"
 #include "ChessMoveLogic.h"
 #include "ChessPeepo.h"
+
+#include <format>
 #include <iostream>
 #include <optional>
 #include <random>
@@ -218,7 +220,11 @@ void ChessInstance::runWithAnalyzer() {
         if (input == "quit") break;
         const GameState game_state = chessBoard.handleInput(input);
         boardDraw.draw(chessBoard);
-        auto getAnalyzedBoard = boardAnalyzer.getAttackedMatrix();
+        auto getAttackerBoard = boardAnalyzer.getAttackedMatrix();
+        auto getDefenderBoard = boardAnalyzer.getDefendedMatrix();
+        std::cout << std::format("attacking total: {}\ndefending total: {}",
+            boardAnalyzer.boardMatrixSize(getAttackerBoard, !chessBoard.isWhitesTurn()),
+            boardAnalyzer.boardMatrixSize(getDefenderBoard, !chessBoard.isWhitesTurn())) << std::endl;
         if (game_state != GameState::IN_PROGRESS) {
             break;
         }

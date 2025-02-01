@@ -28,15 +28,16 @@ class ChessAnalyzer {
 
     boardMatrix getAttackedMatrix();
     boardMatrix getDefendedMatrix();
+    int boardMatrixSize(const boardMatrix &boardMatr, bool color) const;
 
     double evalCurrPosition(bool white);
     double evalPawnStruct(bool white);
 
   private:
     ChessBoard &origBoard;
-    const std::map<ChessPieceType, int> pieceValue = {{ChessPieceType::King, 100000}, {ChessPieceType::Queen, 9},
-                                                      {ChessPieceType::Rook, 5},      {ChessPieceType::Bishop, 3},
-                                                      {ChessPieceType::Knight, 3},    {ChessPieceType::Pawn, 1}};
+    const std::map<ChessPieceType, int> pieceValue = {{King, 100000}, {Queen, 9},
+                                                      {Rook, 5},      {Bishop, 3},
+                                                      {Knight, 3},    {Pawn, 1}};
     const std::vector<int8Pair> directionsBishop = {std::pair(1, 1), std::pair(1, -1), std::pair(-1, 1), std::pair(-1, -1)};
     const std::vector<int8Pair> directionsKnight = {std::pair(2, 1), std::pair(2, -1), std::pair(-2, 1), std::pair(-2, -1),
                                                     std::pair(1, 2), std::pair(-1, 2), std::pair(1, -2), std::pair(-1, -2)};
@@ -47,7 +48,11 @@ class ChessAnalyzer {
     void addToAttackedMatrix(boardMatrix &attackedBy, bool white);
     void addToDefendMatrix(boardMatrix &defendedBy, bool white);
 
-    // helper functions for getting defender matrix.
+
+    // helper for attacker matrix
+    Pieces getPawnAttackingTiles(const ChessTile *pawnTile);
+
+    // helper for defender matrix
     Pieces getDefendedPieces(const ChessTile *fromTile);
     Pieces getDefendedPiecesPawn(const ChessTile *fromTile);
     Pieces getDefendedPiecesByDirection(const ChessTile *fromTile, const std::vector<int8Pair> &directions);

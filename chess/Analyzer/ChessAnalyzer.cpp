@@ -30,18 +30,37 @@ boardMatrix ChessAnalyzer::getAttackedMatrix() {
     return attackedBy;
 }
 
-boardMatrix ChessAnalyzer::getDefendedMatrix() { boardMatrix defendedBy(64); }
+boardMatrix ChessAnalyzer::getDefendedMatrix() {
+    boardMatrix defendedBy(64);
+    addToDefendMatrix(defendedBy, true);
+    addToDefendMatrix(defendedBy, false);
+    return defendedBy;
+}
+
+int ChessAnalyzer::boardMatrixSize(const boardMatrix &boardMatr, const bool color) const {
+    int count = 0;
+    for (const auto &[whiteTiles, blackTiles] : boardMatr) {
+        count += color ? whiteTiles.size() : blackTiles.size();
+    }
+    return count;
+}
 
 double ChessAnalyzer::evalCurrPosition(bool white) {}
 
 double ChessAnalyzer::evalPawnStruct(bool white) {}
 
-void ChessAnalyzer::addToAttackedMatrix(boardMatrix &attackedBy, bool white) {
+void ChessAnalyzer::addToAttackedMatrix(boardMatrix &attackedBy, const bool white) {
     const Pieces colorPieces = white ? origBoard.getAllWhiteTiles() : origBoard.getAllBlackTiles();
 
     for (const auto attackingTile : colorPieces) {
-        Pieces attackedTiles = ChessMoveLogic::getPossibleMoves(origBoard, attackingTile);
-        ChessMoveLogic::filterPossibleMovesForChecks(origBoard, attackingTile, attackedTiles);
+        Pieces attackedTiles;
+        if (attackingTile->piece->getType() == Pawn) { // pawns extra because different attacking logic then the rest
+            attackedTiles = getPawnAttackingTiles(attackingTile);
+            ChessMoveLogic::filterPossibleMovesForChecks(origBoard, attackingTile, attackedTiles);
+        } else {
+            attackedTiles = ChessMoveLogic::getPossibleMoves(origBoard, attackingTile);
+            ChessMoveLogic::filterPossibleMovesForChecks(origBoard, attackingTile, attackedTiles);
+        }
         for (const auto attackedTile : attackedTiles) {
             if (white) {
                 attackedBy[attackedTile->getY() * boardWidth + attackedTile->getX()].first.push_back(attackingTile);
@@ -52,7 +71,7 @@ void ChessAnalyzer::addToAttackedMatrix(boardMatrix &attackedBy, bool white) {
     }
 }
 
-void ChessAnalyzer::addToDefendMatrix(boardMatrix &defendedBy, bool white) {
+void ChessAnalyzer::addToDefendMatrix(boardMatrix &defendedBy, const bool white) {
     const Pieces colorPieces = white ? origBoard.getAllWhiteTiles() : origBoard.getAllBlackTiles();
 
     for (const auto defendingTile : colorPieces) {
@@ -65,6 +84,28 @@ void ChessAnalyzer::addToDefendMatrix(boardMatrix &defendedBy, bool white) {
             }
         }
     }
+}
+
+Pieces ChessAnalyzer::getPawnAttackingTiles(const ChessTile *pawnTile){
+    Pieces attackingTiles;
+    const int moveY = pawnTile->piece->isWhite() ? 1 : -1;
+    const int x = pawnTile->getX();
+    const int y = pawnTile->getY();
+
+    ChessTile *toTileLeft = origBoard.getTileAt(x - 1, y + moveY);
+    ChessTile *toTileRight = origBoard.getTileAt(x + 1, y + moveY);
+
+    if (toTileLeft != nullptr) {
+        if (toTileLeft->piece == nullptr || pawnTile->piece->isWhite() != toTileLeft->piece->isWhite()) {
+            attackingTiles.push_back(toTileLeft);
+        }
+    }
+    if (toTileRight != nullptr) {
+        if (toTileRight->piece == nullptr || pawnTile->piece->isWhite() != toTileRight->piece->isWhite()) {
+            attackingTiles.push_back(toTileRight);
+        }
+    }
+    return attackingTiles;
 }
 
 Pieces ChessAnalyzer::getDefendedPieces(const ChessTile *fromTile) {
@@ -124,14 +165,11 @@ Pieces ChessAnalyzer::getDefendedPiecesByDirectionSingle(const ChessTile *fromTi
 }
 
 /// return value if continue searching
-bool ChessAnalyzer::addIfDefending(const ChessTile *fromTile, ChessTile *toTile, Pieces &defendingMoves) {
-    const bool white = fromTile->piece->isWhite();
-    if (toTile->piece == nullptr)
-        return true;
-    else {
-        if (toTile->piece->isWhite() == white) {
-            defendingMoves.push_back(toTile);
-        }
+inline bool ChessAnalyzer::addIfDefending(const ChessTile *fromTile, ChessTile *toTile, Pieces &defendingMoves) {
+    if (toTile == nullptr) return false; // move is outside the board
+    if (toTile->piece == nullptr) return true;
+    if (toTile->piece->isWhite() == fromTile->piece->isWhite()) { // is defending because it is the same color
+        defendingMoves.push_back(toTile);
     }
-    return false;
+    return false; // should be collision with different colored piece so also stop here
 }
