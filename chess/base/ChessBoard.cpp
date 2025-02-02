@@ -191,6 +191,28 @@ Pieces ChessBoard::getAllBlackTiles() const {
     return blackTiles;
 }
 
+Pieces ChessBoard::getWhitePieceType(ChessPieceType piece) const {
+    Pieces whitePiecesType;
+    for (const auto &tile : board) {
+        if (tile->piece == nullptr) continue;
+        if (tile->piece->isWhite() && tile->piece->getType() == piece) {
+            whitePiecesType.push_back(tile.get());
+        }
+    }
+    return whitePiecesType;
+}
+
+Pieces ChessBoard::getBlackPieceType(ChessPieceType piece) const {
+    Pieces blackPiecesType;
+    for (const auto &tile : board) {
+        if (tile->piece == nullptr) continue;
+        if (!tile->piece->isWhite() && tile->piece->getType() == piece) {
+            blackPiecesType.push_back(tile.get());
+        }
+    }
+    return blackPiecesType;
+}
+
 // TODO improve if I want to with better getAll.. but for single pieces not all
 // of them
 Pieces ChessBoard::getAllPossibleMovesPiece(const bool white, const ChessPieceType piece) {

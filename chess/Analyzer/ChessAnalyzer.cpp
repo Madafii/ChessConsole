@@ -7,19 +7,12 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 
 using oStrVec = ChessAnalyzer::oStrVec;
 using boardMatrix = ChessAnalyzer::boardMatrix;
 
 ChessAnalyzer::ChessAnalyzer(ChessBoard &aboard) : origBoard(aboard) {}
-
-/// returns a vector of moves if a forced checkmate is possible
-oStrVec ChessAnalyzer::getForcedCheckmate(int depth) {
-    const bool white = origBoard.isWhitesTurn();
-    const Pieces allMoves = white ? origBoard.getAllWhiteTiles() : origBoard.getAllBlackTiles();
-
-    return std::nullopt;
-}
 
 // TODO: implement terminal control of analyzer
 std::string ChessAnalyzer::startTerminalAnalyzer() {
@@ -37,6 +30,38 @@ std::string ChessAnalyzer::startTerminalAnalyzer() {
         std::cout << std::format("can take: {} at x:{} y:{}", piece->piece->getFullName(), piece->getX() + 1, piece->getY() + 1)
                   << std::endl;
     }
+}
+
+/// returns a vector of moves if a forced checkmate is possible
+oStrVec ChessAnalyzer::getForcedCheckmate(int depth) {
+    const bool white = origBoard.isWhitesTurn();
+    const Pieces allMoves = white ? origBoard.getAllWhiteTiles() : origBoard.getAllBlackTiles();
+
+    return std::nullopt;
+}
+
+std::vector<std::string> ChessAnalyzer::getBestEvalMoves() {
+    const bool white = origBoard.isWhitesTurn();
+    const Pieces allPossMoves = ChessMoveLogic::getAllPossibleMoves(origBoard, white);
+
+    std::vector<std::pair<double, std::string>> evalMovesList(allPossMoves.size());
+    for (const ChessTile *move : allPossMoves) {
+        // make a copy of the board play the move and evaluate the position
+        ChessBoard simulateBoard(origBoard);
+        std::string moveName = move->getMove();
+        simulateBoard.handleMoveInput(moveName);
+        ChessAnalyzer boardAnalyzer(simulateBoard);
+        const double evalValue = boardAnalyzer.evalCurrPosition(white);
+        evalMovesList.emplace_back(evalValue, std::move(moveName));
+    }
+
+    // sort which position has the best evaluation
+    std::sort(evalMovesList.begin(), evalMovesList.end(), [](const auto &a, const auto &b) { return a.first > b.first; });
+    std::vector<std::string> moves(evalMovesList.size());
+    for (auto &valuePair : evalMovesList) {
+        moves.push_back(std::move(valuePair.second));
+    }
+    return moves;
 }
 
 Pieces ChessAnalyzer::getFreePieces(const boardMatrix &attackMatr, const boardMatrix &defendMatr, const bool white) {
@@ -106,7 +131,14 @@ int ChessAnalyzer::getPieceValueDiff() { return getPieceValue(true) - getPieceVa
 
 double ChessAnalyzer::evalCurrPosition(bool white) {}
 
-double ChessAnalyzer::evalPawnStruct(bool white) {}
+double ChessAnalyzer::evalPawnStruct(bool white) {
+    int totalProgress = 0;
+    const Pieces allPawnPieces = white ? origBoard.getWhitePieceType(Pawn) : origBoard.getBlackPieceType(Pawn);
+    for (const auto pawnPiece : allPawnPieces) {
+        totalProgress += white ? pawnPiece->getY() : 7 - pawnPiece->getY();
+    }
+    return totalProgress;
+}
 
 void ChessAnalyzer::addToAttackedMatrix(boardMatrix &attackedBy, const bool white) {
     const Pieces colorPieces = white ? origBoard.getAllWhiteTiles() : origBoard.getAllBlackTiles();

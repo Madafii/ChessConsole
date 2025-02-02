@@ -5,6 +5,7 @@
 #include "ChessPiece.h"
 #include <cstddef>
 #include <map>
+#include <string_view>
 #include <vector>
 
 // TODO:
@@ -28,6 +29,7 @@ class ChessAnalyzer {
     std::string startTerminalAnalyzer();
 
     oStrVec getForcedCheckmate(int depth);
+    std::vector<std::string> getBestEvalMoves();
 
     Pieces getFreePieces(const boardMatrix &attackMatr, const boardMatrix &defendMatr, bool white);
 

@@ -47,6 +47,8 @@ class ChessBoard {
     Pieces getAllPiecesFor(bool white, ChessPieceType piece) const;
     Pieces getAllWhiteTiles() const;
     Pieces getAllBlackTiles() const;
+    Pieces getWhitePieceType(ChessPieceType piece) const;
+    Pieces getBlackPieceType(ChessPieceType piece) const;
     ChessTile *getTileAt(std::string_view pos) const;
     ChessTile *getTileAt(int x, int y) const;
     ChessTile *getTileAt(int pos) const;
