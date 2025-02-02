@@ -49,6 +49,7 @@ class ChessBoard {
     Pieces getAllBlackTiles() const;
     ChessTile *getTileAt(std::string_view pos) const;
     ChessTile *getTileAt(int x, int y) const;
+    ChessTile *getTileAt(int pos) const;
 
     static void mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge);
 

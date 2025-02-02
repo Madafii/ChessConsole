@@ -3,17 +3,19 @@
 
 #include "ChessBoard.h"
 #include "ChessPiece.h"
+#include <cstddef>
 #include <map>
 #include <vector>
 
 // TODO:
 // eval by:
-// tiles that are attacked unique and ammount of concurrent attackers
-// protected pieces and unprotected ones
+// tiles that are attacked unique and ammount of concurrent attackers | partly done
+// protected pieces and unprotected ones | partly done
 // opennes of king
-// total piece value
+// total piece value | done
 // pawn structure and how advanced they are
-// move possibility for every piece
+// move possibility for every piece | done
+// free pieces | done
 
 class ChessAnalyzer {
   public:
@@ -23,21 +25,27 @@ class ChessAnalyzer {
 
     explicit ChessAnalyzer(ChessBoard &aboard);
 
+    std::string startTerminalAnalyzer();
+
     oStrVec getForcedCheckmate(int depth);
-    oStrVec getFreePieces(const boardMatrix &matr, bool white);
+
+    Pieces getFreePieces(const boardMatrix &attackMatr, const boardMatrix &defendMatr, bool white);
 
     boardMatrix getAttackedMatrix();
     boardMatrix getDefendedMatrix();
-    int boardMatrixSize(const boardMatrix &boardMatr, bool color) const;
+    [[nodiscard]] static size_t boardMatrixSize(const boardMatrix &boardMatr, bool white);
+    [[nodiscard]] Pieces getCoveredPieces(const boardMatrix &boardMat, bool white);
+    [[nodiscard]] Pieces getCoveredTiles(const boardMatrix &boardMat, bool white);
+
+    [[nodiscard]] int getPieceValue(bool white);
+    [[nodiscard]] int getPieceValueDiff();
 
     double evalCurrPosition(bool white);
     double evalPawnStruct(bool white);
 
   private:
     ChessBoard &origBoard;
-    const std::map<ChessPieceType, int> pieceValue = {{King, 100000}, {Queen, 9},
-                                                      {Rook, 5},      {Bishop, 3},
-                                                      {Knight, 3},    {Pawn, 1}};
+    const std::map<ChessPieceType, int> pieceValue = {{King, 0}, {Queen, 9}, {Rook, 5}, {Bishop, 3}, {Knight, 3}, {Pawn, 1}};
     const std::vector<int8Pair> directionsBishop = {std::pair(1, 1), std::pair(1, -1), std::pair(-1, 1), std::pair(-1, -1)};
     const std::vector<int8Pair> directionsKnight = {std::pair(2, 1), std::pair(2, -1), std::pair(-2, 1), std::pair(-2, -1),
                                                     std::pair(1, 2), std::pair(-1, 2), std::pair(1, -2), std::pair(-1, -2)};
@@ -47,7 +55,6 @@ class ChessAnalyzer {
 
     void addToAttackedMatrix(boardMatrix &attackedBy, bool white);
     void addToDefendMatrix(boardMatrix &defendedBy, bool white);
-
 
     // helper for attacker matrix
     Pieces getPawnAttackingTiles(const ChessTile *pawnTile);

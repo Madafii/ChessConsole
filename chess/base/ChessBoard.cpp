@@ -311,6 +311,11 @@ inline ChessTile *ChessBoard::getTileAt(const int x, const int y) const {
     return board[y * boardWidth + x].get();
 }
 
+ChessTile *ChessBoard::getTileAt(const int pos) const {
+    if (pos < 0 || pos >= boardWidth * boardHeight) return nullptr;
+    return board[pos].get();
+}
+
 void ChessBoard::pawnWon(ChessTile *pawnTile, const char pawnToPiece) const {
     if (doAfterMoveChecks) std::cout << "Your pawn reached the end what should it become? (Q, R, B, N)" << std::endl;
     char newPawnTyp;

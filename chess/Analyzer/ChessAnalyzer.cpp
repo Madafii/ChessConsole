@@ -1,6 +1,9 @@
 #include "ChessAnalyzer.h"
 #include "ChessBoardDraw.h"
 #include "ChessMoveLogic.h"
+#include <algorithm>
+#include <cstddef>
+#include <iostream>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -18,7 +21,37 @@ oStrVec ChessAnalyzer::getForcedCheckmate(int depth) {
     return std::nullopt;
 }
 
-oStrVec ChessAnalyzer::getFreePieces(const boardMatrix &matr, const bool white) {}
+// TODO: implement terminal control of analyzer
+std::string ChessAnalyzer::startTerminalAnalyzer() {
+    std::string input;
+    std::cin >> input;
+
+    auto getAttackerBoard = getAttackedMatrix();
+    auto getDefenderBoard = getDefendedMatrix();
+    std::cout << std::format("attacking total: {}\ndefending total: {}",
+                             ChessAnalyzer::boardMatrixSize(getAttackerBoard, origBoard.isWhitesTurn()),
+                             ChessAnalyzer::boardMatrixSize(getDefenderBoard, origBoard.isWhitesTurn()))
+              << std::endl;
+    auto freePieces = getFreePieces(getAttackerBoard, getDefenderBoard, origBoard.isWhitesTurn());
+    for (const auto *piece : freePieces) {
+        std::cout << std::format("can take: {} at x:{} y:{}", piece->piece->getFullName(), piece->getX() + 1, piece->getY() + 1)
+                  << std::endl;
+    }
+}
+
+Pieces ChessAnalyzer::getFreePieces(const boardMatrix &attackMatr, const boardMatrix &defendMatr, const bool white) {
+    Pieces freePieces;
+    const Pieces attackedPieces = getCoveredPieces(attackMatr, white);
+    const Pieces defendedPieces = getCoveredPieces(defendMatr, !white);
+    // TODO: there is probably better algorithm for finding unique eles
+    for (ChessTile *piece : attackedPieces) {
+        auto found = std::find(defendedPieces.begin(), defendedPieces.end(), piece);
+        if (found != defendedPieces.end()) {
+            freePieces.push_back(piece);
+        }
+    }
+    return freePieces;
+}
 
 /// return a matrix with each tile and the corresponding attackers of that tile, where the first pair is the white attackers and the second
 /// the black attackers
@@ -37,13 +70,39 @@ boardMatrix ChessAnalyzer::getDefendedMatrix() {
     return defendedBy;
 }
 
-int ChessAnalyzer::boardMatrixSize(const boardMatrix &boardMatr, const bool color) const {
-    int count = 0;
+size_t ChessAnalyzer::boardMatrixSize(const boardMatrix &boardMatr, const bool white) {
+    size_t count = 0;
     for (const auto &[whiteTiles, blackTiles] : boardMatr) {
-        count += color ? whiteTiles.size() : blackTiles.size();
+        count += white ? whiteTiles.size() : blackTiles.size();
     }
     return count;
 }
+
+// returns the attacked pieces of the opponent
+Pieces ChessAnalyzer::getCoveredPieces(const boardMatrix &boardMat, const bool white) {
+    Pieces converedPieces;
+    for (int i = 0; i < boardMat.size(); i++) {
+        const Pieces selTiles = white ? boardMat[i].first : boardMat[i].second;
+        if (selTiles.empty()) continue; // not attacked
+        ChessTile *coveredTile = origBoard.getTileAt(i);
+        if (coveredTile->piece == nullptr) continue; // attacks empty tile
+        converedPieces.push_back(coveredTile);
+    }
+    return converedPieces;
+}
+
+Pieces ChessAnalyzer::getCoveredTiles(const boardMatrix &boardMat, const bool white) {}
+
+int ChessAnalyzer::getPieceValue(bool white) {
+    int totalValue = 0;
+    const Pieces pieces = white ? origBoard.getAllWhiteTiles() : origBoard.getAllBlackTiles();
+    for (const ChessTile *piece : pieces) {
+        totalValue += pieceValue.at(piece->piece->getType());
+    }
+    return totalValue;
+}
+
+int ChessAnalyzer::getPieceValueDiff() { return getPieceValue(true) - getPieceValue(false); }
 
 double ChessAnalyzer::evalCurrPosition(bool white) {}
 
@@ -86,7 +145,7 @@ void ChessAnalyzer::addToDefendMatrix(boardMatrix &defendedBy, const bool white)
     }
 }
 
-Pieces ChessAnalyzer::getPawnAttackingTiles(const ChessTile *pawnTile){
+Pieces ChessAnalyzer::getPawnAttackingTiles(const ChessTile *pawnTile) {
     Pieces attackingTiles;
     const int moveY = pawnTile->piece->isWhite() ? 1 : -1;
     const int x = pawnTile->getX();

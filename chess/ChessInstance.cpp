@@ -223,8 +223,17 @@ void ChessInstance::runWithAnalyzer() {
         auto getAttackerBoard = boardAnalyzer.getAttackedMatrix();
         auto getDefenderBoard = boardAnalyzer.getDefendedMatrix();
         std::cout << std::format("attacking total: {}\ndefending total: {}",
-            boardAnalyzer.boardMatrixSize(getAttackerBoard, !chessBoard.isWhitesTurn()),
-            boardAnalyzer.boardMatrixSize(getDefenderBoard, !chessBoard.isWhitesTurn())) << std::endl;
+                                 ChessAnalyzer::boardMatrixSize(getAttackerBoard, chessBoard.isWhitesTurn()),
+                                 ChessAnalyzer::boardMatrixSize(getDefenderBoard, chessBoard.isWhitesTurn()))
+                  << std::endl;
+        auto freePieces = boardAnalyzer.getFreePieces(getAttackerBoard, getDefenderBoard, chessBoard.isWhitesTurn());
+        for (const auto *piece : freePieces) {
+            std::cout << std::format("can take: {} at x:{} y:{}", piece->piece->getFullName(), piece->getX() + 1, piece->getY() + 1)
+                      << std::endl;
+        }
+        std::cout << std::format("piece value of white: {}, black: {}", boardAnalyzer.getPieceValue(true),
+                                 boardAnalyzer.getPieceValue(false))
+                  << std::endl;
         if (game_state != GameState::IN_PROGRESS) {
             break;
         }
