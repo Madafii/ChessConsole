@@ -27,11 +27,12 @@ Game modes
  - ...
 
 ### Build
-git clone ...
-git submodule init
-git submodule update
-In the cloned repo
-mkdir build
-cd build
-cmake --build .
-./chess_control
+git clone ...  
+git submodule init  
+git submodule update  
+  
+In the cloned repo:  
+mkdir build  
+cd build  
+cmake --build .  
+./chess_control  
