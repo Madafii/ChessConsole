@@ -40,10 +40,11 @@ class ChessAnalyzer {
     [[nodiscard]] Pieces getCoveredTiles(const boardMatrix &boardMat, bool white);
 
     [[nodiscard]] int getPieceValue(bool white);
-    [[nodiscard]] int getPieceValueDiff();
+    [[nodiscard]] int getPieceValueDiff(bool white);
 
     double evalCurrPosition(bool white);
     double evalPawnStruct(bool white);
+    double evalKingProtection(bool white);
 
   private:
     ChessBoard &origBoard;
@@ -67,6 +68,9 @@ class ChessAnalyzer {
     Pieces getDefendedPiecesByDirection(const ChessTile *fromTile, const std::vector<int8Pair> &directions);
     Pieces getDefendedPiecesByDirectionSingle(const ChessTile *fromTile, const std::vector<int8Pair> &directions);
     static bool addIfDefending(const ChessTile *fromTile, ChessTile *toTile, Pieces &defendingMoves);
+
+    // eval helper
+    double getDiffPercentage(double player, double opponent);
 };
 
 #endif

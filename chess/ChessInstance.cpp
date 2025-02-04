@@ -237,6 +237,7 @@ void ChessInstance::runWithAnalyzer() {
         std::cout << std::format("pawn advancement of white: {}, black; {}", boardAnalyzer.evalPawnStruct(true),
                                  boardAnalyzer.evalPawnStruct(false))
                   << std::endl;
+        std::cout << std::format("the kings protection score is: {}", boardAnalyzer.evalKingProtection(true)) << std::endl;
         if (game_state != GameState::IN_PROGRESS) {
             break;
         }

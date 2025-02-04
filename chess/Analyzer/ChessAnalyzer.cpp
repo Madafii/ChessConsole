@@ -40,6 +40,8 @@ oStrVec ChessAnalyzer::getForcedCheckmate(int depth) {
     return std::nullopt;
 }
 
+/// TODO: evaluates the board position for each possible move. Also adding some depth, which returns new evaluations. Should prioritize
+/// worst outcome after opponent moves again for evaluating the move before that
 std::vector<std::string> ChessAnalyzer::getBestEvalMoves() {
     const bool white = origBoard.isWhitesTurn();
     const Pieces allPossMoves = ChessMoveLogic::getAllPossibleMoves(origBoard, white);
@@ -106,19 +108,28 @@ size_t ChessAnalyzer::boardMatrixSize(const boardMatrix &boardMatr, const bool w
 // returns the attacked pieces of the opponent
 Pieces ChessAnalyzer::getCoveredPieces(const boardMatrix &boardMat, const bool white) {
     Pieces converedPieces;
-    for (int i = 0; i < boardMat.size(); i++) {
+    for (size_t i = 0; i < boardMat.size(); i++) {
         const Pieces selTiles = white ? boardMat[i].first : boardMat[i].second;
         if (selTiles.empty()) continue; // not attacked
-        ChessTile *coveredTile = origBoard.getTileAt(i);
+        ChessTile *coveredTile = origBoard.getTileAt((int)i);
         if (coveredTile->piece == nullptr) continue; // attacks empty tile
         converedPieces.push_back(coveredTile);
     }
     return converedPieces;
 }
 
-Pieces ChessAnalyzer::getCoveredTiles(const boardMatrix &boardMat, const bool white) {}
+Pieces ChessAnalyzer::getCoveredTiles(const boardMatrix &boardMat, const bool white) {
+    Pieces coveredTiles;
+    for (size_t i = 0; i < boardMat.size(); i++) {
+        const Pieces selTiles = white ? boardMat[i].first : boardMat[i].second;
+        if (selTiles.empty()) continue; // not attacked
+        ChessTile *coveredTile = origBoard.getTileAt((int)i);
+        coveredTiles.push_back(coveredTile);
+    }
+    return coveredTiles;
+}
 
-int ChessAnalyzer::getPieceValue(bool white) {
+int ChessAnalyzer::getPieceValue(const bool white) {
     int totalValue = 0;
     const Pieces pieces = white ? origBoard.getAllWhiteTiles() : origBoard.getAllBlackTiles();
     for (const ChessTile *piece : pieces) {
@@ -127,17 +138,81 @@ int ChessAnalyzer::getPieceValue(bool white) {
     return totalValue;
 }
 
-int ChessAnalyzer::getPieceValueDiff() { return getPieceValue(true) - getPieceValue(false); }
+int ChessAnalyzer::getPieceValueDiff(const bool white) {
+    const int diff = getPieceValue(true) - getPieceValue(false);
+    return white ? diff : -diff;
+}
 
-double ChessAnalyzer::evalCurrPosition(bool white) {}
+double ChessAnalyzer::evalCurrPosition(const bool white) {
+    // TODO: should probaply all be double later but for simplicity these are int first
 
-double ChessAnalyzer::evalPawnStruct(bool white) {
+    // board Matrixes
+    auto attackMatr = getAttackedMatrix();
+    auto defendMatr = getDefendedMatrix();
+
+    // first evaluate your position stats
+    const int pawnEval = (int)evalPawnStruct(white);
+    const int kingEval = (int)evalKingProtection(white);
+
+    auto coveredPiecesAttack = getCoveredPieces(attackMatr, white);
+    auto coveredTilesAttack = getCoveredTiles(attackMatr, white);
+    auto coveredPiecesDefend = getCoveredPieces(defendMatr, white);
+    auto coveredTilesDefend = getCoveredTiles(defendMatr, white);
+
+    const int uniquePieceAttacks = (int)coveredPiecesAttack.size();
+    const int uniqueTileAttacks = (int)coveredTilesAttack.size();
+    const int uniquePieceDefends = (int)coveredPiecesDefend.size();
+    const int uniqueTileDefends = (int)coveredTilesDefend.size();
+
+    // get opposition position stats
+    const int pawnEvalO = (int)evalPawnStruct(!white);
+    const int kingEvalO = (int)evalKingProtection(!white);
+
+    auto coveredPiecesAttackO = getCoveredPieces(attackMatr, !white);
+    auto coveredTilesAttackO = getCoveredTiles(attackMatr, !white);
+    auto coveredPiecesDefendO = getCoveredPieces(defendMatr, !white);
+    auto coveredTilesDefendO = getCoveredTiles(defendMatr, !white);
+
+    const int uniquePieceAttacksO = (int)coveredPiecesAttackO.size();
+    const int uniqueTileAttacksO = (int)coveredTilesAttackO.size();
+    const int uniquePieceDefendsO = (int)coveredPiecesDefendO.size();
+    const int uniqueTileDefendsO = (int)coveredTilesDefendO.size();
+
+    // get diff between both players
+    const int diffPawnEval = pawnEval - pawnEvalO;
+    const int diffKingEval = kingEval - kingEvalO;
+    const int diffPieceValue = getPieceValueDiff(white);
+    const int diffUniquePieceAttacks = uniquePieceAttacks - uniquePieceAttacksO;
+    const int diffUniqueTileAttacks = uniqueTileAttacks - uniqueTileAttacksO;
+    const int diffUniquePieceDefends = uniquePieceDefends - uniquePieceDefendsO;
+    const int diffUniqueTileDefends = uniqueTileDefends - uniqueTileDefendsO;
+
+    double evaluation = 0;
+}
+
+// current: only total progress of pawns on board
+// TODO: eval pawns protecting each other. Penalty if pawn stands alone
+double ChessAnalyzer::evalPawnStruct(const bool white) {
     int totalProgress = 0;
     const Pieces allPawnPieces = white ? origBoard.getWhitePieceType(Pawn) : origBoard.getBlackPieceType(Pawn);
     for (const auto pawnPiece : allPawnPieces) {
         totalProgress += white ? pawnPiece->getY() : 7 - pawnPiece->getY();
     }
     return totalProgress;
+}
+
+// current: only check adjacent tiles of protection by other pawns or the border
+double ChessAnalyzer::evalKingProtection(const bool white) {
+    int maxSideProtection = 8;
+    const ChessTile *kingTile = white ? origBoard.getWhitePieceType(King)[0] : origBoard.getBlackPieceType(King)[0];
+    const int x = kingTile->getX();
+    const int y = kingTile->getY();
+    for (const auto &[dirX, dirY] : directionsQueen) {
+        const ChessTile *adjTile = origBoard.getTileAt(x + dirX, y + dirY);
+        if (!adjTile) continue;
+        if (!adjTile->piece) maxSideProtection--;
+    }
+    return maxSideProtection;
 }
 
 void ChessAnalyzer::addToAttackedMatrix(boardMatrix &attackedBy, const bool white) {
@@ -264,3 +339,5 @@ inline bool ChessAnalyzer::addIfDefending(const ChessTile *fromTile, ChessTile *
     }
     return false; // should be collision with different colored piece so also stop here
 }
+
+double ChessAnalyzer::getDiffPercentage(const double player, const double opponent) {}
