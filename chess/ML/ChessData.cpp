@@ -8,6 +8,8 @@
 
 #include "ChessBoard.h"
 #include "ChessBoardDraw.h"
+#include "ChessDatabaseInterface.h"
+#include "ChessLinkedListMoves.h"
 #include "ChessUtils.h"
 
 ChessData::ChessData() : movesLinkedList(std::make_unique<ChessLinkedListMoves>()) {}
@@ -36,6 +38,17 @@ void ChessData::readSimpleGames(const std::string &filename) {
 
     std::cout << "reading the games took: " << duration.count() << " seconds\n";
 }
+
+void ChessData::flushMovesToDB(const std::string &dbName) {
+    ChessDatabaseInterface db(dbName);
+
+    // simulate its blacks turn because then next move is white, which is the start move
+    db.pushMovesToDB(getMoves()->getMoveRoot(), {0, false});
+
+    clearMoves();
+}
+
+void ChessData::clearMoves() { movesLinkedList.reset(); }
 
 ChessLinkedListMoves *ChessData::getMoves() const { return movesLinkedList.get(); }
 

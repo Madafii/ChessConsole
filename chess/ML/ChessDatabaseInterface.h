@@ -1,27 +1,42 @@
-// #ifndef CHESSDATABASEINTERFACE_H
-// #define CHESSDATABASEINTERFACE_H
-//
-// #include "ChessLinkedListMoves.h"
-// #include <string>
-// #include <sqlite3.h>
-//
-// class ChessDatabaseInterface {
-// public:
-//     explicit ChessDatabaseInterface(const std::string& dbName);
-//     ~ChessDatabaseInterface();
-//
-//     bool createNode(const MoveCompressed &move);
-//     bool connectNodes(int sourceId, int targetId);
-//
-//     void printNodes() const;
-//
-//     [[nodiscard]] std::vector<std::unique_ptr<MoveCompressed>> getMoves() const;
-//
-// private:
-//     sqlite3* db;
-//     bool executeSQL(const std::string& sql);
-// };
-//
-//
-//
-// #endif //CHESSDATABASEINTERFACE_H
+#ifndef CHESSDATABASEINTERFACE_H
+#define CHESSDATABASEINTERFACE_H
+
+#include "ChessLinkedListMoves.h"
+#include <pqxx/pqxx>
+#include <string>
+
+class ChessDatabaseInterface {
+  public:
+    using table_pair = std::pair<int, bool>;
+    explicit ChessDatabaseInterface(const std::string &dbName);
+    ~ChessDatabaseInterface() = default;
+
+    void createTable(const table_pair &table);
+    void createConnectTable(const table_pair &table);
+
+    /*void addMove(const table_pair &table, const MoveCompressed &move);*/
+    int createMove(const table_pair &table, const MoveCompressed &move);
+    void updateMove(const table_pair &table, int moveId, int newWins, int newLoses, int newDraws);
+    MoveCompressed getMove(const table_pair &table, int moveId);
+
+    void connectMove(const table_pair &table, int sourceId, int targetId);
+    void connectMoves(const table_pair &table, int sourceId, const std::vector<int> &targetIds);
+    std::vector<int> getNextMoveIds(int moveId);
+
+    int pushMovesToDB(MoveCompressed *head, ChessDatabaseInterface::table_pair table);
+
+  private:
+    pqxx::connection connection;
+
+    bool executeSQL(const std::string &sql);
+
+    static inline char getColor(bool white) { return white ? 'W' : 'B'; }
+    static inline std::string getChessMoveTable(const table_pair &table) {
+        return std::format("chess_move_D{}_{}", table.first, getColor(table.second));
+    }
+    static inline std::string getChessLinkerTable(const table_pair &table) {
+        return std::format("chess_moves_linker_D{}_{}", table.first, getColor(table.second));
+    }
+};
+
+#endif // CHESSDATABASEINTERFACE_H

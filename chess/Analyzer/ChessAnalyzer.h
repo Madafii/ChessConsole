@@ -17,6 +17,10 @@
 // pawn structure and how advanced they are
 // move possibility for every piece | done
 // free pieces | done
+// don't move king before castlinng | done
+// don't repeat moves that much | todo
+// option to make bot more aggressive | todo
+// try move every piece once first | todo
 
 class ChessAnalyzer {
   public:
@@ -29,7 +33,8 @@ class ChessAnalyzer {
     std::string startTerminalAnalyzer();
 
     oStrVec getForcedCheckmate(int depth);
-    std::vector<std::string> getBestEvalMoves();
+    std::vector<std::pair<double, std::string>> getBestEvalMoves();
+    std::vector<std::pair<double, std::string>> getBestEvalMoves(int depth);
 
     Pieces getFreePieces(const boardMatrix &attackMatr, const boardMatrix &defendMatr, bool white);
 
@@ -45,6 +50,7 @@ class ChessAnalyzer {
     double evalCurrPosition(bool white);
     double evalPawnStruct(bool white);
     double evalKingProtection(bool white);
+    double evalKingFirstMove(bool white);
 
   private:
     ChessBoard &origBoard;
@@ -55,6 +61,17 @@ class ChessAnalyzer {
     const std::vector<int8Pair> directionsRook = {std::pair(0, 1), std::pair(0, -1), std::pair(-1, 0), std::pair(1, 0)};
     const std::vector<int8Pair> directionsQueen = {std::pair(0, 1), std::pair(0, -1), std::pair(1, 1),  std::pair(1, -1),
                                                    std::pair(1, 0), std::pair(-1, 0), std::pair(-1, 1), std::pair(-1, -1)};
+
+    // ------ weights for evaluation should amount to one (100%)-------
+    static constexpr double weightPieceValue = 0.825;
+    static constexpr double weightPawnValue = 0.03;
+    static constexpr double weightKingValue = 0.005;
+    static constexpr double weightKingFirstMove = 0.02;
+    static constexpr double weightUniquePieceAttacks = 0.05;
+    static constexpr double weightUniqueTileAttacks = 0.04;
+    static constexpr double weightUniquePieceDefends = 0.015;
+    static constexpr double weightUniqueTileDefends = 0.025;
+    // ----------------------------------------------------------------
 
     void addToAttackedMatrix(boardMatrix &attackedBy, bool white);
     void addToDefendMatrix(boardMatrix &defendedBy, bool white);
@@ -70,7 +87,7 @@ class ChessAnalyzer {
     static bool addIfDefending(const ChessTile *fromTile, ChessTile *toTile, Pieces &defendingMoves);
 
     // eval helper
-    double getDiffPercentage(double player, double opponent);
+    [[nodiscard]] static double getDiffPercentage(double player, double opponent);
 };
 
 #endif

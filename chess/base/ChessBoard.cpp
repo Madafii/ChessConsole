@@ -167,6 +167,12 @@ std::vector<ChessTile *> ChessBoard::getBoard() const {
     return out;
 }
 
+bool ChessBoard::isCastlePossible(const bool white) const {
+    if (white && (!whiteRookMoved.first || !whiteRookMoved.second)) return true;
+    if (!white && (!blackRookMoved.first || !blackRookMoved.second)) return true;
+    return false;
+}
+
 std::string ChessBoard::getMoveName(const ChessTile *fromTile, const ChessTile *toTile) {
     const std::string fromStr = ChessTile::mapIntToX.at(fromTile->getX()) + std::to_string(fromTile->getY() + 1);
     const std::string toStr = ChessTile::mapIntToX.at(toTile->getX()) + std::to_string(toTile->getY() + 1);

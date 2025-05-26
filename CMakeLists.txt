@@ -12,6 +12,7 @@ add_executable(chess_control main.cpp)
 
 add_subdirectory(chess)
 add_subdirectory(tests)
+add_subdirectory(libs/libpqxx build-pqxx)
 
 target_link_libraries(chess_control PRIVATE chess)
 

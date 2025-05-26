@@ -144,7 +144,14 @@ std::bitset<16> ChessLinkedListMoves::createData(const std::string &nextMove, bo
 std::string ChessLinkedListMoves::getMoveFromData(const DataBits &data) {
     std::string outMove;
 
-    auto retrieveData = [&outMove](const DataBits &dataBits, const size_t startPos) {
+    auto retrieveDataX = [&outMove](const DataBits &dataBits, const size_t startPos) {
+        std::bitset<3> bits;
+        for (size_t i = 0; i < 3; ++i) {
+            bits.set(i, dataBits[startPos + i]);
+        }
+        outMove.append(std::to_string(BitToX.at(bits)));
+    };
+    auto retrieveDataY = [&outMove](const DataBits &dataBits, const size_t startPos) {
         std::bitset<3> bits;
         for (size_t i = 0; i < 3; ++i) {
             bits.set(i, dataBits[startPos + i]);
@@ -152,11 +159,11 @@ std::string ChessLinkedListMoves::getMoveFromData(const DataBits &data) {
         outMove.append(std::to_string(BitToX.at(bits)));
     };
 
-    retrieveData(data, 13); // first letter
-    retrieveData(data, 10); // first number
-    outMove.append(":");    // sepearator
-    retrieveData(data, 7);  // second letter
-    retrieveData(data, 4);  // second number
+    retrieveDataX(data, 13); // first letter
+    retrieveDataY(data, 10); // first number
+    outMove.append(":");     // sepearator
+    retrieveDataX(data, 7);  // second letter
+    retrieveDataY(data, 4);  // second number
 
     // pawn won
     if (data.test(3)) {

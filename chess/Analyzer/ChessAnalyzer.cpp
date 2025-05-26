@@ -3,6 +3,7 @@
 #include "ChessMoveLogic.h"
 #include <algorithm>
 #include <cstddef>
+#include <cstdlib>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -42,28 +43,56 @@ oStrVec ChessAnalyzer::getForcedCheckmate(int depth) {
 
 /// TODO: evaluates the board position for each possible move. Also adding some depth, which returns new evaluations. Should prioritize
 /// worst outcome after opponent moves again for evaluating the move before that
-std::vector<std::string> ChessAnalyzer::getBestEvalMoves() {
+std::vector<std::pair<double, std::string>> ChessAnalyzer::getBestEvalMoves() {
     const bool white = origBoard.isWhitesTurn();
-    const Pieces allPossMoves = ChessMoveLogic::getAllPossibleMoves(origBoard, white);
 
-    std::vector<std::pair<double, std::string>> evalMovesList(allPossMoves.size());
-    for (const ChessTile *move : allPossMoves) {
-        // make a copy of the board play the move and evaluate the position
-        ChessBoard simulateBoard(origBoard);
-        std::string moveName = move->getMove();
-        simulateBoard.handleMoveInput(moveName);
-        ChessAnalyzer boardAnalyzer(simulateBoard);
-        const double evalValue = boardAnalyzer.evalCurrPosition(white);
-        evalMovesList.emplace_back(evalValue, std::move(moveName));
+    const Pieces colorPieces = white ? origBoard.getAllWhiteTiles() : origBoard.getAllBlackTiles();
+    std::vector<std::pair<double, std::string>> evalMovesList;
+    for (const ChessTile *fromMove : colorPieces) {
+        const std::string fromMoveName = fromMove->getMove();
+        Pieces possibleMoves = ChessMoveLogic::getPossibleMoves(origBoard, fromMove);
+        ChessMoveLogic::filterPossibleMovesForChecks(origBoard, fromMove, possibleMoves);
+        for (const ChessTile *move : possibleMoves) {
+            // make a copy of the board play the move and evaluate the position
+            ChessBoard simulateBoard(origBoard);
+            std::string moveName = fromMoveName + ":" + move->getMove();
+            simulateBoard.handleMoveInput(moveName);
+            ChessAnalyzer boardAnalyzer(simulateBoard);
+            const double evalValue = boardAnalyzer.evalCurrPosition(white);
+            evalMovesList.emplace_back(evalValue, moveName);
+        }
     }
 
     // sort which position has the best evaluation
     std::sort(evalMovesList.begin(), evalMovesList.end(), [](const auto &a, const auto &b) { return a.first > b.first; });
-    std::vector<std::string> moves(evalMovesList.size());
-    for (auto &valuePair : evalMovesList) {
-        moves.push_back(std::move(valuePair.second));
+    return evalMovesList;
+}
+
+/// only works for depth of one for now
+std::vector<std::pair<double, std::string>> ChessAnalyzer::getBestEvalMoves(const int depth) {
+    bool white = origBoard.isWhitesTurn();
+    auto origBestMoves = getBestEvalMoves();
+    /*auto currBestMoves = origBestMoves;*/
+    for (int i = 0; i <= depth; i++) {
+        // change player
+        white = !white;
+        std::vector<std::pair<double, std::string>> evalMovesList;
+        std::pair<double, std::string> worstMove(10000, ""); // dummy value that will be overwritten
+        for (auto &[evalValue, moveName] : origBestMoves) {
+            // make move from previous evaluation
+            ChessBoard simulateBoard(origBoard);
+            simulateBoard.handleMoveInput(moveName);
+            // get the new best moves
+            ChessAnalyzer boardAnalyzer(simulateBoard);
+            auto simBestMoves = boardAnalyzer.getBestEvalMoves();
+            // get the worst move
+            const auto simWorstMove = simBestMoves.back();
+            evalValue = std::min(evalValue, simWorstMove.first);
+        }
     }
-    return moves;
+
+    std::sort(origBestMoves.begin(), origBestMoves.end(), [](const auto &a, const auto &b) { return a.first > b.first; });
+    return origBestMoves;
 }
 
 Pieces ChessAnalyzer::getFreePieces(const boardMatrix &attackMatr, const boardMatrix &defendMatr, const bool white) {
@@ -178,16 +207,37 @@ double ChessAnalyzer::evalCurrPosition(const bool white) {
     const int uniquePieceDefendsO = (int)coveredPiecesDefendO.size();
     const int uniqueTileDefendsO = (int)coveredTilesDefendO.size();
 
-    // get diff between both players
-    const int diffPawnEval = pawnEval - pawnEvalO;
-    const int diffKingEval = kingEval - kingEvalO;
-    const int diffPieceValue = getPieceValueDiff(white);
-    const int diffUniquePieceAttacks = uniquePieceAttacks - uniquePieceAttacksO;
-    const int diffUniqueTileAttacks = uniqueTileAttacks - uniqueTileAttacksO;
-    const int diffUniquePieceDefends = uniquePieceDefends - uniquePieceDefendsO;
-    const int diffUniqueTileDefends = uniqueTileDefends - uniqueTileDefendsO;
+    // get percantage of the difference between the players
+    const double pieceValuePerc = getDiffPercentage(getPieceValue(white), getPieceValue(!white));
+    const double pawnEvalPerc = getDiffPercentage(pawnEval, pawnEvalO);
+    const double kingEvalPerc = getDiffPercentage(kingEval, kingEvalO);
+    const double uniquePieceAttacksPerc = getDiffPercentage(uniquePieceAttacks, uniquePieceAttacksO);
+    const double uniqueTileAttacksPerc = getDiffPercentage(uniqueTileAttacks, uniqueTileAttacksO);
+    const double uniquePieceDefendsPerc = getDiffPercentage(uniquePieceDefends, uniquePieceDefendsO);
+    const double uniqueTileDefendsPerc = getDiffPercentage(uniqueTileDefends, uniqueTileDefendsO);
 
-    double evaluation = 0;
+    // get each value considering their weight
+    const double evaluatedPieceValue = weightPieceValue * pieceValuePerc;
+    const double evaluatedPawn = weightPawnValue * pawnEvalPerc;
+    const double evaluatedKing = weightKingValue * kingEvalPerc;
+    const double evaluatedUniquePieceAttacks = weightUniquePieceAttacks * uniquePieceAttacksPerc;
+    const double evaluatedUniqueTileAttacks = weightUniqueTileAttacks * uniqueTileAttacksPerc;
+    const double evaluatedUniquePieceDefends = weightUniquePieceDefends * uniquePieceDefendsPerc;
+    const double evaluatedUniqueTileDefends = weightUniqueTileDefends * uniqueTileDefendsPerc;
+    const double evaluatedKingFirstMove = weightKingFirstMove * evalKingFirstMove(white);
+
+    // add the results together
+    double evaluatedResult = 0;
+    evaluatedResult += evaluatedPieceValue;
+    evaluatedResult += evaluatedPawn;
+    evaluatedResult += evaluatedKing;
+    evaluatedResult += evaluatedKingFirstMove;
+    evaluatedResult += evaluatedUniquePieceAttacks;
+    evaluatedResult += evaluatedUniqueTileAttacks;
+    evaluatedResult += evaluatedUniquePieceAttacks;
+    evaluatedResult += evaluatedUniquePieceDefends;
+    evaluatedResult += evaluatedUniqueTileDefends;
+    return evaluatedResult;
 }
 
 // current: only total progress of pawns on board
@@ -213,6 +263,12 @@ double ChessAnalyzer::evalKingProtection(const bool white) {
         if (!adjTile->piece) maxSideProtection--;
     }
     return maxSideProtection;
+}
+
+// discourage moving the king before castling is still possible
+double ChessAnalyzer::evalKingFirstMove(bool white) {
+    if (origBoard.isCastlePossible(white)) return -100;
+    return 0;
 }
 
 void ChessAnalyzer::addToAttackedMatrix(boardMatrix &attackedBy, const bool white) {
@@ -340,4 +396,7 @@ inline bool ChessAnalyzer::addIfDefending(const ChessTile *fromTile, ChessTile *
     return false; // should be collision with different colored piece so also stop here
 }
 
-double ChessAnalyzer::getDiffPercentage(const double player, const double opponent) {}
+inline double ChessAnalyzer::getDiffPercentage(const double player, const double opponent) {
+    if (player == 0 && opponent == 0) return 0;
+    return 100 / std::max(player, opponent) * (player - opponent);
+}

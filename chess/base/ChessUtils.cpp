@@ -1,8 +1,6 @@
 #include "ChessUtils.h"
 #include "ChessMoveLogic.h"
 
-#include <ranges>
-
 std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard &board, const bool &white) {
     // ignore sume values in the input
     // Remove '+' characters

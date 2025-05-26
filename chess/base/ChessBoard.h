@@ -38,6 +38,7 @@ class ChessBoard {
 
     // basic callers
     [[nodiscard]] bool isWhitesTurn() const { return whitesTurn; }
+    [[nodiscard]] bool isCastlePossible(bool white) const;
     [[nodiscard]] std::vector<std::string> getGameHistory() const { return gameHistory; }
     [[nodiscard]] static std::string getMoveName(const ChessTile *fromTile, const ChessTile *toTile);
     [[nodiscard]] std::vector<ChessTile *> getBoard() const;

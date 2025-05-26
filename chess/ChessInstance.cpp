@@ -3,6 +3,7 @@
 #include "ChessBoard.h"
 #include "ChessBoardDraw.h"
 #include "ChessData.h"
+#include "ChessDatabaseInterface.h"
 #include "ChessMoveLogic.h"
 #include "ChessPeepo.h"
 
@@ -12,7 +13,7 @@
 #include <random>
 
 ChessInstance::ChessInstance() {
-    gameOptions = {"normal", "random", "againstRandom", "data", "peepo", "analyzer", "quit"};
+    gameOptions = {"normal", "random", "againstRandom", "data", "database", "peepo", "analyzer", "quit"};
 
     std::cout << "Select the game you want to play: " << std::endl;
     printGameOptions();
@@ -33,10 +34,12 @@ ChessInstance::ChessInstance() {
         } else if (playOption == gameOptions[3]) {
             runWithChessData();
         } else if (playOption == gameOptions[4]) {
-            runAgainstPeepo();
+            runWithChessDatabase();
         } else if (playOption == gameOptions[5]) {
-            runWithAnalyzer();
+            runAgainstPeepo();
         } else if (playOption == gameOptions[6]) {
+            runWithAnalyzer();
+        } else if (playOption == gameOptions[7]) {
             std::cout << "Quitting..." << std::endl;
             break;
         } else {
@@ -131,35 +134,50 @@ void ChessInstance::runAgainstRandom(const bool white) {
 }
 
 void ChessInstance::runWithChessData() {
-    // ChessBoard chessBoard(false);
-    // ChessBoardDraw chessDraw;
-    // ChessData data;
-    // /*const std::string filename =
-    // "/home/fpittermann/Documents/Projects/ChessConsole/data/lichessDatabase/outData/lichess_db_test.txt";*/ const std::string filename =
-    // "../data/lichess/outData/lichess_db_standard.rated_2013-01_backup.txt"; data.readSimpleGames(filename); ChessLinkedListMoves *moves =
-    // data.getMoves(); moves->setMoveHead(moves->getMoveRoot()); // set it to the root before the game beginns
-    //
-    // std::string input;
-    // chessDraw.draw(chessBoard);
-    // while (true) {
-    //     std::cin >> input;
-    //     if (input == "quit") break;
-    //     // handle game input
-    //     const GameState game_state = chessBoard.handleInput(input);
-    //     chessDraw.draw(chessBoard);
-    //     // get info for the next moves
-    //     Move *move = moves->getAtMove(input);
-    //     if (move == nullptr) {
-    //         std::cout << "no more suggested moves" << std::endl;
-    //     } else {
-    //         // set the head to the newly played move
-    //         moves->setMoveHead(move);
-    //         std::cout << moves->getInfoNextMoves() << std::endl;
-    //     }
-    //     if (game_state != GameState::IN_PROGRESS) {
-    //         break;
-    //     }
-    // }
+    ChessBoard chessBoard;
+    ChessBoardDraw chessDraw;
+
+    // get the data
+    ChessData data;
+    const std::string filename = "../data/lichess/outData/lichess_db_standard.rated_2013-03.txt";
+    data.readSimpleGames(filename);
+    data.flushMovesToDB("chessMoves");
+    /*ChessBoard chessBoard(false);*/
+    /*ChessBoardDraw chessDraw;*/
+    /*ChessData data;*/
+    /*const std::string filename = "/home/fpittermann/Documents/Projects/ChessConsole/data/lichessDatabase/outData/lichess_db_test.txt";*/
+    /*/*const std::string filename = "../data/lichess/outData/lichess_db_standard.rated_2013-01_backup.txt";*/
+    /*data.readSimpleGames(filename);*/
+    /*ChessLinkedListMoves *moves = data.getMoves();*/
+    /*moves->setMoveHead(moves->getMoveRoot()); // set it to the root before the game beginns*/
+    /**/
+    /*std::string input;*/
+    /*chessDraw.draw(chessBoard);*/
+    /*while (true) {*/
+    /*    std::cin >> input;*/
+    /*    if (input == "quit") break;*/
+    /*    // handle game input*/
+    /*    const GameState game_state = chessBoard.handleInput(input);*/
+    /*    chessDraw.draw(chessBoard);*/
+    /*    // get info for the next moves*/
+    /*    Move *move = moves->getAtMove(input);*/
+    /*    if (move == nullptr) {*/
+    /*        std::cout << "no more suggested moves" << std::endl;*/
+    /*    } else {*/
+    /*        // set the head to the newly played move*/
+    /*        moves->setMoveHead(move);*/
+    /*        std::cout << moves->getInfoNextMoves() << std::endl;*/
+    /*    }*/
+    /*    if (game_state != GameState::IN_PROGRESS) {*/
+    /*        break;*/
+    /*    }*/
+    /*}*/
+}
+
+void ChessInstance::runWithChessDatabase() {
+    ChessBoard chessBoard;
+    ChessBoardDraw chessDraw;
+    ChessDatabaseInterface chessInterface("chessMoves");
 }
 
 void ChessInstance::runAgainstPeepo() {
@@ -168,7 +186,7 @@ void ChessInstance::runAgainstPeepo() {
 
     // get the data
     ChessData data;
-    const std::string filename = "../data/lichess/outData/lichess_db_standard.rated_2013-01_backup.txt";
+    const std::string filename = "../data/lichess/outData/lichess_db_standard.rated_2013-01.txt";
     data.readSimpleGames(filename);
     ChessLinkedListMoves *moves = data.getMoves();
     moves->setMoveHead(moves->getMoveRoot()); // set it to the root before the game beginns
@@ -238,6 +256,14 @@ void ChessInstance::runWithAnalyzer() {
                                  boardAnalyzer.evalPawnStruct(false))
                   << std::endl;
         std::cout << std::format("the kings protection score is: {}", boardAnalyzer.evalKingProtection(true)) << std::endl;
+        std::cout << std::format("the evaluated result of this board for the current player is: {}",
+                                 boardAnalyzer.evalCurrPosition(chessBoard.isWhitesTurn()))
+                  << std::endl;
+        auto bestMovesSorted = boardAnalyzer.getBestEvalMoves(1);
+        std::cout << std::format("recommended next move is: {}, which has the evaluation of: {}", bestMovesSorted.at(0).second,
+                                 bestMovesSorted.at(0).first)
+                  << std::endl;
+
         if (game_state != GameState::IN_PROGRESS) {
             break;
         }

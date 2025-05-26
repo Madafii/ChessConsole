@@ -4,7 +4,6 @@
 #include "ChessBoard.h"
 #include "ChessData.h"
 #include "ChessLinkedListMoves.h"
-#include <ranges>
 #include <sys/types.h>
 
 class ChessPeepo {
