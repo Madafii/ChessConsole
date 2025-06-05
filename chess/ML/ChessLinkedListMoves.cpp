@@ -74,41 +74,36 @@ std::vector<const MoveCompressed *> ChessLinkedListMoves::getAllMoves() const {
     return result;
 }
 
+std::string ChessLinkedListMoves::getFullInfo(const MoveCompressed *move) {
+    std::string output;
+    output.append(getInfoMove(move));
+    output.append(getInfoNextMoves(move));
+    return output;
+}
+
 std::string ChessLinkedListMoves::getInfoMove(const MoveCompressed *move) {
     std::string output;
-    const MoveCompressed *outputMove = move == nullptr ? head : move;
-    output.append("ChessLinkedListMoves: " + getMoveFromData(outputMove->data) + "\n");
+    output.append("ChessLinkedListMoves: " + getMoveFromData(move->data) + "\n");
     output.append(separatorLine);
-    output.append("color: " + std::string(getWhiteFromData(outputMove->data) ? "white" : "black") + "\n");
+    output.append("color: " + std::string(getWhiteFromData(move->data) ? "white" : "black") + "\n");
     output.append(separatorLine);
-    output.append("wins: " + std::to_string(outputMove->wins) + "\n");
-    output.append("loses: " + std::to_string(outputMove->loses) + "\n");
-    output.append("draws: " + std::to_string(outputMove->draws) + "\n");
+    output.append("wins: " + std::to_string(move->wins) + "\n");
+    output.append("loses: " + std::to_string(move->loses) + "\n");
+    output.append("draws: " + std::to_string(move->draws) + "\n");
     output.append(separatorLine);
     return output;
 }
 
 std::string ChessLinkedListMoves::getBasicInfo(const MoveCompressed *move) {
-    const MoveCompressed *outputMove = move == nullptr ? head : move;
-    return std::format("move: {}, stats(w,l,d): {}, {}, {}\n", getMoveFromData(outputMove->data), outputMove->wins, outputMove->loses,
-                       outputMove->draws);
+    return std::format("move: {}, stats(w,l,d): {}, {}, {}\n", getMoveFromData(move->data), move->wins, move->loses, move->draws);
 }
 
 std::string ChessLinkedListMoves::getInfoNextMoves(const MoveCompressed *move) {
     std::string output;
-    const MoveCompressed *outputMove = move == nullptr ? head : move;
-    for (const auto &nextMove : outputMove->nexts) {
+    for (const auto &nextMove : move->nexts) {
         output.append(getBasicInfo(nextMove.get()));
     }
     output.append(separatorLine);
-    return output;
-}
-
-std::string ChessLinkedListMoves::getFullInfo(const MoveCompressed *move) {
-    std::string output;
-    const MoveCompressed *outputMove = move == nullptr ? head : move;
-    output.append(getInfoMove(outputMove));
-    output.append(getInfoNextMoves(outputMove));
     return output;
 }
 

@@ -67,11 +67,16 @@ class ChessLinkedListMoves {
     [[nodiscard]] MoveCompressed *getAtMove(const std::string &move) const;
     [[nodiscard]] std::vector<const MoveCompressed *> getAllMoves() const;
 
-    // info by move, not set uses head
-    std::string getFullInfo(const MoveCompressed *move = nullptr);
-    std::string getInfoMove(const MoveCompressed *move = nullptr);
-    std::string getBasicInfo(const MoveCompressed *move = nullptr);
-    std::string getInfoNextMoves(const MoveCompressed *move = nullptr);
+    // string info of move
+    static std::string getFullInfo(const MoveCompressed *move);
+    static std::string getInfoMove(const MoveCompressed *move);
+    static std::string getBasicInfo(const MoveCompressed *move);
+    static std::string getInfoNextMoves(const MoveCompressed *move);
+
+    inline std::string getFullInfoHead() { return getFullInfo(head); };
+    inline std::string getInfoMoveHead() { return getInfoMove(head); };
+    inline std::string getBasicInfoHead() { return getBasicInfo(head); };
+    inline std::string getInfoNextMovesHead() { return getInfoNextMoves(head); };
 
     // statics
     static std::string createKey(const bool &white, const std::string &board);
