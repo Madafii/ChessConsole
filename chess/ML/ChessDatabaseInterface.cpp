@@ -1,13 +1,14 @@
 #include "ChessDatabaseInterface.h"
-#include "ChessData.h"
 #include "ChessLinkedListMoves.h"
+#include "pqxx/internal/concat.hxx"
 #include "pqxx/internal/statement_parameters.hxx"
 #include <cstdint>
-#include <iomanip>
 #include <iostream>
 #include <memory>
+#include <stack>
 #include <string>
 #include <sys/types.h>
+#include <tuple>
 
 ChessDatabaseInterface::ChessDatabaseInterface(const std::string &dbName)
     : connection("dbname=" + dbName + " user=finnp password=Mcstinki+2314") {
@@ -18,45 +19,23 @@ ChessDatabaseInterface::ChessDatabaseInterface(const std::string &dbName)
     }
 }
 
-// Did 500 for each color both move and linker
-void ChessDatabaseInterface::createTable(const table_pair &table) {
-    // might just create maximum ammount of rounds possible which would be 5898 moves by the 50 moves rule*/
-    const std::string sql =
-        std::format("CREATE TABLE IF NOT EXISTS {} (id SERIAL PRIMARY KEY, moveData CHAR(2), wins BIGINT, loses BIGINT, draws BIGINT);",
-                    getChessMoveTable(table));
-    if (executeSQL(sql)) {
-        std::cout << "Created Table" << std::endl;
-    }
-}
-
-void ChessDatabaseInterface::createConnectTable(const table_pair &table) {
-    const std::string sql = std::format("CREATE TABLE IF NOT EXISTS {} (id SERIAL PRIMARY KEY, chess_move_id INT REFERENCES "
-                                        "{}(id), next_id INT REFERENCES {}(id));",
-                                        getChessLinkerTable(table), getChessMoveTable(table), getChessLinkerTable(table));
-    if (executeSQL(sql)) {
-        std::cout << "Created Table" << std::endl;
-    }
-}
-
-/*void ChessDatabaseInterface::addMove(const table_pair &table, const MoveCompressed &move) {*/
-/*    const std::string sql = std::format("INSERT INTO {} (movedata, wins, loses, draws) VALUES ({}, {}, {}, {}) ON CONFLICT ",*/
-/*                                              getChessMoveTable(table), move.data.to_string(), move.wins, move.loses, move.draws);*/
-/*}*/
-
 int ChessDatabaseInterface::createMove(const table_pair &table, const MoveCompressed &move) {
     pqxx::work worker(connection);
 
     const std::string sql =
         "INSERT INTO " + getChessMoveTable(table) + " (movedata, wins, loses, draws) VALUES ($1, $2, $3, $4) RETURNING id;";
 
-    // TODO: bruh took so long but can't find how to just pass to a bytea type from the bitset. So this gotta work for now
-    auto value = static_cast<uint16_t>(move.data.to_ulong());
-    pqxx::params par = pqxx::params{value, move.wins, move.loses, move.draws};
-    pqxx::result result = worker.exec(sql, par);
+    std::byte bytes[2];
+    auto dataLong = move.data.to_ulong();
+    bytes[1] = std::byte(dataLong);
+    bytes[0] = std::byte(dataLong >> 8);
+    auto sqlBytes = pqxx::binary_cast(bytes, sizeof(bytes));
+    pqxx::params par = pqxx::params{sqlBytes, move.wins, move.loses, move.draws};
 
+    pqxx::result result = worker.exec(sql, par);
     worker.commit();
 
-    std::cout << "pushed move to table: " << getChessMoveTable(table) << std::endl;
+    /*std::cout << "pushed move to table: " << getChessMoveTable(table) << std::endl;*/
 
     // get first value which is the id of the created move
     return (*result.begin())[0].as<int>();
@@ -76,7 +55,7 @@ MoveCompressed ChessDatabaseInterface::getMove(const table_pair &table, int move
     W.commit();
 }
 
-void ChessDatabaseInterface::connectMove(const table_pair &table, int sourceId, int targetId) {
+void ChessDatabaseInterface::connectMove(const table_pair &table, const int sourceId, const int targetId) {
     pqxx::work worker(connection);
 
     const std::string sql = "INSERT INTO " + getChessLinkerTable(table) + " (chess_move_id, next_id) VALUES ($1, $2)";
@@ -107,28 +86,37 @@ std::vector<int> ChessDatabaseInterface::getNextMoveIds(int moveId) {
     return results;
 }
 
-// recursive foreach of all the moves
-int ChessDatabaseInterface::pushMovesToDB(MoveCompressed *head, ChessDatabaseInterface::table_pair table) {
+void ChessDatabaseInterface::pushMovesToDB(const MoveCompressed *head, table_pair table) {
+    if (!head) return;
 
-    /**/
-    /*MoveCompressed *currentMove;*/
-    /*while (currentMove) {*/
-    /*    currentMove->nexts*/
-    /*}*/
-    /**/
-    /**/
-    /**/
-    if (!head) return -1; // reached last move
+    const auto start = std::chrono::high_resolution_clock::now();
 
-    const int newId = createMove(table, *head);
+    std::stack<std::tuple<const MoveCompressed *, table_pair, int>> moveStack;
 
-    for (const auto &nextMove : head->nexts) {
-        if (!table.second) table.first++; // depth only increase after black move
-        table.second = !table.second;
-        const int nextNewId = pushMovesToDB(nextMove.get(), table);
-        connectMove(table, newId, nextNewId);
+    int connectFromId = createMove(table, *head);
+    moveStack.emplace(head, table, connectFromId);
+
+    while (!moveStack.empty()) {
+        auto [currentMove, currentTable, currentId] = moveStack.top();
+        moveStack.pop();
+
+        const table_pair connectTable(currentTable);
+
+        if (currentTable.second) currentTable.first++; // depth only increase after white moves
+        currentTable.second = !currentTable.second;
+
+        for (const auto &nextMove : currentMove->nexts) {
+            const int connectToId = createMove(currentTable, *nextMove);
+            moveStack.emplace(nextMove.get(), currentTable, connectToId);
+
+            connectMove(connectTable, currentId, connectToId);
+        }
     }
-    return newId;
+
+    const auto end = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<double> duration = end - start;
+
+    std::cout << "pushing move to DB took: " << duration.count() << " seconds\n";
 }
 
 bool ChessDatabaseInterface::executeSQL(const std::string &sql) {

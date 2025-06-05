@@ -11,10 +11,6 @@ class ChessDatabaseInterface {
     explicit ChessDatabaseInterface(const std::string &dbName);
     ~ChessDatabaseInterface() = default;
 
-    void createTable(const table_pair &table);
-    void createConnectTable(const table_pair &table);
-
-    /*void addMove(const table_pair &table, const MoveCompressed &move);*/
     int createMove(const table_pair &table, const MoveCompressed &move);
     void updateMove(const table_pair &table, int moveId, int newWins, int newLoses, int newDraws);
     MoveCompressed getMove(const table_pair &table, int moveId);
@@ -23,7 +19,7 @@ class ChessDatabaseInterface {
     void connectMoves(const table_pair &table, int sourceId, const std::vector<int> &targetIds);
     std::vector<int> getNextMoveIds(int moveId);
 
-    int pushMovesToDB(MoveCompressed *head, ChessDatabaseInterface::table_pair table);
+    void pushMovesToDB(const MoveCompressed *head, ChessDatabaseInterface::table_pair table);
 
   private:
     pqxx::connection connection;
