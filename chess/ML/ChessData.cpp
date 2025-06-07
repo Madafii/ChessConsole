@@ -43,14 +43,10 @@ void ChessData::flushMovesToDB(const std::string &dbName) {
     ChessDatabaseInterface db(dbName);
 
     // simulate its blacks turn because then next move is white, which is the start move
-    db.pushMovesToDB(getMoves()->getMoveRoot(), {0, false});
+    db.pushMovesToDB(*getMoves(), {0, false});
 
     clearMoves();
 }
-
-void ChessData::clearMoves() { movesLinkedList.reset(); }
-
-ChessLinkedListMoves *ChessData::getMoves() const { return movesLinkedList.get(); }
 
 ChessData::ResultPair ChessData::getResult(const std::string_view result) {
     std::pair<RESULT, RESULT> gameResult;

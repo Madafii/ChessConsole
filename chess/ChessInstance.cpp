@@ -4,6 +4,7 @@
 #include "ChessBoardDraw.h"
 #include "ChessData.h"
 #include "ChessDatabaseInterface.h"
+#include "ChessLinkedListMoves.h"
 #include "ChessMoveLogic.h"
 #include "ChessPeepo.h"
 
@@ -136,12 +137,26 @@ void ChessInstance::runAgainstRandom(const bool white) {
 void ChessInstance::runWithChessData() {
     ChessBoard chessBoard;
     ChessBoardDraw chessDraw;
+    ChessDatabaseInterface chessDB("chessMoves");
 
     // get the data
     ChessData data;
-    const std::string filename = "../data/lichess/outData/lichess_db_standard.rated_2013-03.txt";
+    const std::string filename = "../data/lichess/outData/lichess_db_standard.rated_2013-01.txt";
     data.readSimpleGames(filename);
     data.flushMovesToDB("chessMoves");
+
+    while (true) {
+        std::string inputNum, inputCol;
+        std::cin >> inputNum;
+        std::cin >> inputCol;
+
+        int num = std::stoi(inputNum);
+        bool white = inputCol == "w" ? true : false;
+
+        auto move = chessDB.getMove({num, white}, 1);
+        std::cout << ChessLinkedListMoves::getFullInfo(&move) << std::endl;
+    }
+
     /*ChessBoard chessBoard(false);*/
     /*ChessBoardDraw chessDraw;*/
     /*ChessData data;*/

@@ -4,14 +4,20 @@
 #include "ChessLinkedListMoves.h"
 #include <pqxx/pqxx>
 #include <string>
+#include <tuple>
 
 class ChessDatabaseInterface {
   public:
     using table_pair = std::pair<int, bool>;
+    // they are saved in this way in the db to save storage
+    /*using small_table_tuple = std::tuple<std::byte[2], uint16_t, uint16_t, uint16_t>;*/
+    /*using medium_table_tuple = std::tuple<std::byte[2], uint32_t, uint16_t, uint16_t>;*/
+    /*using big_table_tuple = std::tuple<std::byte[2], uint64_t, uint16_t, uint16_t>;*/
+
     explicit ChessDatabaseInterface(const std::string &dbName);
     ~ChessDatabaseInterface() = default;
 
-    int createMove(const table_pair &table, const MoveCompressed &move);
+    std::optional<int> createMove(const table_pair &table, const MoveCompressed &move);
     void updateMove(const table_pair &table, int moveId, int newWins, int newLoses, int newDraws);
     MoveCompressed getMove(const table_pair &table, int moveId);
 
@@ -19,12 +25,12 @@ class ChessDatabaseInterface {
     void connectMoves(const table_pair &table, int sourceId, const std::vector<int> &targetIds);
     std::vector<int> getNextMoveIds(int moveId);
 
-    void pushMovesToDB(const MoveCompressed *head, ChessDatabaseInterface::table_pair table);
+    void pushMovesToDB(const ChessLinkedListMoves &llMoves, ChessDatabaseInterface::table_pair table);
 
   private:
     pqxx::connection connection;
 
-    bool executeSQL(const std::string &sql);
+    std::optional<pqxx::result> executeSQL(const std::string &sql, const pqxx::params &pars);
 
     static inline char getColor(bool white) { return white ? 'W' : 'B'; }
     static inline std::string getChessMoveTable(const table_pair &table) {

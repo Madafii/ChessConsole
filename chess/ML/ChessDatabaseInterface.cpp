@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <stack>
 #include <string>
 #include <sys/types.h>
@@ -19,54 +20,60 @@ ChessDatabaseInterface::ChessDatabaseInterface(const std::string &dbName)
     }
 }
 
-int ChessDatabaseInterface::createMove(const table_pair &table, const MoveCompressed &move) {
-    pqxx::work worker(connection);
-
+std::optional<int> ChessDatabaseInterface::createMove(const table_pair &table, const MoveCompressed &move) {
     const std::string sql =
         "INSERT INTO " + getChessMoveTable(table) + " (movedata, wins, loses, draws) VALUES ($1, $2, $3, $4) RETURNING id;";
 
     std::byte bytes[2];
     auto dataLong = move.data.to_ulong();
-    bytes[1] = std::byte(dataLong);
-    bytes[0] = std::byte(dataLong >> 8);
+    bytes[1] = static_cast<std::byte>(dataLong);
+    bytes[0] = static_cast<std::byte>(dataLong >> 8);
     auto sqlBytes = pqxx::binary_cast(bytes, sizeof(bytes));
-    pqxx::params par = pqxx::params{sqlBytes, move.wins, move.loses, move.draws};
+    const pqxx::params par(sqlBytes, move.wins, move.loses, move.draws);
 
-    pqxx::result result = worker.exec(sql, par);
-    worker.commit();
+    if (const auto result = executeSQL(sql, par)) {
+        // get first value which is the id of the created move
+        return result->begin()->at(0).as<int>();
+    }
 
-    /*std::cout << "pushed move to table: " << getChessMoveTable(table) << std::endl;*/
-
-    // get first value which is the id of the created move
-    return (*result.begin())[0].as<int>();
+    std::cerr << "error: pushing the move " << ChessLinkedListMoves::getBasicInfo(&move);
+    return std::nullopt;
 }
 
+// TODO:
 void ChessDatabaseInterface::updateMove(const table_pair &table, int moveId, int newWins, int newLoses, int newDraws) {
     const std::string sql = std::format("UPDATE {} SET wins = {}, loses = {}, draws = {} WHERE id = {}", getChessMoveTable(table), newWins,
                                         newLoses, newDraws, moveId);
-    executeSQL(sql);
+    /*executeSQL(sql);*/
 }
 
-MoveCompressed ChessDatabaseInterface::getMove(const table_pair &table, int moveId) {
-    pqxx::work W(connection);
-    auto [moveData, wins, loses, draws] = W.query1<std::string, u_int64_t, uint64_t, uint64_t>(
-        std::format("SELECT * FROM {} WHERE id = {}", getChessMoveTable(table), moveId));
-    return MoveCompressed(DataBits(moveData), wins, loses, draws);
-    W.commit();
+MoveCompressed ChessDatabaseInterface::getMove(const table_pair &table, const int moveId) {
+    const std::string sql = "SELECT moveData, wins, loses, draws FROM " + getChessMoveTable(table) + " WHERE id = $1";
+    pqxx::params pars(moveId);
+
+    pqxx::work worker(connection);
+    auto [moveData, wins, loses, draws] = worker.query1<std::string, uint64_t, uint64_t, uint64_t>(sql, pars);
+    worker.commit();
+
+    // TODO: can not be the best way to do that. Propably some way in the library for a better solution
+    std::string hexMoveData = moveData.substr(2);
+
+    unsigned int intMoveData;
+    std::stringstream ss;
+    ss << std::hex << hexMoveData;
+    ss >> intMoveData;
+
+    return MoveCompressed(DataBits(std::bitset<16>(intMoveData)), wins, loses, draws);
 }
 
 void ChessDatabaseInterface::connectMove(const table_pair &table, const int sourceId, const int targetId) {
-    pqxx::work worker(connection);
-
     const std::string sql = "INSERT INTO " + getChessLinkerTable(table) + " (chess_move_id, next_id) VALUES ($1, $2)";
     pqxx::params par = {sourceId, targetId};
 
-    worker.exec(sql, par);
-    worker.commit();
-
-    std::cout << "create connection between: " << sourceId << " and: " << targetId << std::endl;
+    executeSQL(sql, par);
 }
 
+// unused
 void ChessDatabaseInterface::connectMoves(const table_pair &table, int sourceId, const std::vector<int> &targetIds) {
     pqxx::work worker(connection);
     for (const int targetId : targetIds) {
@@ -75,6 +82,7 @@ void ChessDatabaseInterface::connectMoves(const table_pair &table, int sourceId,
     worker.commit();
 }
 
+// TODO:
 std::vector<int> ChessDatabaseInterface::getNextMoveIds(int moveId) {
     pqxx::work worker(connection);
     std::vector<int> results;
@@ -86,15 +94,17 @@ std::vector<int> ChessDatabaseInterface::getNextMoveIds(int moveId) {
     return results;
 }
 
-void ChessDatabaseInterface::pushMovesToDB(const MoveCompressed *head, table_pair table) {
-    if (!head) return;
+// starts from the head of the linked list (so set to root if wanted)
+void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves, table_pair table) {
+    if (!llMoves.getMoveHead()) return;
 
     const auto start = std::chrono::high_resolution_clock::now();
 
     std::stack<std::tuple<const MoveCompressed *, table_pair, int>> moveStack;
 
-    int connectFromId = createMove(table, *head);
-    moveStack.emplace(head, table, connectFromId);
+    if (auto connectFromId = createMove(table, *llMoves.getMoveHead())) {
+        moveStack.emplace(llMoves.getMoveHead(), table, *connectFromId);
+    }
 
     while (!moveStack.empty()) {
         auto [currentMove, currentTable, currentId] = moveStack.top();
@@ -106,10 +116,11 @@ void ChessDatabaseInterface::pushMovesToDB(const MoveCompressed *head, table_pai
         currentTable.second = !currentTable.second;
 
         for (const auto &nextMove : currentMove->nexts) {
-            const int connectToId = createMove(currentTable, *nextMove);
-            moveStack.emplace(nextMove.get(), currentTable, connectToId);
+            if (auto connectToId = createMove(currentTable, *nextMove)) {
+                moveStack.emplace(nextMove.get(), currentTable, *connectToId);
 
-            connectMove(connectTable, currentId, connectToId);
+                connectMove(connectTable, currentId, *connectToId);
+            }
         }
     }
 
@@ -119,18 +130,21 @@ void ChessDatabaseInterface::pushMovesToDB(const MoveCompressed *head, table_pai
     std::cout << "pushing move to DB took: " << duration.count() << " seconds\n";
 }
 
-bool ChessDatabaseInterface::executeSQL(const std::string &sql) {
+std::optional<pqxx::result> ChessDatabaseInterface::executeSQL(const std::string &sql, const pqxx::params &pars) {
+    pqxx::work c(connection);
+    pqxx::result result;
     try {
-        pqxx::work c(connection);
-        c.exec(sql);
-        c.commit();
+        result = c.exec(sql, pars);
     } catch (const pqxx::sql_error &e) {
         std::cerr << "SQL error: " << e.what() << std::endl;
         std::cerr << "SQL state: " << e.sqlstate() << std::endl;
-        return false;
+        c.commit();
+        return std::nullopt;
     } catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
-        return false;
+        c.commit();
+        return std::nullopt;
     }
-    return true;
+    c.commit();
+    return result;
 }

@@ -15,12 +15,12 @@ class ChessData {
     explicit ChessData();
 
     void readSimpleGames(const std::string &filename);
+
     void flushMovesToDB(const std::string &dbName);
 
-    void clearMoves();
+    inline void clearMoves() { movesLinkedList.reset(); };
 
-    // TODO: save linked list and reader for that
-    [[nodiscard]] ChessLinkedListMoves *getMoves() const;
+    [[nodiscard]] ChessLinkedListMoves *getMoves() const { return movesLinkedList.get(); };
 
   private:
     std::unique_ptr<ChessLinkedListMoves> movesLinkedList;

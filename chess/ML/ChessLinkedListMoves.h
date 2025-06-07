@@ -5,7 +5,6 @@
 #include <bitset>
 #include <cstdint>
 #include <cstring>
-#include <functional>
 #include <memory>
 #include <string>
 #include <sys/types.h>
@@ -59,11 +58,11 @@ class ChessLinkedListMoves {
     void addResult(const RESULT &result);
 
     // manually set the head to another move
-    void setMoveHead(MoveCompressed *move);
+    inline void setMoveHead(MoveCompressed *move) { head = move; };
 
     // get Move
-    [[nodiscard]] MoveCompressed *getMoveHead() const;
-    [[nodiscard]] MoveCompressed *getMoveRoot() const;
+    [[nodiscard]] inline MoveCompressed *getMoveHead() const { return head; };
+    [[nodiscard]] inline MoveCompressed *getMoveRoot() const { return root.get(); };
     [[nodiscard]] MoveCompressed *getAtMove(const std::string &move) const;
     [[nodiscard]] std::vector<const MoveCompressed *> getAllMoves() const;
 
@@ -79,7 +78,7 @@ class ChessLinkedListMoves {
     inline std::string getInfoNextMovesHead() { return getInfoNextMoves(head); };
 
     // statics
-    static std::string createKey(const bool &white, const std::string &board);
+    static inline std::string createKey(const bool &white, const std::string &board) { return (white ? "W|" : "B|") + board; };
     static DataBits createData(const std::string &nextMove, bool nextWhite);
     static std::string getMoveFromData(const DataBits &data);
     static bool getWhiteFromData(const DataBits &data);

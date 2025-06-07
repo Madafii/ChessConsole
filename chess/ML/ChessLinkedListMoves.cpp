@@ -47,13 +47,6 @@ void ChessLinkedListMoves::addResult(const RESULT &result) {
     }
 }
 
-// TODO: I think i don't want this to be able to be nullptr so fix that later
-void ChessLinkedListMoves::setMoveHead(MoveCompressed *move) { head = move; }
-
-MoveCompressed *ChessLinkedListMoves::getMoveHead() const { return head; }
-
-MoveCompressed *ChessLinkedListMoves::getMoveRoot() const { return root.get(); }
-
 MoveCompressed *ChessLinkedListMoves::getAtMove(const std::string &move) const {
     const auto found = std::ranges::find_if(head->nexts, [&move](const auto &nextMove) { return getMoveFromData(nextMove->data) == move; });
     if (found == head->nexts.end()) {
@@ -83,11 +76,11 @@ std::string ChessLinkedListMoves::getFullInfo(const MoveCompressed *move) {
 
 std::string ChessLinkedListMoves::getInfoMove(const MoveCompressed *move) {
     std::string output;
-    output.append("ChessLinkedListMoves: " + getMoveFromData(move->data) + "\n");
+    output.append("move:  " + getMoveFromData(move->data) + "\n");
     output.append(separatorLine);
     output.append("color: " + std::string(getWhiteFromData(move->data) ? "white" : "black") + "\n");
     output.append(separatorLine);
-    output.append("wins: " + std::to_string(move->wins) + "\n");
+    output.append("wins:  " + std::to_string(move->wins) + "\n");
     output.append("loses: " + std::to_string(move->loses) + "\n");
     output.append("draws: " + std::to_string(move->draws) + "\n");
     output.append(separatorLine);
@@ -106,8 +99,6 @@ std::string ChessLinkedListMoves::getInfoNextMoves(const MoveCompressed *move) {
     output.append(separatorLine);
     return output;
 }
-
-std::string ChessLinkedListMoves::createKey(const bool &white, const std::string &board) { return (white ? "W|" : "B|") + board; }
 
 std::bitset<16> ChessLinkedListMoves::createData(const std::string &nextMove, bool nextWhite) {
     std::bitset<16> outSet;
@@ -144,14 +135,14 @@ std::string ChessLinkedListMoves::getMoveFromData(const DataBits &data) {
         for (size_t i = 0; i < 3; ++i) {
             bits.set(i, dataBits[startPos + i]);
         }
-        outMove.append(std::to_string(BitToX.at(bits)));
+        outMove += BitToX.at(bits);
     };
     auto retrieveDataY = [&outMove](const DataBits &dataBits, const size_t startPos) {
         std::bitset<3> bits;
         for (size_t i = 0; i < 3; ++i) {
             bits.set(i, dataBits[startPos + i]);
         }
-        outMove.append(std::to_string(BitToX.at(bits)));
+        outMove += BitToY.at(bits);
     };
 
     retrieveDataX(data, 13); // first letter
