@@ -4,6 +4,7 @@
 #include "ChessLinkedListMoves.h"
 #include <pqxx/pqxx>
 #include <string>
+#include <string_view>
 #include <tuple>
 
 class ChessDatabaseInterface {
@@ -39,6 +40,8 @@ class ChessDatabaseInterface {
     static inline std::string getChessLinkerTable(const table_pair &table) {
         return std::format("chess_moves_linker_D{}_{}", table.first, getColor(table.second));
     }
+
+    static DataBits getBitsFromDB(std::string_view bytes);
 };
 
 #endif // CHESSDATABASEINTERFACE_H

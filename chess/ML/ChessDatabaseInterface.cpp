@@ -8,6 +8,7 @@
 #include <optional>
 #include <stack>
 #include <string>
+#include <string_view>
 #include <sys/types.h>
 #include <tuple>
 
@@ -52,18 +53,18 @@ MoveCompressed ChessDatabaseInterface::getMove(const table_pair &table, const in
     pqxx::params pars(moveId);
 
     pqxx::work worker(connection);
-    auto [moveData, wins, loses, draws] = worker.query1<std::string, uint64_t, uint64_t, uint64_t>(sql, pars);
+    auto [moveData, wins, loses, draws] = worker.query1<std::string_view, uint64_t, uint64_t, uint64_t>(sql, pars);
     worker.commit();
 
-    // TODO: can not be the best way to do that. Propably some way in the library for a better solution
-    std::string hexMoveData = moveData.substr(2);
+    DataBits bits(getBitsFromDB(std::string_view(moveData).substr(2)));
+    /*std::string hexMoveData = moveData.substr(2);*/
+    /**/
+    /*unsigned int intMoveData;*/
+    /*std::stringstream ss;*/
+    /*ss << std::hex << hexMoveData;*/
+    /*ss >> intMoveData;*/
 
-    unsigned int intMoveData;
-    std::stringstream ss;
-    ss << std::hex << hexMoveData;
-    ss >> intMoveData;
-
-    return MoveCompressed(DataBits(std::bitset<16>(intMoveData)), wins, loses, draws);
+    return MoveCompressed(bits, wins, loses, draws);
 }
 
 void ChessDatabaseInterface::connectMove(const table_pair &table, const int sourceId, const int targetId) {
@@ -147,4 +148,14 @@ std::optional<pqxx::result> ChessDatabaseInterface::executeSQL(const std::string
     }
     c.commit();
     return result;
+}
+
+DataBits ChessDatabaseInterface::getBitsFromDB(std::string_view bytes) {
+    // TODO: can not be the best way to do that. Propably some way in the library for a better solution
+    unsigned int intMoveData;
+    std::stringstream ss;
+    ss << std::hex << bytes;
+    ss >> intMoveData;
+
+    return {intMoveData};
 }

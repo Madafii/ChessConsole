@@ -1,7 +1,3 @@
-//
-// Created by fpittermann on 10/5/24.
-//
-
 #ifndef CHESSINSTANCE_H
 #define CHESSINSTANCE_H
 
