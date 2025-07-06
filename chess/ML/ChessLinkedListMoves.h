@@ -35,12 +35,12 @@ using DataBits = std::bitset<16>;
 
 struct MoveCompressed {
     explicit MoveCompressed(const DataBits inData) : data{inData} {};
-    explicit MoveCompressed(const DataBits inData, u_int64_t inWins, u_int64_t inLoses, u_int64_t inDraws)
+    explicit MoveCompressed(const DataBits inData, uint64_t inWins, uint64_t inLoses, uint64_t inDraws)
         : data(inData), wins(inWins), loses(inLoses), draws(inDraws) {};
     const DataBits data;
-    u_int64_t wins = 0;
-    u_int64_t loses = 0;
-    u_int64_t draws = 0;
+    uint64_t wins = 0;
+    uint64_t loses = 0;
+    uint64_t draws = 0;
     std::vector<std::unique_ptr<MoveCompressed>> nexts;
 };
 
@@ -82,10 +82,10 @@ class ChessLinkedListMoves {
     static DataBits createData(const std::string &nextMove, bool nextWhite);
     static std::string getMoveFromData(const DataBits &data);
     static bool getWhiteFromData(const DataBits &data);
-    static inline std::array<char, 2> getCharFromData(const DataBits &data) {
-        return std::array<char, 2>({static_cast<char>(data.to_ulong() & 0xFF), static_cast<char>((data.to_ulong() >> 8) & 0xFF)});
-    };
-    static inline std::string getStringFromData(const DataBits &data) { return {getCharFromData(data).data()}; };
+    // static inline std::array<char, 2> getCharFromData(const DataBits &data) {
+    //     return std::array<char, 2>({static_cast<char>(data.to_ulong() & 0xFF), static_cast<char>((data.to_ulong() >> 8) & 0xFF)});
+    // };
+    // static inline std::string getStringFromData(const DataBits &data) { return {getCharFromData(data).data()}; };
 
     // bit maps
     static const std::unordered_map<char, std::bitset<3>> xToBit;

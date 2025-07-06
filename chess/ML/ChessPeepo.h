@@ -4,6 +4,7 @@
 #include "ChessBoard.h"
 #include "ChessData.h"
 #include "ChessLinkedListMoves.h"
+#include "ChessDatabaseInterface.h"
 #include <sys/types.h>
 
 class ChessPeepo {
@@ -17,8 +18,12 @@ class ChessPeepo {
     void makeRandomBestMove(const int &randomRange = -1);
     void makeRandomMove();
 
-    // some random checks
-    bool isBoardDataOnSync();
+    bool makeBestDBMove();
+
+    static MoveCompressed *getMostPlayedMove(const std::vector<MoveCompressed*> &moves);
+    static std::string getRandomInputMove(ChessBoard &board);
+
+    inline static uint64_t playedMoves(const MoveCompressed *move) { return move->wins + move->loses + move->draws; }
 
   private:
     ChessBoard &board;
@@ -27,10 +32,7 @@ class ChessPeepo {
     /*std::vector<std::string> getSmartMoveSelection();*/
     /*std::vector<std::string> getMoveSelection();*/
 
-    MoveCompressed *getMostPlayedMove(const std::vector<std::unique_ptr<MoveCompressed>> &moves);
-    std::string getRandomInputMove();
 
-    u_int64_t playedMoves(const MoveCompressed *move);
 };
 
 #endif // CHESSPEEPO_H

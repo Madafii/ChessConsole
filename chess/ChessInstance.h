@@ -15,7 +15,10 @@ class ChessInstance {
     void runWithChessData();
     void runWithChessDatabase();
     void runAgainstPeepo();
+    void runAgainstDatabase();
     void runWithAnalyzer();
+
+    void loadDB();
 
   private:
     std::vector<std::string> gameOptions;

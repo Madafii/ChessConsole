@@ -1,6 +1,3 @@
-//
-// Created by finnp on 10/13/24.
-//
 #include "ChessUtils.h"
 #include "gtest/gtest.h"
 #include <iostream>
@@ -10,19 +7,19 @@
 
 using strvec = std::vector<std::string>;
 
-void doMovements(strvec moves) {
+void doMovements(const strvec &moves) {
     ChessBoard board;
-    for (const std::string move : moves) {
+    for (const std::string &move : moves) {
         if (board.handleMoveInput(move) != GameState::IN_PROGRESS)
             break;
     }
 }
 
-void doMovementsFromPGN(strvec moves) {
+void doMovementsFromPGN(const strvec &moves) {
     ChessBoard board;
     bool whitesTurn = true;
     int count = 0;
-    for (const std::string move : moves) {
+    for (const std::string &move : moves) {
         std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, board, whitesTurn);
         std::cout << "from: " << move << " to: " << inputMyChess << std::endl;
         if (board.handleMoveInput(inputMyChess) != GameState::IN_PROGRESS)

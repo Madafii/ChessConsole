@@ -3,6 +3,7 @@
 #include "pqxx/internal/concat.hxx"
 #include "pqxx/internal/statement_parameters.hxx"
 #include <cstdint>
+#include <exception>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -26,10 +27,10 @@ std::optional<int> ChessDatabaseInterface::createMove(const table_pair &table, c
         "INSERT INTO " + getChessMoveTable(table) + " (movedata, wins, loses, draws) VALUES ($1, $2, $3, $4) RETURNING id;";
 
     std::byte bytes[2];
-    auto dataLong = move.data.to_ulong();
+    const auto dataLong = move.data.to_ulong();
     bytes[1] = static_cast<std::byte>(dataLong);
     bytes[0] = static_cast<std::byte>(dataLong >> 8);
-    auto sqlBytes = pqxx::binary_cast(bytes, sizeof(bytes));
+    const auto sqlBytes = pqxx::binary_cast(bytes, sizeof(bytes));
     const pqxx::params par(sqlBytes, move.wins, move.loses, move.draws);
 
     if (const auto result = executeSQL(sql, par)) {
@@ -48,33 +49,41 @@ void ChessDatabaseInterface::updateMove(const table_pair &table, int moveId, int
     /*executeSQL(sql);*/
 }
 
-MoveCompressed ChessDatabaseInterface::getMove(const table_pair &table, const int moveId) {
-    const std::string sql = "SELECT moveData, wins, loses, draws FROM " + getChessMoveTable(table) + " WHERE id = $1";
+std::optional<MoveCompressed> ChessDatabaseInterface::getMove(const table_pair &table, const int moveId) {
+    const std::string sql = selectCompressedMoveFrom + getChessMoveTable(table) + " WHERE id = $1";
     pqxx::params pars(moveId);
 
-    pqxx::work worker(connection);
-    auto [moveData, wins, loses, draws] = worker.query1<std::string_view, uint64_t, uint64_t, uint64_t>(sql, pars);
-    worker.commit();
+    return queryMove(sql, pars);
+}
 
-    DataBits bits(getBitsFromDB(std::string_view(moveData).substr(2)));
-    /*std::string hexMoveData = moveData.substr(2);*/
-    /**/
-    /*unsigned int intMoveData;*/
-    /*std::stringstream ss;*/
-    /*ss << std::hex << hexMoveData;*/
-    /*ss >> intMoveData;*/
+std::optional<MoveCompressed> ChessDatabaseInterface::getMove(const table_pair &table, const int fromMoveId, const DataBits &moveData) {
+    table_pair nextMoveTable(table);
+    incrementTable(nextMoveTable);
 
-    return MoveCompressed(bits, wins, loses, draws);
+    const std::string sql = selectCompressedMoveFrom + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1 AND mt.movedata = $2";
+    pqxx::params pars(fromMoveId, getDBHexStringFromMoveData(moveData));
+
+    return queryMove(sql, pars);
+}
+
+std::optional<int> ChessDatabaseInterface::getMoveId(const table_pair &table, int fromMoveId, const DataBits &moveData) {
+    table_pair nextMoveTable(table);
+    incrementTable(nextMoveTable);
+
+    const std::string sql = "SELECT mt.id FROM " + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1 AND mt.movedata = $2";
+    pqxx::params pars(fromMoveId, getDBHexStringFromMoveData(moveData));
+
+    return queryMoveId(sql, pars);
 }
 
 void ChessDatabaseInterface::connectMove(const table_pair &table, const int sourceId, const int targetId) {
     const std::string sql = "INSERT INTO " + getChessLinkerTable(table) + " (chess_move_id, next_id) VALUES ($1, $2)";
-    pqxx::params par = {sourceId, targetId};
+    pqxx::params par(sourceId, targetId);
 
     executeSQL(sql, par);
 }
 
-// unused
+// unused TODO:
 void ChessDatabaseInterface::connectMoves(const table_pair &table, int sourceId, const std::vector<int> &targetIds) {
     pqxx::work worker(connection);
     for (const int targetId : targetIds) {
@@ -83,16 +92,16 @@ void ChessDatabaseInterface::connectMoves(const table_pair &table, int sourceId,
     worker.commit();
 }
 
-// TODO:
-std::vector<int> ChessDatabaseInterface::getNextMoveIds(int moveId) {
-    pqxx::work worker(connection);
-    std::vector<int> results;
-    const std::string sql = std::format("SELECT next_id FROM chess_moves_linker WHERE chess_move_id = {}", moveId);
-    for (const auto &[id] : worker.query<int>(sql)) {
-        results.push_back(id);
-    }
-    worker.commit();
-    return results;
+std::vector<MoveCompressed> ChessDatabaseInterface::getNextMoves(const table_pair &table, int moveId) {
+    std::vector<MoveCompressed> resultMoves;
+
+    table_pair nextMoveTable(table);
+    incrementTable(nextMoveTable);
+
+    const std::string sql = selectCompressedMoveFrom + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1";
+    const pqxx::params par(moveId);
+
+    return queryMoves(sql, par);
 }
 
 // starts from the head of the linked list (so set to root if wanted)
@@ -113,8 +122,7 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves, 
 
         const table_pair connectTable(currentTable);
 
-        if (currentTable.second) currentTable.first++; // depth only increase after white moves
-        currentTable.second = !currentTable.second;
+        incrementTable(currentTable);
 
         for (const auto &nextMove : currentMove->nexts) {
             if (auto connectToId = createMove(currentTable, *nextMove)) {
@@ -132,30 +140,74 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves, 
 }
 
 std::optional<pqxx::result> ChessDatabaseInterface::executeSQL(const std::string &sql, const pqxx::params &pars) {
-    pqxx::work c(connection);
+    pqxx::work worker(connection);
     pqxx::result result;
     try {
-        result = c.exec(sql, pars);
+        result = worker.exec(sql, pars);
     } catch (const pqxx::sql_error &e) {
         std::cerr << "SQL error: " << e.what() << std::endl;
         std::cerr << "SQL state: " << e.sqlstate() << std::endl;
-        c.commit();
+        worker.commit();
         return std::nullopt;
     } catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
-        c.commit();
+        worker.commit();
         return std::nullopt;
     }
-    c.commit();
+    worker.commit();
     return result;
 }
 
-DataBits ChessDatabaseInterface::getBitsFromDB(std::string_view bytes) {
-    // TODO: can not be the best way to do that. Propably some way in the library for a better solution
-    unsigned int intMoveData;
-    std::stringstream ss;
-    ss << std::hex << bytes;
-    ss >> intMoveData;
+std::optional<MoveCompressed> ChessDatabaseInterface::queryMove(const std::string &sql, const pqxx::params &pars) {
+    pqxx::work worker(connection);
+    move_tuple results;
+    try {
+        results = worker.query1<std::string_view, uint64_t, uint64_t, uint64_t>(sql, pars);
+    } catch (const pqxx::unexpected_rows &e) {
+        std::cerr << "SQL error: " << e.what() << std::endl;
+        worker.commit();
+        return std::nullopt;
+    } catch (std::exception &e) {
+        std::cerr << "error: " << e.what() << std::endl;
+        worker.commit();
+        return std::nullopt;
+    }
+    worker.commit();
+    const DataBits bits(getBitsFromDB(std::string_view(std::get<0>(results)).substr(2)));
+    return MoveCompressed(bits, std::get<1>(results), std::get<2>(results), std::get<3>(results));
+}
 
-    return {intMoveData};
+std::optional<int> ChessDatabaseInterface::queryMoveId(const std::string &sql, const pqxx::params &pars) {
+    pqxx::work worker(connection);
+    std::tuple<int> results;
+    try {
+        results = worker.query1<int>(sql, pars);
+    } catch (const pqxx::unexpected_rows &e) {
+        std::cerr << "SQL error: " << e.what() << std::endl;
+        worker.commit();
+        return std::nullopt;
+    } catch (std::exception &e) {
+        std::cerr << "error: " << e.what() << std::endl;
+        worker.commit();
+        return std::nullopt;
+    }
+    worker.commit();
+    return std::get<0>(results);
+}
+
+std::vector<MoveCompressed> ChessDatabaseInterface::queryMoves(const std::string &sql, const pqxx::params &pars) {
+    pqxx::work worker(connection);
+    std::vector<MoveCompressed> moves;
+
+    try {
+        for (auto [moveData, wins, loses, draws] : worker.query<std::string_view, uint64_t, uint64_t, uint64_t>(sql, pars)) {
+            const DataBits bits(getBitsFromDB(std::string_view(moveData).substr(2)));
+            moves.emplace_back(bits, wins, loses, draws);
+        }
+    } catch (std::exception &e) {
+        std::cerr << "error: " << e.what() << std::endl;
+    }
+
+    worker.commit();
+    return moves;
 }

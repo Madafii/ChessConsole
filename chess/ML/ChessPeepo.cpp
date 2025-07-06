@@ -1,5 +1,6 @@
 #include "ChessPeepo.h"
 #include "ChessBoard.h"
+#include "ChessDatabaseInterface.h"
 #include "ChessLinkedListMoves.h"
 #include "ChessMoveLogic.h"
 #include <iostream>
@@ -14,9 +15,14 @@ GameState ChessPeepo::makeMostPlayedMove() {
     std::string inputMove;
     if (moveHead == nullptr || moveHead->nexts.empty()) {
         std::cout << "no more suggestions for moves, next move will be random" << std::endl;
-        inputMove = getRandomInputMove();
+        inputMove = getRandomInputMove(board);
     } else {
-        MoveCompressed *mostPlayedMove = getMostPlayedMove(moveHead->nexts);
+        std::vector<MoveCompressed *> currNexts;
+        currNexts.reserve(moveHead->nexts.size());
+        for (const auto &nextMove : moveHead->nexts) {
+            currNexts.push_back(nextMove.get());
+        }
+        MoveCompressed *mostPlayedMove = getMostPlayedMove(currNexts);
         data.getMoves()->setMoveHead(mostPlayedMove);
         inputMove = ChessLinkedListMoves::getMoveFromData(mostPlayedMove->data);
     }
@@ -34,23 +40,24 @@ void ChessPeepo::makeRandomBestMove(const int &randomRange) {}
 
 void ChessPeepo::makeRandomMove() {}
 
-// some random checks
-bool ChessPeepo::isBoardDataOnSync() {}
+bool ChessPeepo::makeBestDBMove() {
+    
+}
 
-MoveCompressed *ChessPeepo::getMostPlayedMove(const std::vector<std::unique_ptr<MoveCompressed>> &moves) {
+MoveCompressed *ChessPeepo::getMostPlayedMove(const std::vector<MoveCompressed*> &moves) {
     MoveCompressed *mostPlayedMove = nullptr;
-    u_int64_t currPlays = 0;
+    uint64_t currPlays = 0;
     for (const auto &move : moves) {
-        const u_int64_t plays = playedMoves(move.get());
+        const uint64_t plays = playedMoves(move);
         if (mostPlayedMove == nullptr || plays > currPlays) {
-            mostPlayedMove = move.get();
+            mostPlayedMove = move;
             currPlays = plays;
         }
     }
     return mostPlayedMove;
 }
 
-std::string ChessPeepo::getRandomInputMove() {
+std::string ChessPeepo::getRandomInputMove(ChessBoard &board) {
     // random seeder thing
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -78,4 +85,3 @@ std::string ChessPeepo::getRandomInputMove() {
     return input;
 }
 
-inline u_int64_t ChessPeepo::playedMoves(const MoveCompressed *move) { return move->wins + move->loses + move->draws; }
