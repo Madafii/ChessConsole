@@ -4,3 +4,6 @@
 [submodule "libs/libpqxx"]
 	path = libs/libpqxx
 	url = https://github.com/jtv/libpqxx
+[submodule "libs/spdlog"]
+	path = libs/spdlog
+	url = https://github.com/gabime/spdlog

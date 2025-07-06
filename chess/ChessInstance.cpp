@@ -16,34 +16,24 @@
 #include <random>
 
 ChessInstance::ChessInstance() {
-    gameOptions = {"normal", "random", "againstRandom", "data", "database", "peepo", "analyzer", "loadDB", "quit"};
+    // all game options
+    gameOptions.emplace("normal", [this] { run(); });
+    gameOptions.emplace("random", [this] { runRandom(); }),
+    gameOptions.emplace("againstRandom", [this] { runAgainstRandom(); }),
+    gameOptions.emplace("data", [this] { runWithChessData(); }),
+    gameOptions.emplace("database", [this] { runAgainstDatabase(); }),
+    gameOptions.emplace("peepo", [this] { runAgainstPeepo(); }),
+    gameOptions.emplace("analyzer", [this] { runWithAnalyzer(); }),
+    gameOptions.emplace("loadDB", [this] { loadDB(); });
 
     std::cout << "Select the game you want to play: " << std::endl;
     printGameOptions();
     std::string playOption;
     while (true) {
         std::cin >> playOption;
-        if (playOption == gameOptions[0]) {
-            run();
-        } else if (playOption == gameOptions[1]) {
-            runRandom();
-        } else if (playOption == gameOptions[2]) {
-            std::string color;
-            std::cout << "which color do you want to start as? white or black?" << std::endl;
-            do {
-                std::cin >> color;
-            } while (color != "white" && color != "black");
-            runAgainstRandom(color == "white");
-        } else if (playOption == gameOptions[3]) {
-            runWithChessData();
-        } else if (playOption == gameOptions[4]) {
-            runAgainstDatabase();
-        } else if (playOption == gameOptions[5]) {
-            runAgainstPeepo();
-        } else if (playOption == gameOptions[6]) {
-            runWithAnalyzer();
-        } else if (playOption == gameOptions[7]) {
-        } else if (playOption == gameOptions[8]) {
+        if (gameOptions.contains(playOption)) {
+            gameOptions.at(playOption);
+        } else if (playOption == "quit") {
             std::cout << "Quitting..." << std::endl;
             break;
         } else {
@@ -101,7 +91,8 @@ void ChessInstance::runRandom() {
     }
 }
 
-void ChessInstance::runAgainstRandom(const bool white) {
+void ChessInstance::runAgainstRandom() {
+    bool white = true;
     ChessBoard chessBoard;
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -257,7 +248,6 @@ void ChessInstance::runAgainstDatabase() {
         GameState game_state = chessBoard.handleInput(input);
         chessDraw.draw(chessBoard);
 
-
         // get oponents move id
         if (auto whiteMoveId = chessDB.getMoveId(gameDepth, fromMoveId, ChessLinkedListMoves::createData(input, true))) {
             fromMoveId = *whiteMoveId;
@@ -269,7 +259,7 @@ void ChessInstance::runAgainstDatabase() {
             auto nextMoves = chessDB.getNextMoves(gameDepth, fromMoveId);
 
             // transform to pointer vector
-            std::vector<MoveCompressed*> nextMovePtrs;
+            std::vector<MoveCompressed *> nextMovePtrs;
             nextMovePtrs.reserve(nextMoves.size());
             std::ranges::transform(nextMoves, std::back_inserter(nextMovePtrs), [](MoveCompressed &move) { return &move; });
 
@@ -301,8 +291,8 @@ void ChessInstance::runAgainstDatabase() {
 
 inline void ChessInstance::printGameOptions() {
     std::cout << "The options are: " << std::endl;
-    for (const std::string &option : gameOptions) {
-        std::cout << "\t" << option << std::endl;
+    for (const auto &option : gameOptions) {
+        std::cout << "\t" << option.first << std::endl;
     }
 }
 
@@ -351,6 +341,4 @@ void ChessInstance::runWithAnalyzer() {
     }
 }
 
-void ChessInstance::loadDB() {
-
-}
+void ChessInstance::loadDB() {}
