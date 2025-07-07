@@ -3,24 +3,24 @@
 
 #include <string>
 
-enum ChessPieceType { King, Queen, Rook, Knight, Bishop, Pawn, None };
+enum class ChessPieceType { KING, QUEEN, ROOK, KNIGHT, BISHOP, PAWN, NONE };
 
 class ChessPiece {
   public:
     explicit ChessPiece(ChessPieceType type, bool white);
-    ~ChessPiece();
+    // ChessPiece(ChessPiece &&other) noexcept;
+    ~ChessPiece() = default;
 
-    [[nodiscard]] ChessPieceType getType() const;
-    [[nodiscard]] bool isWhite() const;
-
-    [[nodiscard]] std::string getFullName() const;
-    [[nodiscard]] char getShortName() const;
+    [[nodiscard]] inline ChessPieceType getType() const { return _type; };
+    [[nodiscard]] inline bool isWhite() const { return _white; };
+    [[nodiscard]] inline std::string_view getLongName() const { return _long; }
+    [[nodiscard]] inline char getShortName() const { return _short; }
 
     static ChessPieceType getTypeFromShort(const char &shortName);
 
   private:
-    const ChessPieceType _type;
-    const bool _white;
+    ChessPieceType _type;
+    bool _white;
     std::string _long;
     char _short;
 };

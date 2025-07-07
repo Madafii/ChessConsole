@@ -54,7 +54,7 @@ class ChessAnalyzer {
 
   private:
     ChessBoard &origBoard;
-    const std::map<ChessPieceType, int> pieceValue = {{King, 0}, {Queen, 9}, {Rook, 5}, {Bishop, 3}, {Knight, 3}, {Pawn, 1}};
+    const std::map<ChessPieceType, int> pieceValue = {{KING, 0}, {Queen, 9}, {Rook, 5}, {Bishop, 3}, {Knight, 3}, {Pawn, 1}};
     const std::vector<int8Pair> directionsBishop = {std::pair(1, 1), std::pair(1, -1), std::pair(-1, 1), std::pair(-1, -1)};
     const std::vector<int8Pair> directionsKnight = {std::pair(2, 1), std::pair(2, -1), std::pair(-2, 1), std::pair(-2, -1),
                                                     std::pair(1, 2), std::pair(-1, 2), std::pair(1, -2), std::pair(-1, -2)};

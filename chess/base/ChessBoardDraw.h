@@ -12,7 +12,7 @@ class ChessBoardDraw {
   public:
     explicit ChessBoardDraw(ChessBoardDrawSettings settings = ChessBoardDrawSettings());
 
-    void draw(const ChessBoard &board);
+    void draw(const ChessBoard &board) const;
 
     ChessBoardDrawSettings &getSettings();
 

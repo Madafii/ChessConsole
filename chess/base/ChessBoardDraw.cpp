@@ -4,7 +4,7 @@
 
 ChessBoardDraw::ChessBoardDraw(const ChessBoardDrawSettings settings) : settings(settings) {}
 
-void ChessBoardDraw::draw(const ChessBoard &board) {
+void ChessBoardDraw::draw(const ChessBoard &board) const {
     if (settings.sysClear) system("clear");
     // Print the chessboard with characters
     for (int y = 7; y >= 0; --y) {

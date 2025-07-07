@@ -26,7 +26,7 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard &board
     std::string extra;
     switch (input[0]) {
         case 'K':
-            typeToMove = King;
+            typeToMove = KING;
             break;
         case 'Q':
             typeToMove = Queen;
