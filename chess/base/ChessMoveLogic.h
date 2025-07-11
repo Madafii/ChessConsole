@@ -5,48 +5,50 @@
 #include "ChessPiece.h"
 #include <functional>
 
-using possibleMovesFunc = std::function<Pieces(const ChessBoard &board, const ChessTile &fromTile)>;
+using possibleMovesFunc = std::function<Pieces(const ChessTile &fromTile)>;
 
 class ChessMoveLogic {
     using enum ChessPieceType;
   public:
-    ChessMoveLogic() = default;
+    explicit ChessMoveLogic(const ChessBoard &board);
 
     // finds possible moves
-    static Pieces getPossibleMoves(ChessBoard &board, const ChessTile &fromTile);
-    static Pieces getPossibleMovesUncached(ChessBoard &board, const ChessTile &fromTile);
-    static Pieces getAllPossibleMoves(ChessBoard &board, bool white);
+    Pieces getPossibleMoves(const ChessTile &fromTile) const;
+    Pieces getPossibleMovesUncached(const ChessTile &fromTile) const;
+    Pieces getAllPossibleMoves(bool white) const;
 
     // manipulate a possible moves list
-    static void filterPossibleMovesForChecks(ChessBoard &board, const ChessTile &fromTile, Pieces &possibleMoves);
-    static bool addIfPossibleMove(const ChessTile &fromTile, ChessTile &toTile, Pieces &possibleMoves);
+    void filterPossibleMovesForChecks(const ChessTile &fromTile, Pieces &possibleMoves) const;
+    bool addIfPossibleMove(const ChessTile &fromTile, const ChessTile &toTile, Pieces &possibleMoves) const;
 
     // checks for things on the board
-    static bool isInputMovePossible(ChessBoard &board, const ChessTile &fromTile, const ChessTile &toTile);
-    static bool isTileAttacked(ChessBoard &board, bool white, const Pieces &tilesToCheck);
-    static bool isTileFree(const ChessBoard &board, const Pieces &tilesToCheck);
-    static bool isKingChecked(ChessBoard &board, bool white, bool cached = true);
-    static bool isKingCheckedAfterMove(ChessBoard &board, const ChessTile &fromTile, ChessTile &toTile);
-    static bool isKingCheckmate(ChessBoard &board);
-    static bool isDraw(ChessBoard &board);
-    static bool isThreefoldRepetition(const ChessBoard &board);
-    static bool isDeadPosition(const ChessBoard &board);
+    bool isInputMovePossible(const ChessTile &fromTile, const ChessTile &toTile) const;
+    bool isTileAttacked(bool white, const Pieces &tilesToCheck) const;
+    bool isTileFree(const Pieces &tilesToCheck) const;
+    bool isKingChecked(bool white, bool cached = true) const;
+    bool isKingCheckedAfterMove(const ChessTile &fromTile, const ChessTile &toTile) const;
+    bool isKingCheckmate() const;
+    bool isDraw() const;
+    bool isThreefoldRepetition() const;
+    bool isDeadPosition() const;
 
   private:
+    const ChessBoard &_board;
+
     // helpers for find possible moves
-    static Pieces getPossibleMovesCached(ChessBoard &board, const ChessTile &fromTile, const possibleMovesFunc &func);
-    static Pieces getPossibleMovesPawn(const ChessBoard &board, const ChessTile &fromTile);
-    static Pieces getPossibleMovesBishop(const ChessBoard &board, const ChessTile &fromTile);
-    static Pieces getPossibleMovesKnight(const ChessBoard &board, const ChessTile &fromTile);
-    static Pieces getPossibleMovesRook(const ChessBoard &board, const ChessTile &fromTile);
-    static Pieces getPossibleMovesQueen(const ChessBoard &board, const ChessTile &fromTile);
-    static Pieces getPossibleMovesKing(ChessBoard &board, const ChessTile &fromTile);
-    static Pieces getPossibleMovesKingSingle(ChessBoard &board, const ChessTile &fromTile, bool cache = true);
-    static Pieces getPossibleMovesCastling(ChessBoard &board, const ChessTile &fromTile);
-    static Pieces getPossibleMovesByDirection(const ChessBoard &board, const ChessTile &fromTile,
-                                              const std::vector<std::pair<int, int>> &directions);
-    static Pieces getPossibleMovesByDirectionSingle(const ChessBoard &board, const ChessTile &fromTile,
-                                                    const std::vector<std::pair<int, int>> &directions);
+    Pieces getPossibleMovesCached(const ChessTile &fromTile, const possibleMovesFunc &func) const;
+    Pieces getPossibleMovesPawn(const ChessTile &fromTile) const;
+    Pieces getPossibleMovesBishop(const ChessTile &fromTile) const;
+    Pieces getPossibleMovesKnight(const ChessTile &fromTile) const;
+    Pieces getPossibleMovesRook(const ChessTile &fromTile) const;
+    Pieces getPossibleMovesQueen(const ChessTile &fromTile) const;
+    Pieces getPossibleMovesKing(const ChessTile &fromTile) const;
+    Pieces getPossibleMovesKingSingle(const ChessTile &fromTile, bool cache = true) const;
+    Pieces getPossibleMovesCastling(const ChessTile &fromTile) const;
+    Pieces getPossibleMovesByDirection(const ChessTile &fromTile,
+                                       const std::vector<std::pair<int, int>> &directions) const;
+    Pieces getPossibleMovesByDirectionSingle(const ChessTile &fromTile,
+                                             const std::vector<std::pair<int, int>> &directions) const;
 };
 
 #endif // CHESSMOVELOGIC_H

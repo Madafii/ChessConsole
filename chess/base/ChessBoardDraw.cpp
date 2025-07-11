@@ -17,18 +17,18 @@ void ChessBoardDraw::draw(const ChessBoard &board) const {
                 // White square
                 std::cout << "\x1b[48;5;231m";
             }
-            if (board.getTileAt(x, y)->piece == nullptr) {
+            if (board.getTileAt(x, y).getPiece().getType() == ChessPieceType::NONE) {
                 std::cout << "   ";
                 continue;
             }
-            if (board.getTileAt(x, y)->piece->isWhite()) {
+            if (board.getTileAt(x, y).getPiece().isWhite()) {
                 // green
                 std::cout << "\x1b[38;5;22m";
             } else {
                 // magenta
                 std::cout << "\x1b[38;5;126m";
             }
-            std::cout << " " << board.getTileAt(x, y)->piece->getShortName() << " ";
+            std::cout << " " << board.getTileAt(x, y).getPiece().getShortName() << " ";
         }
         std::cout << "\x1b[0m" << std::endl; // Reset to default color after each line
     }

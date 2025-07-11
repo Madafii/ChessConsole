@@ -12,31 +12,31 @@
 ChessBoard::ChessBoard(const bool doAfterMoveChecks) : doAfterMoveChecks(doAfterMoveChecks) { initBoard(); }
 
 void ChessBoard::initBoard() {
-    board.emplace_back(ChessPiece(ChessPieceType::KING, true), 0, 0);
-    board.emplace_back(ChessPiece(ChessPieceType::KNIGHT, true), 1, 0);
-    board.emplace_back(ChessPiece(ChessPieceType::BISHOP, true), 2, 0);
-    board.emplace_back(ChessPiece(ChessPieceType::QUEEN, true), 3, 0);
-    board.emplace_back(ChessPiece(ChessPieceType::KING, true), 4, 0);
-    board.emplace_back(ChessPiece(ChessPieceType::BISHOP, true), 5, 0);
-    board.emplace_back(ChessPiece(ChessPieceType::KNIGHT, true), 6, 0);
-    board.emplace_back(ChessPiece(ChessPieceType::ROOK, true), 7, 0);
+    board[0] = ChessTile(ChessPiece(ChessPieceType::KING, true), 0, 0);
+    board[1] = ChessTile(ChessPiece(ChessPieceType::KNIGHT, true), 1, 0);
+    board[2] = ChessTile(ChessPiece(ChessPieceType::BISHOP, true), 2, 0);
+    board[3] = ChessTile(ChessPiece(ChessPieceType::QUEEN, true), 3, 0);
+    board[4] = ChessTile(ChessPiece(ChessPieceType::KING, true), 4, 0);
+    board[5] = ChessTile(ChessPiece(ChessPieceType::BISHOP, true), 5, 0);
+    board[6] = ChessTile(ChessPiece(ChessPieceType::KNIGHT, true), 6, 0);
+    board[7] = ChessTile(ChessPiece(ChessPieceType::ROOK, true), 7, 0);
     for (int i = 0; i < boardWidth; i++) {
-        board.emplace_back(ChessPiece(ChessPieceType::PAWN, true), i, 1);
+        board[i + boardWidth] = ChessTile(ChessPiece(ChessPieceType::PAWN, true), i, 1);
     }
     for (int i = 0; i < boardWidth * 4; i++) {
-        board.emplace_back(ChessPiece(ChessPieceType::NONE, true), i % boardWidth, i / boardWidth + 2);
+        board[i + 2 * boardWidth] = ChessTile(ChessPiece(ChessPieceType::NONE, true), i % boardWidth, i / boardWidth + 2);
     }
     for (int i = 0; i < boardWidth; i++) {
-        board.emplace_back(ChessPiece(ChessPieceType::PAWN, false), i, 6);
+        board[i + 6 * boardWidth] = ChessTile(ChessPiece(ChessPieceType::PAWN, false), i, 6);
     }
-    board.emplace_back(ChessPiece(ChessPieceType::ROOK, false), 0, 7);
-    board.emplace_back(ChessPiece(ChessPieceType::KNIGHT, false), 1, 7);
-    board.emplace_back(ChessPiece(ChessPieceType::BISHOP, false), 2, 7);
-    board.emplace_back(ChessPiece(ChessPieceType::QUEEN, false), 3, 7);
-    board.emplace_back(ChessPiece(ChessPieceType::KING, false), 4, 7);
-    board.emplace_back(ChessPiece(ChessPieceType::BISHOP, false), 5, 7);
-    board.emplace_back(ChessPiece(ChessPieceType::KNIGHT, false), 6, 7);
-    board.emplace_back(ChessPiece(ChessPieceType::ROOK, false), 7, 7);
+    board[56] = ChessTile(ChessPiece(ChessPieceType::ROOK, false), 0, 7);
+    board[57] = ChessTile(ChessPiece(ChessPieceType::KNIGHT, false), 1, 7);
+    board[58] = ChessTile(ChessPiece(ChessPieceType::BISHOP, false), 2, 7);
+    board[59] = ChessTile(ChessPiece(ChessPieceType::QUEEN, false), 3, 7);
+    board[60] = ChessTile(ChessPiece(ChessPieceType::KING, false), 4, 7);
+    board[61] = ChessTile(ChessPiece(ChessPieceType::BISHOP, false), 5, 7);
+    board[62] = ChessTile(ChessPiece(ChessPieceType::KNIGHT, false), 6, 7);
+    board[63] = ChessTile(ChessPiece(ChessPieceType::ROOK, false), 7, 7);
     // add initial board as first in the game history
     gameHistory.emplace_back(getStringFromBoard());
 }
@@ -102,7 +102,7 @@ GameState ChessBoard::handleMoveInput(const std::string_view input) {
     ChessTile &fromTile = moveTilePair->first;
     ChessTile &toTile = moveTilePair->second;
 
-    if (!ChessMoveLogic::isInputMovePossible(*this, fromTile, toTile)) return GameState::IN_PROGRESS;
+    if (!ChessMoveLogic::isInputMovePossible(fromTile, toTile)) return GameState::IN_PROGRESS;
     // make the move
     move(fromTile, toTile);
 
@@ -213,7 +213,7 @@ Pieces ChessBoard::getAllPossibleMovesPiece(const bool white, const ChessPieceTy
     const Pieces colorPieceTiles = white ? getAllWhiteTiles() : getAllBlackTiles();
     for (const ChessTile *tile : colorPieceTiles) {
         if (tile->getPiece().getType() == piece) {
-            mergePossVec(allPossibleMoves, ChessMoveLogic::getPossibleMoves(*this, *tile));
+            mergePossVec(allPossibleMoves, ChessMoveLogic::getPossibleMoves(*tile));
         }
     }
     return allPossibleMoves;
@@ -282,22 +282,21 @@ void ChessBoard::moveKing(const ChessTile &fromTile, const ChessTile &toTile) {
     if (abs(fromTile.getX() - toTile.getX()) >= 2) {
         const int x = toTile.getX();
         const int y = toTile.getY();
-        ChessTile *rookTile;
-        ChessTile *rookToTile;
         if (x < 4) {
-            rookTile = getTileAt(0, y);
-            rookToTile = getTileAt(3, y);
+            ChessTile &rookTile = getTileAt(0, y);
+            ChessTile &rookToTile = getTileAt(3, y);
+            rookToTile.switchPiece(rookTile.getPiece());
         } else {
-            rookTile = getTileAt(7, y);
-            rookToTile = getTileAt(5, y);
+            ChessTile &rookTile = getTileAt(7, y);
+            ChessTile &rookToTile = getTileAt(5, y);
+            rookToTile.switchPiece(rookTile.getPiece());
         }
-        rookToTile->piece = std::move(rookTile->piece);
     }
 }
 
 inline void ChessBoard::moveRook(const ChessTile &fromTile) {
-    const int x = fromTile->getX();
-    const int y = fromTile->getY();
+    const int x = fromTile.getX();
+    const int y = fromTile.getY();
     // just mark them as moved
     if (x == 0) {
         if (y == 0) whiteRookMoved.first = true;
@@ -309,20 +308,19 @@ inline void ChessBoard::moveRook(const ChessTile &fromTile) {
     }
 }
 
-ChessTile &ChessBoard::getTileAt(const std::string_view pos) const {
+bool ChessBoard::validTilePos(std::string_view pos) const{
     if (pos.size() != 2) {
-        throw "wrong input length";
-        // std::cout << "ChessBoard::getTileAt: Wrong input length." << std::endl;
-        // return nullptr;
+        std::cout << "ChessBoard::getTileAt: Wrong input length." << std::endl;
+        return false;
     }
     const char xText = pos[0];
-    if (xText != std::clamp(xText, 'a', 'h')) return nullptr;
+    if (xText != std::clamp(xText, 'a', 'h')) return false;
     const int x = ChessTile::mapXtoInt.at(xText);
     const int y = pos[1] - '0'; // is a trick to convert number char to int
-    return getTileAt(x, y);
+    return validTilePos(x, y);
 }
 
-void ChessBoard::pawnWon(ChessTile *pawnTile, const char pawnToPiece) const {
+void ChessBoard::pawnWon(ChessTile &pawnTile, const char pawnToPiece) const {
     if (doAfterMoveChecks) std::cout << "Your pawn reached the end what should it become? (Q, R, B, N)" << std::endl;
     char newPawnTyp;
     if (pawnToPiece == '0')
@@ -334,25 +332,23 @@ void ChessBoard::pawnWon(ChessTile *pawnTile, const char pawnToPiece) const {
         std::cin >> newPawnTyp;
     }
     const bool white = pawnTile.getPiece().isWhite();
-    std::unique_ptr<ChessPiece> newPawn;
     switch (newPawnTyp) {
         case 'Q':
-            newPawn = std::make_unique<ChessPiece>(Queen, white);
+            pawnTile.changePiece(ChessPiece(ChessPieceType::QUEEN, white));
             break;
         case 'R':
-            newPawn = std::make_unique<ChessPiece>(Rook, white);
+            pawnTile.changePiece(ChessPiece(ChessPieceType::ROOK, white));
             break;
         case 'B':
-            newPawn = std::make_unique<ChessPiece>(Bishop, white);
+            pawnTile.changePiece(ChessPiece(ChessPieceType::BISHOP, white));
             break;
         case 'N':
-            newPawn = std::make_unique<ChessPiece>(Knight, white);
+            pawnTile.changePiece(ChessPiece(ChessPieceType::KNIGHT, white));
             break;
         default:
             std::cout << "you broke the game f u" << std::endl;
             break;
     }
-    pawnTile->piece = std::move(newPawn);
 }
 
 GameState ChessBoard::afterMoveChecks(ChessTile &toTile, const char pawnToPiece) {
@@ -360,16 +356,16 @@ GameState ChessBoard::afterMoveChecks(ChessTile &toTile, const char pawnToPiece)
         enPassantPossibleLastMove = false;
         doublePawnMoveAt = std::make_pair(-1, -1);
     }
-    if (toTile.getPiece().getType() == Pawn && (toTile->getY() == 0 || toTile->getY() == 7)) {
+    if (toTile.getPiece().getType() == ChessPieceType::PAWN && (toTile.getY() == 0 || toTile.getY() == 7)) {
         pawnWon(toTile, pawnToPiece);
     }
     // sometimes want to skip these for performance
     if (doAfterMoveChecks) {
-        if (ChessMoveLogic::isDraw(*this)) {
+        if (ChessMoveLogic::isDraw()) {
             std::cout << "this game is a draw!" << std::endl;
             return GameState::DRAW;
         }
-        if (ChessMoveLogic::isKingCheckmate(*this)) {
+        if (ChessMoveLogic::isKingCheckmate()) {
             std::cout << "you won the game!" << std::endl;
             return GameState::WON;
         }
@@ -379,7 +375,7 @@ GameState ChessBoard::afterMoveChecks(ChessTile &toTile, const char pawnToPiece)
     return GameState::IN_PROGRESS;
 }
 
-PiecePair ChessBoard::getMoveTilesFromInput(const std::string &input) const {
+PiecePair ChessBoard::getMoveTilesFromInput(const std::string &input) {
     if (input.length() != 5) {
         std::cout << "ChessBoard::getMoveTilesFromInput: Wrong input length, should be 5." << std::endl;
         return std::nullopt;
@@ -388,13 +384,13 @@ PiecePair ChessBoard::getMoveTilesFromInput(const std::string &input) const {
     std::string subStrTo = input.substr(3);
     subStrFrom[1] = static_cast<char>(subStrFrom[1] - 1);
     subStrTo[1] = static_cast<char>(subStrTo[1] - 1);
-    ChessTile &fromTile = getTileAt(subStrFrom);
-    ChessTile &toTile = getTileAt(subStrTo);
-    if (fromTile == nullptr || toTile == nullptr) {
+    if (!validTilePos(subStrFrom) || !validTilePos(subStrTo)) {
         std::cout << "ChessBoard::getMoveTilesFromInput: there is no tile like that" << std::endl;
         return std::nullopt;
     }
-    if (fromTile->piece == nullptr || fromTile.getPiece().isWhite() != whitesTurn) {
+    ChessTile &fromTile = getTileAt(subStrFrom);
+    ChessTile &toTile = getTileAt(subStrTo);
+    if (fromTile.getPiece().getType() == ChessPieceType::NONE || fromTile.getPiece().isWhite() != whitesTurn) {
         std::cout << "ChessBoard::getMoveTilesFromInput: trying to move a piece "
                      "from the opponent or no piece"
                   << std::endl;

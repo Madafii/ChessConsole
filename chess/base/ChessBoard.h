@@ -6,6 +6,7 @@
 #include <map>
 #include <optional>
 #include <vector>
+#include <array>
 
 class ChessBoardDraw;
 class ChessMoveLogic;
@@ -37,16 +38,19 @@ class ChessBoard {
     std::string getStringFromBoard();
 
     // basic callers
-    [[nodiscard]] inline bool isWhitesTurn() const { return whitesTurn; }
-    [[nodiscard]] inline bool isCastlePossible(bool white) const {
+    [[nodiscard]] bool isWhitesTurn() const { return whitesTurn; }
+    [[nodiscard]] bool isCastlePossible(const bool white) const {
         if ((white && (!whiteRookMoved.first || !whiteRookMoved.second)) || (!white && (!blackRookMoved.first || !blackRookMoved.second)))
             return true;
         return false;
     }
-    [[nodiscard]] inline std::vector<std::string> getGameHistory() const { return gameHistory; }
-    [[nodiscard]] std::vector<ChessTile> getBoard() const { return board; };
+
+    [[nodiscard]] std::vector<std::string> getGameHistory() const { return gameHistory; }
+    [[nodiscard]] std::vector<ChessTile> getBoard() const { return board; }
+
     [[nodiscard]] static std::string getMoveName(const ChessTile &fromTile, const ChessTile &toTile);
-    [[nodiscard]] inline static bool hasPiece(const ChessTile &tile) { return tile.getPiece().getType() != ChessPieceType::NONE; }
+
+    [[nodiscard]] static bool hasPiece(const ChessTile &tile) { return tile.getPiece().getType() != ChessPieceType::NONE; }
 
     Pieces getAllPossibleMovesPiece(bool white, ChessPieceType piece) const;
     // get tiles
@@ -56,32 +60,50 @@ class ChessBoard {
     Pieces getWhitePieceType(ChessPieceType piece) const;
     Pieces getBlackPieceType(ChessPieceType piece) const;
 
-    ChessTile &getTileAt(std::string_view pos) const;
-    inline ChessTile &getTileAt(int x, int y) {
-        // if (x < 0 || x >= boardWidth || y < 0 || y >= boardHeight) return nullptr;
+    bool validTilePos(std::string_view pos) const;
+    bool validTilePos(const int x, const int y) const {
+        return x < 0 || x >= boardWidth || y < 0 || y >= boardHeight;
+    }
+    bool validTilePos(const int pos) const {
+        return pos < 0 || pos >= boardWidth * boardHeight;
+    }
+
+    const ChessTile &getTileAt(const int x, const int y) const {
         return board[y * boardWidth + x];
     }
-    inline ChessTile &getTileAt(int pos) {
-        // if (pos < 0 || pos >= boardWidth * boardHeight) return nullptr;
+    const ChessTile &getTileAt(const int pos) const {
         return board[pos];
+    }
+    const ChessTile &getTileAt(const std::string_view pos) const {
+        return getTileAt(ChessTile::mapXtoInt.at(pos[0]), pos[1] - '0');
+    }
+
+    ChessTile &getTileAt(const int x, const int y) {
+        return board[y * boardWidth + x];
+    }
+    ChessTile &getTileAt(const int pos) {
+        return board[pos];
+    }
+    ChessTile &getTileAt(const std::string_view pos) {
+        return getTileAt(ChessTile::mapXtoInt.at(pos[0]), pos[1] - '0');
     }
 
     static void mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge);
 
   private:
-    std::vector<ChessTile> board;
+    std::array<ChessTile, 64> board {};
     std::map<ChessTile, Pieces> possibleMovesCache;
-    bool whitesTurn = true;
     std::pair<bool, bool> whiteRookMoved = {false, false};
     std::pair<bool, bool> blackRookMoved = {false, false};
+    std::pair<int, int> doublePawnMoveAt = std::make_pair(-1, -1); // says in what column a pawn move with two steps happened
     std::vector<std::string> gameHistory;
     bool markTurnForEnPassant = false;
-    std::pair<int, int> doublePawnMoveAt = std::make_pair(-1, -1); // says in what column a pawn move with two steps happened
+    bool whitesTurn = true;
     bool enPassantPossibleLastMove = false;
     int movesSinceLastCapture = 0;
 
     // options for performance
-    bool doAfterMoveChecks{false};
+    bool doAfterMoveChecks = false;
 
     // moves
     void move(ChessTile &fromTile, ChessTile &toTile);
@@ -89,11 +111,11 @@ class ChessBoard {
     void moveKing(const ChessTile &fromTile, const ChessTile &toTile);
     void moveRook(const ChessTile &fromTile);
 
-    void pawnWon(ChessTile *pawnTile, char pawnToPiece = '0') const;
+    void pawnWon(ChessTile &pawnTile, char pawnToPiece = '0') const;
 
     GameState afterMoveChecks(ChessTile &toTile, char pawnToPiece = '0');
 
-    PiecePair getMoveTilesFromInput(const std::string &input) const;
+    PiecePair getMoveTilesFromInput(const std::string &input);
 
     friend ChessBoardDraw;
     friend ChessMoveLogic;

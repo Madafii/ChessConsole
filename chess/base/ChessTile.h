@@ -9,12 +9,18 @@ class ChessTile {
   public:
     explicit ChessTile(const ChessPiece &piece, int x, int y);
 
-    [[nodiscard]] inline int getX() const { return _x; }
-    [[nodiscard]] inline int getY() const { return _y; }
-    [[nodiscard]] inline ChessPiece getPiece() const { return _piece; }
-    [[nodiscard]] inline std::string getMove() const { return std::string(mapIntToX.at(_x) + std::to_string(_y + 1)); }
+    [[nodiscard]] int getX() const { return _x; }
+    [[nodiscard]] int getY() const { return _y; }
+    [[nodiscard]] std::string getMove() const { return std::string(mapIntToX.at(_x) + std::to_string(_y + 1)); }
 
-    inline void changePiece(const ChessPiece &piece) { _piece = piece; }
+    [[nodiscard]] ChessPiece &getPiece() { return _piece; }
+    [[nodiscard]] ChessPiece getPiece() const { return _piece; }
+    void changePiece(const ChessPiece &piece) { _piece = piece; }
+    void switchPiece(ChessPiece &piece) { std::swap(_piece, piece); }
+
+    // default checks if any piece on tile
+    bool hasPiece(const ChessPieceType pType = ChessPieceType::NONE) const { return _piece.getType() == pType; }
+    bool hasWhitePiece() const { return _piece.isWhite(); }
 
     static const std::unordered_map<char, int> mapXtoInt;
     static const std::unordered_map<int, char> mapIntToX;
