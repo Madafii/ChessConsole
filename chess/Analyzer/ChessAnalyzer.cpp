@@ -28,7 +28,7 @@ std::string ChessAnalyzer::startTerminalAnalyzer() {
               << std::endl;
     auto freePieces = getFreePieces(getAttackerBoard, getDefenderBoard, origBoard.isWhitesTurn());
     for (const auto *piece : freePieces) {
-        std::cout << std::format("can take: {} at x:{} y:{}", piece->piece->getFullName(), piece->getX() + 1, piece->getY() + 1)
+        std::cout << std::format("can take: {} at x:{} y:{}", piece->getPiece().getLongName(), piece->getX() + 1, piece->getY() + 1)
                   << std::endl;
     }
 }

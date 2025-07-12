@@ -7,6 +7,7 @@
 
 class ChessTile {
   public:
+    explicit ChessTile() = default;
     explicit ChessTile(const ChessPiece &piece, int x, int y);
 
     [[nodiscard]] int getX() const { return _x; }
@@ -19,7 +20,7 @@ class ChessTile {
     void switchPiece(ChessPiece &piece) { std::swap(_piece, piece); }
 
     // default checks if any piece on tile
-    bool hasPiece(const ChessPieceType pType = ChessPieceType::NONE) const { return _piece.getType() == pType; }
+    bool hasPiece(const ChessPieceType pType) const { return _piece.getType() == pType; }
     bool hasWhitePiece() const { return _piece.isWhite(); }
 
     static const std::unordered_map<char, int> mapXtoInt;

@@ -1,7 +1,7 @@
 #include "ChessUtils.h"
 #include "ChessMoveLogic.h"
 
-std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard &board, const bool &white) {
+std::string ChessUtils::convertPGNToMyInput(std::string input, ChessMoveLogic &chessLogic, const bool &white) {
     // ignore sume values in the input
     // Remove '+' characters
     std::erase(input, '+');
@@ -26,19 +26,19 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard &board
     std::string extra;
     switch (input[0]) {
         case 'K':
-            typeToMove = KING;
+            typeToMove = ChessPieceType::KING;
             break;
         case 'Q':
-            typeToMove = Queen;
+            typeToMove = ChessPieceType::QUEEN;
             break;
         case 'R':
-            typeToMove = Rook;
+            typeToMove = ChessPieceType::ROOK;
             break;
         case 'B':
-            typeToMove = Bishop;
+            typeToMove = ChessPieceType::BISHOP;
             break;
         case 'N':
-            typeToMove = Knight;
+            typeToMove = ChessPieceType::KNIGHT;
             break;
         case 'O':
             if (input.size() == 3) {
@@ -52,20 +52,20 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard &board
             }
             return "e8:c8";
         default: // pawns
-            typeToMove = Pawn;
+            typeToMove = ChessPieceType::PAWN;
             break;
     }
     if (Leftovers.size() >= 2) extra = input.substr(1, 1);
     if (Leftovers.size() >= 3) extra = input.substr(1, 2);
-    if (typeToMove == Pawn) {
+    if (typeToMove == ChessPieceType::PAWN) {
         if (Leftovers.size() >= 1) extra = input.substr(0, 1);
     }
     // find the piece To move
-    const Pieces pieces = board.getAllPiecesFor(white, typeToMove);
+    const Pieces pieces = chessLogic.getChessBoard().getAllPiecesFor(white, typeToMove);
     const ChessTile *foundFromTile = nullptr;
-    std::vector<std::pair<const ChessTile *, ChessTile *>> foundMoves;
-    for (const auto &piece : pieces) {
-        Pieces possibleMoves = ChessMoveLogic::getPossibleMoves(board, piece);
+    std::vector<std::pair<const ChessTile *, const ChessTile *>> foundMoves;
+    for (const auto *piece : pieces) {
+        Pieces possibleMoves = chessLogic.getPossibleMoves(*piece);
         auto it = std::ranges::find_if(possibleMoves, [&](const ChessTile *tile) {
             if (tile->getX() == ChessTile::mapXtoInt.at(moveTo[0]) && tile->getY() + 1 == moveTo[1] - '0') {
                 return true;
@@ -82,7 +82,7 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, ChessBoard &board
         for (const auto &[fromTile, toTile] : foundMoves) {
             // check if not possible by being checked
             Pieces filterPieces{toTile};
-            ChessMoveLogic::filterPossibleMovesForChecks(board, fromTile, filterPieces);
+            chessLogic.filterPossibleMovesForChecks(*fromTile, filterPieces);
             if (filterPieces.size() == 0) continue;
             foundFromTile = fromTile;
             // is like a move hint if there are multiple same pieces that have the to move as a possibility

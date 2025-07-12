@@ -7,6 +7,7 @@ enum class ChessPieceType { KING, QUEEN, ROOK, KNIGHT, BISHOP, PAWN, NONE };
 
 class ChessPiece {
   public:
+    explicit ChessPiece();
     explicit ChessPiece(ChessPieceType type, bool white);
     // ChessPiece(ChessPiece &&other) noexcept;
     ~ChessPiece() = default;

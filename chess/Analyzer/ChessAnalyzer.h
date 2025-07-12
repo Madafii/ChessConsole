@@ -2,6 +2,7 @@
 #define CHESSANALYZER_H
 
 #include "ChessBoard.h"
+#include "ChessMoveLogic.h"
 #include "ChessPiece.h"
 #include <cstddef>
 #include <map>
@@ -53,8 +54,10 @@ class ChessAnalyzer {
     double evalKingFirstMove(bool white);
 
   private:
-    ChessBoard &origBoard;
-    const std::map<ChessPieceType, int> pieceValue = {{KING, 0}, {Queen, 9}, {Rook, 5}, {Bishop, 3}, {Knight, 3}, {Pawn, 1}};
+    ChessBoard origBoard;
+    ChessMoveLogic chessLogic;
+    const std::map<ChessPieceType, int> pieceValue = {{ChessPieceType::KING, 0},   {ChessPieceType::QUEEN, 9},  {ChessPieceType::ROOK, 5},
+                                                      {ChessPieceType::BISHOP, 3}, {ChessPieceType::KNIGHT, 3}, {ChessPieceType::PAWN, 1}};
     const std::vector<int8Pair> directionsBishop = {std::pair(1, 1), std::pair(1, -1), std::pair(-1, 1), std::pair(-1, -1)};
     const std::vector<int8Pair> directionsKnight = {std::pair(2, 1), std::pair(2, -1), std::pair(-2, 1), std::pair(-2, -1),
                                                     std::pair(1, 2), std::pair(-1, 2), std::pair(1, -2), std::pair(-1, -2)};

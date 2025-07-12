@@ -4,9 +4,8 @@
 #include "ChessBoard.h"
 #include <string>
 
-class ChessUtils {
-  public:
-    static std::string convertPGNToMyInput(std::string input, ChessBoard &board, const bool &white);
+namespace ChessUtils {
+    std::string convertPGNToMyInput(std::string input, ChessMoveLogic &chessLogic, const bool &white);
 };
 
 #endif // CHESSUTILS_H

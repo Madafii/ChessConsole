@@ -9,6 +9,7 @@
 #include "ChessBoard.h"
 #include "ChessBoardDraw.h"
 #include "ChessDatabaseInterface.h"
+#include "ChessInterface.h"
 #include "ChessLinkedListMoves.h"
 #include "ChessUtils.h"
 
@@ -75,23 +76,23 @@ void ChessData::processLine(const std::string_view line) {
     iss >> pgnMove; // skip second input
 
     // play the game
-    ChessBoard board(false);
+    ChessInterface chessInterface;
     // ChessBoardDraw boardDraw;
     bool whitesTurn = true;
     while (iss >> pgnMove) {
-        addPGNMove(pgnMove, board, whitesTurn, gameResult);
+        addPGNMove(pgnMove, chessInterface, whitesTurn, gameResult);
     }
 
     // set the head back to the root for the next game
     movesLinkedList->setMoveHead(movesLinkedList->getMoveRoot());
 }
 
-void ChessData::addPGNMove(const std::string &pgnMove, ChessBoard &board, bool &whitesTurn, const ResultPair &gameResult) {
-    const std::string boardMove = ChessUtils::convertPGNToMyInput(pgnMove, board, whitesTurn);
-    board.handleMoveInputNoChecks(boardMove, false);
+void ChessData::addPGNMove(const std::string &pgnMove, ChessInterface &chessInterface, bool &whitesTurn, const ResultPair &gameResult) {
+    const std::string boardMove = ChessUtils::convertPGNToMyInput(pgnMove, chessInterface.getChessMoveLogic(), whitesTurn);
+    chessInterface.handleMoveInputNoChecks(boardMove, false);
     // ChessBoardDraw boardDraw;
     // boardDraw.draw(board); // for debugging
-    const std::string boardStr = board.getStringFromBoard();
+    const std::string boardStr = chessInterface.getChessBoard().getStringFromBoard();
     movesLinkedList->addMoveCompressed(boardMove, whitesTurn ? gameResult.first : gameResult.second, whitesTurn);
     whitesTurn = !whitesTurn;
 }

@@ -2,7 +2,9 @@
 #define CHESSDATA_H
 
 #include "ChessDatabaseInterface.h"
+#include "ChessInterface.h"
 #include "ChessLinkedListMoves.h"
+#include "ChessMoveLogic.h"
 #include <string>
 
 class ChessBoard;
@@ -27,7 +29,7 @@ class ChessData {
 
     ResultPair getResult(std::string_view result);
     void processLine(std::string_view line);
-    void addPGNMove(const std::string &pgnMove, ChessBoard &board, bool &whitesTurn, const ResultPair &gameResult);
+    void addPGNMove(const std::string &pgnMove, ChessInterface &chessInterface, bool &whitesTurn, const ResultPair &gameResult);
 };
 
 #endif
