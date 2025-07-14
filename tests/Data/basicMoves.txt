@@ -1,13 +1,12 @@
-a2:a4 b7:b5 a4:b5 
-b2:b3 a7:a6 c1:a3
-a2:a4 a7:a6 a1:a3 h7:h6 a3:d3
-b1:c3 g8:f6 c3:e4
-f2:f3 e7:e6 g2:g4 d8:h4 a2:a3
-f2:f3 e7:e6 h2:h3 d8:h4 g2:g3
-f2:f3 e7:e6 g2:g3 d8:h4 g3:g4
-e2:e4 a7:a6 e4:e5 d7:d5 e5:d6
-g1:f3 a7:a6 g2:g3 b7:b5 f1:g2 c7:c6 e1:g1
-d2:d4 a7:a6 d1:d3 b7:b5 c1:d2 c7:c6 b1:c3 d7:d5 e1:c1
-d2:d4 a7:a6 d1:d3 b7:b5 c1:d2 c7:c6 b1:c3 d7:d5 e2:e3 e7:e6 b2:b3 f8:a3 e1:c1
-a2:a4 h7:h6 a4:a5 h6:h5 a5:a6 h5:h4 a6:b7 h4:h3 b7:a8
-a2:a4 h7:h6 a4:a5 h6:h5 a5:a6 h5:h4 a6:b7 h4:h3 b7:a8=N
+a2:a4 b7:b5 a4:b5 rnbqkbnr_ppppppp_________________p______________P_PPPPPPRNBQKBNR
+b2:b3 a7:a6 c1:a3 rn_qkbnrp_ppppppbp______________________P________PPPPPPPRNBQKBNR
+a2:a4 a7:a6 a1:a3 h7:h6 a3:d3 _nbqkbnr_ppppppp___r____p_______________P______P_PPPPPP_RNBQKBNR
+b1:c3 g8:f6 c3:e4 r_bqkbnrpppppppp____________n________________N__PPPPPPPPRNBQKB_R
+f2:f3 e7:e6 g2:g4 d8:h4 a2:a3 rnbqkbnrppppp__p_____p________pQ____________P___PPPP_PPPRNB_KBNR
+f2:f3 e7:e6 h2:h3 d8:h4 g2:g3 rnbqkbnrppppp________ppp_______Q____________P___PPPP_PPPRNB_KBNR
+f2:f3 e7:e6 g2:g3 d8:h4 g3:g4 rnbqkbnrppppp__p_____pp________Q____________P___PPPP_PPPRNB_KBNR
+e2:e4 a7:a6 e4:e5 d7:d5 e5:d6 rnbqkbnrpppp_ppp________________________P__p_____PP_PPPPRNBQKBNR
+g1:f3 a7:a6 g2:g3 b7:b5 f1:g2 c7:c6 e1:g1 rnbq_rk_ppppppbp_____np__________P______P_P________PPPPPRNBQKBNR
+d2:d4 a7:a6 d1:d3 b7:b5 c1:d2 c7:c6 b1:c3 d7:d5 e1:c1 __kr_bnrpppbpppp__nq_______p_____P_P____P_P_________PPPPRNBQKBNR
+d2:d4 a7:a6 d1:d3 b7:b5 c1:d2 c7:c6 b1:c3 d7:d5 e2:e3 e7:e6 b2:b3 f8:a3 e1:c1 r___kbnrp_pb_pppBpnqp______p_____P_P____P_P_P________PPPRNBQK_NR
+a2:a4 h7:h6 a4:a5 h6:h5 a5:a6 h5:h4 a6:b7 h4:h3 b7:a8=N rnbqkbnr_ppppppp_______P________________________P_PPPPP_nNBQKBNR

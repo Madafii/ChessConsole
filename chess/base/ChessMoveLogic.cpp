@@ -291,7 +291,7 @@ bool ChessMoveLogic::isKingChecked(const bool white, const bool cached) {
             }
         }
         for (const ChessTile *possMove : possMoves) {
-            if (!possMove->hasPiece(NONE)) continue;
+            if (possMove->hasPiece(NONE)) continue;
             if (possMove->hasPiece(KING) && possMove->hasWhitePiece() == white) {
                 return true;
             }

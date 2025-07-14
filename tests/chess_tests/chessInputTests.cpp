@@ -36,7 +36,8 @@ void doMovementsFromPGN(const strvec &moves) {
 }
 
 TEST(ChessInterfaceTests, testBasics) {
-    std::ifstream inputDataFile("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/basicMoves.txt");
+    // std::ifstream inputDataFile("~/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/basicMoves.txt");
+    std::ifstream inputDataFile("/home/fpittermann/Documents/Projects/ChessConsole/tests/Data/basicMoves.txt");
     std::string line;
 
     if (!inputDataFile.is_open()) {
@@ -61,7 +62,7 @@ TEST(ChessInterfaceTests, testBasics) {
     for (const auto &moveTest : moveTests) {
         ChessInterface chessInterface;
         doMovements(chessInterface, moveTest.second);
-        // EXPECT_EQ(moveTest.first, *chessInterface.getChessBoard().getGameHistory().end());
+        EXPECT_EQ(moveTest.first, chessInterface.getChessBoard().getGameHistory().back());
     }
 }
 

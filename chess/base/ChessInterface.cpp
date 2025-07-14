@@ -113,6 +113,8 @@ GameState ChessInterface::afterMoveChecks(ChessTile &toTile, const char pawnToPi
             return GameState::WON;
         }
     }
+
+    chessBoard.addToGameHistory(chessBoard.getStringFromBoard());
     chessBoard.setTurn(!chessBoard.isWhitesTurn());
     // possibleMovesCache.clear();
     return GameState::IN_PROGRESS;

@@ -54,6 +54,7 @@ class ChessBoard {
     void setEnPassantMarker(const bool white) { markTurnForEnPassant = white; }
     void setLastDoublePawnMove(const std::pair<int, int> &pawnPos) { doublePawnMoveAt = pawnPos; }
     void resetLastDoublePawnMove() { doublePawnMoveAt = {-1, -1}; }
+    void addToGameHistory(const std::string &boardStr) { gameHistory.push_back(boardStr); }
     void incrementMoves() { movesSinceLastCapture++; }
 
     // board pos validators
