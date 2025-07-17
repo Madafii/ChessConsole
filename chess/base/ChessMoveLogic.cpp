@@ -312,7 +312,7 @@ bool ChessMoveLogic::isKingCheckedAfterMove(const ChessTile &fromTile, const Che
     ChessTile &checkToTile = checkBoard.getTileAt(toTile.getX(), toTile.getY());
     checkBoard.move(checkFromTile, checkToTile);
 
-    return checkMoveLogic.isKingChecked(checkBoard.isWhitesTurn());
+    return checkMoveLogic.isKingChecked(!checkBoard.isWhitesTurn());
 }
 
 bool ChessMoveLogic::isKingCheckmate() {

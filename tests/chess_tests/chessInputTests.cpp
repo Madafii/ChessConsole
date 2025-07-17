@@ -1,5 +1,6 @@
 #include "ChessInterface.h"
 #include "ChessUtils.h"
+
 #include "gtest/gtest.h"
 #include <fstream>
 #include <iostream>
@@ -8,6 +9,7 @@
 #include <vector>
 
 using strvec = std::vector<std::string>;
+using namespace std;
 
 void doMovements(const strvec &moves) {
     ChessInterface chessInterface;
@@ -20,6 +22,31 @@ void doMovements(ChessInterface &chessInterface, const strvec &moves) {
     for (const std::string &move : moves) {
         if (chessInterface.handleMoveInput(move) != GameState::IN_PROGRESS) break;
     }
+}
+
+auto readInputFile(const string &fileName) -> vector<pair<string, vector<string>>> {
+    std::ifstream inputDataFile(fileName);
+    std::string line;
+
+    if (!inputDataFile.is_open()) {
+        std::cerr << "could not open file" << std::endl;
+        return {};
+    }
+
+    vector<pair<string, vector<string>>> moveTests;
+
+    while (std::getline(inputDataFile, line)) {
+        std::istringstream iss(line);
+        std::string token;
+        std::vector<std::string> tokens;
+
+        while (iss >> token) {
+            tokens.push_back(token);
+        }
+        std::vector moves(tokens.begin(), tokens.end() - 1);
+        moveTests.emplace_back(tokens.back(), moves);
+    }
+    return moveTests;
 }
 
 void doMovementsFromPGN(const strvec &moves) {
@@ -36,110 +63,31 @@ void doMovementsFromPGN(const strvec &moves) {
 }
 
 TEST(ChessInterfaceTests, testBasics) {
-    // std::ifstream inputDataFile("~/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/basicMoves.txt");
-    std::ifstream inputDataFile("/home/fpittermann/Documents/Projects/ChessConsole/tests/Data/basicMoves.txt");
-    std::string line;
+    auto movesTests = readInputFile("/home/fpittermann/Documents/Projects/ChessConsole/tests/Data/basicMoves.txt");
 
-    if (!inputDataFile.is_open()) {
-        std::cerr << "could not open file" << std::endl;
-        return;
-    }
-
-    std::vector<std::pair<std::string, std::vector<std::string>>> moveTests;
-
-    while (std::getline(inputDataFile, line)) {
-        std::istringstream iss(line);
-        std::string token;
-        std::vector<std::string> tokens;
-
-        while (iss >> token) {
-            tokens.push_back(token);
-        }
-        std::vector<std::string> moves(tokens.begin(), tokens.end() - 1);
-        moveTests.emplace_back(tokens.back(), moves);
-    }
-
-    for (const auto &moveTest : moveTests) {
+    for (const auto &[checkBoard, moves] : movesTests) {
         ChessInterface chessInterface;
-        doMovements(chessInterface, moveTest.second);
-        EXPECT_EQ(moveTest.first, chessInterface.getChessBoard().getGameHistory().back());
+        doMovements(chessInterface, moves);
+        EXPECT_EQ(checkBoard, chessInterface.getChessBoard().getGameHistory().back());
     }
 }
 
-// TEST(basicChessTests, testChessInput) {
-//     ChessInterface chessInterface;
-//     chessInterface.handleMoveInput("a2:a4");
-// }
-//
-// TEST(basicChessTests, testPawnMovement) {
-//     const strvec inputs = {"a2:a4", "b7:b5", "a4:b5"};
-//     doMovements(inputs);
-// }
-//
-// TEST(basicChessTests, testBishopMovement) {
-//     const strvec inputs = {"b2:b3", "a7:a6", "c1:a3"};
-//     doMovements(inputs);
-// }
-//
-// TEST(basicChessTests, testRookMovement) {
-//     const strvec input = {"a2:a4", "a7:a6", "a1:a3", "h7:h6", "a3:d3"};
-//     doMovements(input);
-// }
-//
-// TEST(basicChessTests, testKnightMovements) {
-//     const strvec input = {"b1:c3", "g8:f6", "c3:e4"};
-//     doMovements(input);
-// }
-//
-// TEST(basicChessTests, testKingIsCheckmate) {
-//     const strvec input = {"f2:f3", "e7:e6", "g2:g4", "d8:h4", "a2:a3"};
-//     doMovements(input);
-// }
-//
-// TEST(basicChessTests, testKingIsChecked) {
-//     const strvec input = {"f2:f3", "e7:e6", "h2:h3", "d8:h4", "g2:g3"};
-//     doMovements(input);
-// }
-//
-// TEST(basicChessTests, testKingIsPinned) {
-//     const strvec input = {"f2:f3", "e7:e6", "g2:g3", "d8:h4", "g3:g4"};
-//     doMovements(input);
-// }
-//
-// TEST(basicChessTests, testThatWeirdPawnMovement) {
-//     const strvec input = {"e2:e4", "a7:a6", "e4:e5", "d7:d5", "e5:d6"};
-//     doMovements(input);
-// }
-//
-// TEST(basicChessTests, testCastling) {
-//     const strvec input = {"g1:f3", "a7:a6", "g2:g3", "b7:b5", "f1:g2", "c7:c6", "e1:g1"};
-//     doMovements(input);
-// }
-//
-// TEST(basicChessTests, testCastlingLeft) {
-//     const strvec input = {"d2:d4", "a7:a6", "d1:d3", "b7:b5", "c1:d2", "c7:c6", "b1:c3", "d7:d5", "e1:c1"};
-//     doMovements(input);
-// }
-//
-// TEST(basicChessTests, testCastlingLeftNotPossible) {
-//     const strvec input = {"d2:d4", "a7:a6", "d1:d3", "b7:b5", "c1:d2", "c7:c6", "b1:c3",
-//                           "d7:d5", "e2:e3", "e7:e6", "b2:b3", "f8:a3", "e1:c1"};
-//     doMovements(input);
-// }
+TEST(ChessInterfaceTests, testCheckmates) {
+    auto movesTests = readInputFile("/home/fpittermann/Documents/Projects/ChessConsole/tests/Data/checkmates.txt");
 
-// TEST(basicChessTests, testPawnWon) {
-//     const strvec input = {"a2:a4", "h7:h6", "a4:a5", "h6:h5", "a5:a6", "h5:h4", "a6:b7", "h4:h3", "b7:a8"};
-//     const std::string newPawnType = "Q";
-//     const std::istringstream iss(newPawnType);
-//     std::cin.rdbuf(iss.rdbuf());
-//
-//     doMovements(input);
-// }
-//
-// TEST(basicChessTests, testPawnWon2) {
-//     const strvec input = {"a2:a4", "h7:h6", "a4:a5", "h6:h5", "a5:a6", "h5:h4", "a6:b7", "h4:h3", "b7:a8=N"};
-//     doMovements(input);
-// }
+    for (const auto &[gameOutcome, moves] : movesTests) {
+        ChessInterface chessInterface;
+        GameState gameState = GameState::IN_PROGRESS;
+        bool winningColor = gameOutcome[0] == '1';
+        for (const auto &move : moves) {
+            gameState = chessInterface.handleMoveInput(move);
+        }
+
+        // someone won and it is the correct color
+        EXPECT_EQ(gameState, GameState::WON);
+        EXPECT_EQ(winningColor, chessInterface.getChessBoard().isWhitesTurn());
+    }
+}
 
 TEST(basicChessTests, testPGNConverterDraw) {
     const strvec input = {"e4",   "e5",   "Nf3",  "d6",    "Bc4",  "a5",   "Nc3",  "c6",   "O-O",  "b5",   "Be2",  "a4",   "a3",   "Be7",

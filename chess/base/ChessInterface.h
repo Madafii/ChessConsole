@@ -31,7 +31,7 @@ class ChessInterface {
     ChessMoveLogic chessLogic;
 
     // options for performance
-    bool doAfterMoveChecks = false;
+    bool doAfterMoveChecks = true;
 };
 
 #endif

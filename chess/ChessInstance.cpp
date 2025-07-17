@@ -33,7 +33,7 @@ ChessInstance::ChessInstance() {
     while (true) {
         std::cin >> playOption;
         if (gameOptions.contains(playOption)) {
-            gameOptions.at(playOption);
+            gameOptions.at(playOption)();
         } else if (playOption == "quit") {
             std::cout << "Quitting..." << std::endl;
             break;
