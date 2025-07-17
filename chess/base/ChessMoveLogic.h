@@ -4,6 +4,7 @@
 #include "ChessBoard.h"
 #include "ChessPiece.h"
 #include <functional>
+#include <algorithm>
 #include <map>
 
 class ChessMoveLogic {
@@ -19,6 +20,7 @@ class ChessMoveLogic {
     Pieces getPossibleMoves(const ChessTile &fromTile);
     Pieces getPossibleMovesUncached(const ChessTile &fromTile);
     Pieces getAllPossibleMoves(bool white);
+    Pieces getAllPossibleMovesPiece(const bool white, const ChessPieceType piece);
 
     // manipulate a possible moves list
     void filterPossibleMovesForChecks(const ChessTile &fromTile, Pieces &possibleMoves);
@@ -27,13 +29,17 @@ class ChessMoveLogic {
     // checks for things on the board
     bool isInputMovePossible(const ChessTile &fromTile, const ChessTile &toTile);
     bool isTileAttacked(bool white, const Pieces &tilesToCheck);
-    bool isTileFree(const Pieces &tilesToCheck) const;
     bool isKingChecked(bool white, bool cached = true);
     bool isKingCheckedAfterMove(const ChessTile &fromTile, const ChessTile &toTile);
     bool isKingCheckmate();
     bool isDraw();
     bool isThreefoldRepetition() const;
     bool isDeadPosition() const;
+
+    static bool isTileFree(const Pieces &tilesToCheck) {
+        return !std::ranges::any_of(tilesToCheck, [](const ChessTile *tile) { return !tile->hasPiece(NONE); });
+    }
+
 
   private:
     const ChessBoard &board;

@@ -9,29 +9,30 @@ class ChessInterface {
   public:
     explicit ChessInterface();
 
-    const ChessBoard &getChessBoard() const { return chessBoard; }
-    ChessMoveLogic &getChessMoveLogic() { return chessLogic; }
-
     // handle inputs to the game
     GameState handleInput(std::string_view input);
     GameState handleMoveInput(std::string_view input);
     void handleMoveInputNoChecks(std::string_view input, bool enPassant);
 
-    // some getters of pieces
-    Pieces getAllPossibleMovesPiece(bool white, ChessPieceType piece);
-
-    GameState afterMoveChecks(ChessTile &toTile, char pawnToPiece = '0');
-    PiecePair getMoveTilesFromInput(std::string_view input);
-
-    void pawnWon(ChessTile &pawnTile, char pawnToPiece = '0') const;
+    // getters
+    const ChessBoard &getChessBoard() const { return chessBoard; }
+    ChessMoveLogic &getChessMoveLogic() { return chessLogic; }
 
   private:
+    ChessMoveLogic chessLogic;
     ChessBoard chessBoard;
     ChessBoardDraw chessDraw;
-    ChessMoveLogic chessLogic;
 
     // options for performance
-    bool doAfterMoveChecks = true;
+    bool doGameStateCheck = true;
+
+    PiecePair getMoveTilesFromInput(std::string_view input);
+
+    GameState checkGameState();
+
+    static std::pair<std::string, char> splitMoveInput(std::string_view input) {
+        return {std::string(input.substr(0, 5)), (input.length() == 7 ? input[6] : '0')};
+    }
 };
 
 #endif

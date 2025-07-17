@@ -218,6 +218,19 @@ Pieces ChessMoveLogic::getAllPossibleMoves(const bool white) {
     return allPossibleMoves;
 }
 
+// TODO improve if I want to with better getAll.. but for single pieces not all
+// of them
+Pieces ChessMoveLogic::getAllPossibleMovesPiece(const bool white, const ChessPieceType piece) {
+    Pieces allPossibleMoves;
+    const Pieces colorPieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
+    for (const ChessTile *tile : colorPieceTiles) {
+        if (tile->getPiece().getType() == piece) {
+            ChessBoard::mergePossVec(allPossibleMoves, getPossibleMoves(*tile));
+        }
+    }
+    return allPossibleMoves;
+}
+
 bool ChessMoveLogic::isInputMovePossible(const ChessTile &fromTile, const ChessTile &toTile) {
     // get the possible moves for the from tile
     Pieces possibleMoves = getPossibleMoves(fromTile);
@@ -232,7 +245,7 @@ void ChessMoveLogic::filterPossibleMovesForChecks(const ChessTile &fromTile, Pie
 }
 
 bool ChessMoveLogic::addIfPossibleMove(const ChessTile &fromTile, const ChessTile &toTile, Pieces &possibleMoves) const {
-    if (!toTile.hasPiece(NONE)) {                                               // there is a piece
+    if (!toTile.hasPiece(NONE)) {                                          // there is a piece
         if (fromTile.hasPiece(PAWN) && fromTile.getX() == toTile.getX()) { // pawn only piece that can't capture piece directly in its path
             return false;
         }
@@ -268,10 +281,6 @@ bool ChessMoveLogic::isTileAttacked(const bool white, const Pieces &tilesToCheck
     return false;
 }
 
-bool ChessMoveLogic::isTileFree(const Pieces &tilesToCheck) const {
-    return std::ranges::all_of(tilesToCheck, [](const ChessTile *tile) { return tile->hasPiece(NONE); });
-}
-
 ///
 /// @param _board the chess _board to check this
 /// @param white The color to check for being checked
@@ -282,7 +291,9 @@ bool ChessMoveLogic::isKingChecked(const bool white, const bool cached) {
     for (const ChessTile *tile : pieceTiles) {
         Pieces possMoves;
         if (tile->hasPiece(KING)) {
-            possMoves = getPossibleMovesKingSingle(*tile, cached);
+            // should be impossible. Two kings can not check each other
+            // possMoves = getPossibleMovesKingSingle(*tile, cached);
+            continue;
         } else {
             if (!cached) {
                 possMoves = getPossibleMovesUncached(*tile);
@@ -291,7 +302,6 @@ bool ChessMoveLogic::isKingChecked(const bool white, const bool cached) {
             }
         }
         for (const ChessTile *possMove : possMoves) {
-            if (possMove->hasPiece(NONE)) continue;
             if (possMove->hasPiece(KING) && possMove->hasWhitePiece() == white) {
                 return true;
             }
@@ -310,7 +320,7 @@ bool ChessMoveLogic::isKingCheckedAfterMove(const ChessTile &fromTile, const Che
     ChessMoveLogic checkMoveLogic(checkBoard);
     ChessTile &checkFromTile = checkBoard.getTileAt(fromTile.getX(), fromTile.getY());
     ChessTile &checkToTile = checkBoard.getTileAt(toTile.getX(), toTile.getY());
-    checkBoard.move(checkFromTile, checkToTile);
+    checkBoard.move(checkFromTile, checkToTile); // TODO: I think this does not include pawn won which could alter the result
 
     return checkMoveLogic.isKingChecked(!checkBoard.isWhitesTurn());
 }

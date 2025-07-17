@@ -18,6 +18,10 @@ class ChessTile {
     [[nodiscard]] ChessPiece getPiece() const { return _piece; }
     void changePiece(const ChessPiece &piece) { _piece = piece; }
     void switchPiece(ChessPiece &piece) { std::swap(_piece, piece); }
+    void occupyPiece(ChessPiece &piece) {
+        piece = _piece;
+        _piece = ChessPiece();
+    }
 
     // default checks if any piece on tile
     bool hasPiece(const ChessPieceType pType) const { return _piece.getType() == pType; }

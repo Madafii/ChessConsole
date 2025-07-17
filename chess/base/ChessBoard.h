@@ -71,8 +71,8 @@ class ChessBoard {
     ChessTile &getTileAt(const int pos) { return board[pos]; }
     ChessTile &getTileAt(const std::string_view pos) { return getTileAt(ChessTile::mapXtoInt.at(pos[0]), pos[1] - '0'); }
 
-    // move tiles TODO: part of logic
-    void move(ChessTile &fromTile, ChessTile &toTile);
+    void move(ChessTile &fromTile, ChessTile &toTile, char pawnToPiece = '0');
+    void endMove();
 
     std::string getStringFromBoard() const;
 
@@ -96,6 +96,8 @@ class ChessBoard {
     void movePawn(const ChessTile &fromTile, const ChessTile &toTile);
     void moveKing(const ChessTile &fromTile, const ChessTile &toTile);
     void moveRook(const ChessTile &fromTile);
+    static void pawnWon(ChessTile &pawnTile, char pawnToPiece);
+
 
     friend ChessBoardDraw;
 };

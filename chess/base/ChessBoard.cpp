@@ -35,28 +35,6 @@ void ChessBoard::initBoard() {
     gameHistory.emplace_back(getStringFromBoard());
 }
 
-// ChessBoard::ChessBoard(const ChessBoard &otherBoard) {
-//     for (const auto &otherTile : otherBoard.board) {
-//         if (otherTile->piece == nullptr) {
-//             board.push_back(std::make_unique<ChessTile>(nullptr, otherTile->getX(), otherTile->getY()));
-//             continue;
-//         }
-//         board.push_back(std::make_unique<ChessTile>(std::make_unique<ChessPiece>(otherTile.getPiece().getType(),
-//         otherTile.getPiece().isWhite()),
-//                                                     otherTile->getX(), otherTile->getY()));
-//     }
-//     possibleMovesCache = otherBoard.possibleMovesCache;
-//     whitesTurn = otherBoard.whitesTurn;
-//     whiteRookMoved = otherBoard.whiteRookMoved;
-//     blackRookMoved = otherBoard.blackRookMoved;
-//     gameHistory = otherBoard.gameHistory;
-//     markTurnForEnPassant = otherBoard.markTurnForEnPassant;
-//     doublePawnMoveAt = otherBoard.doublePawnMoveAt;
-//     enPassantPossibleLastMove = otherBoard.enPassantPossibleLastMove;
-//     movesSinceLastCapture = otherBoard.movesSinceLastCapture;
-//     doAfterMoveChecks = otherBoard.doAfterMoveChecks;
-// }
-
 // get a simple string of the current board
 std::string ChessBoard::getStringFromBoard() const {
     std::string outMoves;
@@ -137,7 +115,8 @@ Pieces ChessBoard::getAllPiecesFor(const bool white, const ChessPieceType piece)
     return pieces;
 }
 
-void ChessBoard::move(ChessTile &fromTile, ChessTile &toTile) {
+// every actual board piece change happens here
+void ChessBoard::move(ChessTile &fromTile, ChessTile &toTile, const char pawnToPiece) {
     switch (fromTile.getPiece().getType()) {
         case ChessPieceType::PAWN:
             movePawn(fromTile, toTile);
@@ -151,18 +130,25 @@ void ChessBoard::move(ChessTile &fromTile, ChessTile &toTile) {
             break;
     }
 
-    // for optional or 100 moves draw rule
-    if (!toTile.hasPiece(ChessPieceType::NONE) || fromTile.getPiece().getType() == ChessPieceType::PAWN) {
-        movesSinceLastCapture = 0;
-    } else {
-        movesSinceLastCapture++;
+    fromTile.occupyPiece(toTile.getPiece());
+
+    if (toTile.hasPiece(ChessPieceType::PAWN) && (toTile.getY() == 0 || toTile.getY() == 7)) {
+        pawnWon(toTile, pawnToPiece);
     }
 
-    toTile.changePiece(fromTile.getPiece());
-    fromTile.changePiece(ChessPiece());
-
-    gameHistory.push_back(getStringFromBoard());
+    endMove();
 }
+
+void ChessBoard::endMove() {
+    if (getEnPassantMarker() != isWhitesTurn()) {
+        setEnPassantPossible(false);
+        resetLastDoublePawnMove();
+    }
+
+    addToGameHistory(getStringFromBoard());
+    setTurn(!isWhitesTurn());
+}
+
 
 void ChessBoard::movePawn(const ChessTile &fromTile, const ChessTile &toTile) {
     // for that special pawn movement check if pawn moved more than two tiles.
@@ -228,6 +214,26 @@ bool ChessBoard::validTilePos(std::string_view pos) {
     return validTilePos(x, y);
 }
 
+
+void ChessBoard::pawnWon(ChessTile &pawnTile, const char pawnToPiece) {
+    const bool white = pawnTile.getPiece().isWhite();
+    switch (pawnToPiece) {
+        case 'Q':
+            pawnTile.changePiece(ChessPiece(ChessPieceType::QUEEN, white));
+            break;
+        case 'R':
+            pawnTile.changePiece(ChessPiece(ChessPieceType::ROOK, white));
+            break;
+        case 'B':
+            pawnTile.changePiece(ChessPiece(ChessPieceType::BISHOP, white));
+            break;
+        case 'N':
+            pawnTile.changePiece(ChessPiece(ChessPieceType::KNIGHT, white));
+            break;
+        default:
+            break;
+    }
+}
 
 void ChessBoard::mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge) {
     possibleMoves.insert(possibleMoves.end(), possibleMovesMerge.begin(), possibleMovesMerge.end());
