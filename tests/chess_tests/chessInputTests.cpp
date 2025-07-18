@@ -73,7 +73,7 @@ TEST(ChessInterfaceTests, testBasics) {
 }
 
 TEST(ChessInterfaceTests, testCheckmates) {
-    auto movesTests = readInputFile("/home/fpittermann/Documents/Projects/ChessConsole/tests/Data/checkmates.txt");
+    auto movesTests = readInputFile("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/checkmates.txt");
 
     for (const auto &[gameOutcome, moves] : movesTests) {
         ChessInterface chessInterface;
@@ -85,7 +85,7 @@ TEST(ChessInterfaceTests, testCheckmates) {
 
         // someone won and it is the correct color
         EXPECT_EQ(gameState, GameState::WON);
-        EXPECT_EQ(winningColor, chessInterface.getChessBoard().isWhitesTurn());
+        EXPECT_EQ(winningColor, !chessInterface.getChessBoard().isWhitesTurn());
     }
 }
 

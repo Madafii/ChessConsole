@@ -323,7 +323,7 @@ bool ChessMoveLogic::isKingCheckedAfterMove(const ChessTile &fromTile, const Che
 }
 
 bool ChessMoveLogic::isKingCheckmate() {
-    const Pieces pieceTiles = !board.isWhitesTurn() ? board.getAllWhiteTiles() : board.getAllBlackTiles();
+    const Pieces pieceTiles = board.isWhitesTurn() ? board.getAllWhiteTiles() : board.getAllBlackTiles();
     for (const ChessTile *tile : pieceTiles) {
         Pieces possMoves = getPossibleMovesNoCastling(*tile);
         filterPossibleMovesForChecks(*tile, possMoves);
