@@ -63,7 +63,7 @@ void doMovementsFromPGN(const strvec &moves) {
 }
 
 TEST(ChessInterfaceTests, testBasics) {
-    auto movesTests = readInputFile("/home/fpittermann/Documents/Projects/ChessConsole/tests/Data/basicMoves.txt");
+    auto movesTests = readInputFile("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/basicMoves.txt");
 
     for (const auto &[checkBoard, moves] : movesTests) {
         ChessInterface chessInterface;

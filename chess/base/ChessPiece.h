@@ -7,23 +7,23 @@ enum class ChessPieceType { KING, QUEEN, ROOK, KNIGHT, BISHOP, PAWN, NONE };
 
 class ChessPiece {
   public:
-    explicit ChessPiece();
-    explicit ChessPiece(ChessPieceType type, bool white);
-    // ChessPiece(ChessPiece &&other) noexcept;
-    ~ChessPiece() = default;
+    ChessPiece() = default;
+    ChessPiece(ChessPieceType type, bool white);
+    // ChessPiece(const ChessPiece &other) = default;
 
-    [[nodiscard]] inline ChessPieceType getType() const { return _type; };
-    [[nodiscard]] inline bool isWhite() const { return _white; };
-    [[nodiscard]] inline std::string_view getLongName() const { return _long; }
-    [[nodiscard]] inline char getShortName() const { return _short; }
+    [[nodiscard]] ChessPieceType getType() const { return _type; };
+    [[nodiscard]] bool isWhite() const { return _white; };
+    [[nodiscard]] std::string_view getLongName() const { return _long; }
+    [[nodiscard]] char getShortName() const { return _short; }
 
     static ChessPieceType getTypeFromShort(const char &shortName);
 
   private:
-    ChessPieceType _type;
-    bool _white;
-    std::string _long;
-    char _short;
+    // default is a empty tile
+    ChessPieceType _type = ChessPieceType::NONE;
+    bool _white = true;
+    std::string _long = "_";
+    char _short = '_';
 };
 
 #endif // CHESSPIECE_H

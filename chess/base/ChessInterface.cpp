@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-ChessInterface::ChessInterface() : chessLogic(ChessBoard()), chessBoard(chessLogic.getChessBoard()), chessDraw(ChessBoardDraw()) {}
+ChessInterface::ChessInterface() : chessBoard(ChessBoard()), chessLogic(chessBoard), chessDraw(ChessBoardDraw()) { }
 
 // handles input usually by a user with checks for wrong inputs
 GameState ChessInterface::handleInput(const std::string_view input) {
@@ -47,6 +47,7 @@ GameState ChessInterface::handleMoveInput(const std::string_view input) {
         return GameState::IN_PROGRESS;
     }
     chessBoard.move(fromTile, toTile, pawnChangeTo);
+    chessLogic.resetCache();
 
     return checkGameState();
 }
@@ -66,6 +67,7 @@ void ChessInterface::handleMoveInputNoChecks(const std::string_view input, const
     ChessTile &toTile = chessBoard.getTileAt(inputMove.substr(3));
 
     chessBoard.move(fromTile, toTile, pawnChangeTo);
+    chessLogic.resetCache();
 }
 
 PiecePair ChessInterface::getMoveTilesFromInput(const std::string_view input) {

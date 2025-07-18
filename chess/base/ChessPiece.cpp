@@ -1,9 +1,6 @@
 #include "ChessPiece.h"
 #include <iostream>
 
-// default constructor creates NONE piece type _white is irrelevant then
-ChessPiece::ChessPiece() : _type(ChessPieceType::NONE), _white(true) {};
-
 ChessPiece::ChessPiece(const ChessPieceType type, const bool white) : _type(type), _white(white) {
     using enum ChessPieceType;
     switch (_type) {
@@ -37,6 +34,13 @@ ChessPiece::ChessPiece(const ChessPieceType type, const bool white) : _type(type
             break;
     }
 }
+
+// ChessPiece::ChessPiece(const ChessPiece &other){
+//     _type = other._type;
+//     _white = other._white;
+//     _short = other._short;
+//     _long = other._long;
+// }
 
 // ChessPiece::ChessPiece(ChessPiece &&other) noexcept {
 //     this->_type = other._type;

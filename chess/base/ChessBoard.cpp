@@ -132,9 +132,7 @@ void ChessBoard::move(ChessTile &fromTile, ChessTile &toTile, const char pawnToP
 
     fromTile.occupyPiece(toTile.getPiece());
 
-    if (toTile.hasPiece(ChessPieceType::PAWN) && (toTile.getY() == 0 || toTile.getY() == 7)) {
-        pawnWon(toTile, pawnToPiece);
-    }
+    if (isPawnWinCondition(toTile)) pawnWon(toTile, pawnToPiece);
 
     endMove();
 }
@@ -144,17 +142,15 @@ void ChessBoard::endMove() {
         setEnPassantPossible(false);
         resetLastDoublePawnMove();
     }
-
-    addToGameHistory(getStringFromBoard());
-    setTurn(!isWhitesTurn());
+    pushGameToHistory();
+    toggleTurn();
 }
-
 
 void ChessBoard::movePawn(const ChessTile &fromTile, const ChessTile &toTile) {
     // for that special pawn movement check if pawn moved more than two tiles.
     if (abs(fromTile.getY() - toTile.getY()) >= 2) {
-        doublePawnMoveAt = std::make_pair(toTile.getX(), toTile.getY());
-        markTurnForEnPassant = whitesTurn; // mark for delete next turn
+        setLastDoublePawnMove({toTile.getX(), toTile.getY()});
+        setEnPassantMarker(whitesTurn); // mark this turn for enPassant
     }
     // that special move happened so extra rule with capturing
     if (fromTile.getX() != toTile.getX() && toTile.getPiece().getType() == ChessPieceType::NONE) {
@@ -167,21 +163,21 @@ void ChessBoard::movePawn(const ChessTile &fromTile, const ChessTile &toTile) {
 void ChessBoard::moveKing(const ChessTile &fromTile, const ChessTile &toTile) {
     // disables castling when the king is being moved
     if (fromTile.getPiece().isWhite() == true) {
-        whiteRookMoved.first = true;
-        whiteRookMoved.second = true;
+        whiteRookMoved = {true, true};
     } else {
-        blackRookMoved.first = true;
-        blackRookMoved.second = true;
+        blackRookMoved = {true, true};
     }
     // do castling move for the rook
     if (abs(fromTile.getX() - toTile.getX()) >= 2) {
         const int x = toTile.getX();
         const int y = toTile.getY();
         if (x < 4) {
+            // castle happened on left side
             ChessTile &rookTile = getTileAt(0, y);
             ChessTile &rookToTile = getTileAt(3, y);
             rookToTile.switchPiece(rookTile.getPiece());
         } else {
+            // castle happened on right side
             ChessTile &rookTile = getTileAt(7, y);
             ChessTile &rookToTile = getTileAt(5, y);
             rookToTile.switchPiece(rookTile.getPiece());
@@ -196,8 +192,7 @@ inline void ChessBoard::moveRook(const ChessTile &fromTile) {
     if (x == 0) {
         if (y == 0) whiteRookMoved.first = true;
         if (y == 7) blackRookMoved.first = true;
-    }
-    if (x == 7) {
+    } else if (x == 7) {
         if (y == 0) whiteRookMoved.second = true;
         if (y == 7) blackRookMoved.second = true;
     }
@@ -213,7 +208,6 @@ bool ChessBoard::validTilePos(std::string_view pos) {
     const int y = pos[1] - '0'; // is a trick to convert number char to int
     return validTilePos(x, y);
 }
-
 
 void ChessBoard::pawnWon(ChessTile &pawnTile, const char pawnToPiece) {
     const bool white = pawnTile.getPiece().isWhite();

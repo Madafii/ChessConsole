@@ -20,7 +20,8 @@ enum class GameState { WON, DRAW, IN_PROGRESS };
 
 class ChessBoard {
   public:
-    explicit ChessBoard() { initBoard(); };
+    ChessBoard() { initBoard(); };
+    ChessBoard(const ChessBoard &other) = default;
     ~ChessBoard() = default;
 
     // create the board
@@ -50,11 +51,12 @@ class ChessBoard {
 
     // setters
     void setTurn(const bool white) { whitesTurn = white; }
+    void toggleTurn() { whitesTurn = !whitesTurn; }
     void setEnPassantPossible(const bool possible) { enPassantPossibleLastMove = possible; }
     void setEnPassantMarker(const bool white) { markTurnForEnPassant = white; }
     void setLastDoublePawnMove(const std::pair<int, int> &pawnPos) { doublePawnMoveAt = pawnPos; }
     void resetLastDoublePawnMove() { doublePawnMoveAt = {-1, -1}; }
-    void addToGameHistory(const std::string &boardStr) { gameHistory.push_back(boardStr); }
+    void pushGameToHistory() { gameHistory.push_back(getStringFromBoard()); }
     void incrementMoves() { movesSinceLastCapture++; }
 
     // board pos validators
@@ -71,6 +73,7 @@ class ChessBoard {
     ChessTile &getTileAt(const int pos) { return board[pos]; }
     ChessTile &getTileAt(const std::string_view pos) { return getTileAt(ChessTile::mapXtoInt.at(pos[0]), pos[1] - '0'); }
 
+    // TODO: might want to change this as it contains logic -> so split to logic?
     void move(ChessTile &fromTile, ChessTile &toTile, char pawnToPiece = '0');
     void endMove();
 
@@ -82,7 +85,7 @@ class ChessBoard {
   private:
     // data of the board
     std::array<ChessTile, boardSize> board;
-    std::vector<std::string> gameHistory;
+    std::vector<std::string> gameHistory = {};
     std::pair<bool, bool> whiteRookMoved = {false, false};
     std::pair<bool, bool> blackRookMoved = {false, false};
     std::pair<int, int> doublePawnMoveAt = std::make_pair(-1, -1); // says in what column a pawn move with two steps happened
@@ -91,13 +94,15 @@ class ChessBoard {
     bool markTurnForEnPassant = false;
     int movesSinceLastCapture = 0;
 
-
     // moves
     void movePawn(const ChessTile &fromTile, const ChessTile &toTile);
     void moveKing(const ChessTile &fromTile, const ChessTile &toTile);
     void moveRook(const ChessTile &fromTile);
     static void pawnWon(ChessTile &pawnTile, char pawnToPiece);
 
+    static bool isPawnWinCondition(const ChessTile &toTile) {
+        return toTile.hasPiece(ChessPieceType::PAWN) && (toTile.getY() == 0 || toTile.getY() == 7);
+    }
 
     friend ChessBoardDraw;
 };

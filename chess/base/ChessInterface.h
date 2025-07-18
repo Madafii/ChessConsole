@@ -19,8 +19,8 @@ class ChessInterface {
     ChessMoveLogic &getChessMoveLogic() { return chessLogic; }
 
   private:
-    ChessMoveLogic chessLogic;
     ChessBoard chessBoard;
+    ChessMoveLogic chessLogic;
     ChessBoardDraw chessDraw;
 
     // options for performance

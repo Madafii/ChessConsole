@@ -7,8 +7,9 @@
 
 class ChessTile {
   public:
-    explicit ChessTile() = default;
-    explicit ChessTile(const ChessPiece &piece, int x, int y);
+    ChessTile() = default;
+    // ChessTile(const ChessTile &other) = default;
+    ChessTile(const ChessPiece &piece, int x, int y);
 
     [[nodiscard]] int getX() const { return _x; }
     [[nodiscard]] int getY() const { return _y; }
@@ -16,6 +17,7 @@ class ChessTile {
 
     [[nodiscard]] ChessPiece &getPiece() { return _piece; }
     [[nodiscard]] ChessPiece getPiece() const { return _piece; }
+    [[nodiscard]] ChessPieceType getPieceType() const { return _piece.getType(); }
     void changePiece(const ChessPiece &piece) { _piece = piece; }
     void switchPiece(ChessPiece &piece) { std::swap(_piece, piece); }
     void occupyPiece(ChessPiece &piece) {
@@ -31,9 +33,9 @@ class ChessTile {
     static const std::unordered_map<int, char> mapIntToX;
 
   private:
-    ChessPiece _piece;
-    int _x;
-    int _y;
+    ChessPiece _piece = ChessPiece();
+    int _x = 0;
+    int _y = 0;
 };
 
 #endif // CHESSTILE_H
