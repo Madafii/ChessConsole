@@ -22,6 +22,7 @@ Pieces ChessMoveLogic::getPossibleMoves(const ChessTile &fromTile) {
             return getPossibleMovesCached(fromTile, std::bind(&ChessMoveLogic::getPossibleMovesQueen, this, std::placeholders::_1));
         case KING:
             // do insert and assign here because this will also include moves from castling which are not included sometimes
+            return getPossibleMovesKing(fromTile);
             if (!possibleMovesCache.contains(&fromTile)) {
                 possibleMovesCache[&fromTile] = getPossibleMovesKing(fromTile);
             }
@@ -71,8 +72,12 @@ Pieces ChessMoveLogic::getPossibleMovesUncached(const ChessTile &fromTile) {
 }
 
 Pieces ChessMoveLogic::getPossibleMovesCached(const ChessTile &fromTile, const possibleMovesFunc &func) {
+    // const auto possMovesNoCache = func(fromTile);
+    // return possMovesNoCache;
     if (!possibleMovesCache.contains(&fromTile)) {
-        possibleMovesCache.insert(std::make_pair(&fromTile, func(fromTile)));
+        const auto possMoves = func(fromTile);
+        possibleMovesCache.insert(std::make_pair(&fromTile, possMoves));
+        return possMoves;
     }
     return possibleMovesCache.at(&fromTile);
 }
@@ -147,28 +152,28 @@ Pieces ChessMoveLogic::getPossibleMovesCastling(const ChessTile &fromTile) {
     const int x = fromTile.getX();
     const int y = fromTile.getY();
     if (board.isWhitesTurn()) {
-        const auto &whiteRookMoved = board.getWhiteRookMoved();
-        if (!whiteRookMoved.first) {
+        const auto &[whiteRookLeft, whiteRookRight] = board.getWhiteRookMoved();
+        if (!whiteRookLeft) {
             const Pieces tilesToCheckLeft = getLeftCastleTiles(x, y);
             if (!isTileAttacked(false, tilesToCheckLeft) && isTileFree(tilesToCheckLeft)) {
                 possibleMoves.push_back(&board.getTileAt(x - 2, y));
             }
         }
-        if (!whiteRookMoved.second) {
+        if (!whiteRookRight) {
             const Pieces tilesToCheckRight = getRightCastleTiles(x, y);
             if (!isTileAttacked(false, tilesToCheckRight) && isTileFree(tilesToCheckRight)) {
                 possibleMoves.push_back(&board.getTileAt(x + 2, y));
             }
         }
     } else {
-        const auto &blackRookMoved = board.getBlackRookMoved();
-        if (!blackRookMoved.first) {
+        const auto &[blackRookLeft, blackRookRight] = board.getBlackRookMoved();
+        if (!blackRookLeft) {
             const Pieces tilesToCheckLeft = getLeftCastleTiles(x, y);
             if (!isTileAttacked(true, tilesToCheckLeft) && isTileFree(tilesToCheckLeft)) {
                 possibleMoves.push_back(&board.getTileAt(x - 2, y));
             }
         }
-        if (!blackRookMoved.second) {
+        if (!blackRookRight) {
             const Pieces tilesToCheckRight = getRightCastleTiles(x, y);
             if (!isTileAttacked(true, tilesToCheckRight) && isTileFree(tilesToCheckRight)) {
                 possibleMoves.push_back(&board.getTileAt(x + 2, y));
@@ -295,13 +300,15 @@ bool ChessMoveLogic::isTileAttacked(const bool white, const Pieces &tilesToCheck
 bool ChessMoveLogic::isKingChecked(const bool white) {
     const Pieces pieceTiles = !white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
     for (const ChessTile *tile : pieceTiles) {
-        // should be impossible. Can not check with king and castling can't capture a piece
-        if (tile->hasPiece(KING)) continue;
+        // if (tile->hasPiece(KING)) continue;
 
-        const Pieces possMoves = getPossibleMoves(*tile);
-        return std::ranges::any_of(possMoves, [white](const ChessTile *possMove) { 
+        const Pieces possMoves = getPossibleMovesNoCastling(*tile);
+        const bool found = std::ranges::any_of(possMoves, [white](const ChessTile *possMove) {
             return possMove->hasPiece(KING) && possMove->hasWhitePiece() == white; 
         });
+        if (found) {
+            return true;
+        }
     }
     return false;
 }
@@ -317,13 +324,12 @@ bool ChessMoveLogic::isKingCheckedAfterMove(const ChessTile &fromTile, const Che
     ChessTile &checkFromTile = checkBoard.getTileAt(fromTile.getX(), fromTile.getY());
     ChessTile &checkToTile = checkBoard.getTileAt(toTile.getX(), toTile.getY());
     checkBoard.move(checkFromTile, checkToTile);
-    checkBoard.endMove();
 
-    return checkMoveLogic.isKingChecked(checkBoard.isWhitesTurn());
+    return checkMoveLogic.isKingChecked(!checkBoard.isWhitesTurn());
 }
 
-bool ChessMoveLogic::isKingCheckmate() {
-    const Pieces pieceTiles = board.isWhitesTurn() ? board.getAllWhiteTiles() : board.getAllBlackTiles();
+bool ChessMoveLogic::isKingCheckmate(const bool white) {
+    const Pieces pieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
     for (const ChessTile *tile : pieceTiles) {
         Pieces possMoves = getPossibleMovesNoCastling(*tile);
         filterPossibleMovesForChecks(*tile, possMoves);
@@ -334,10 +340,12 @@ bool ChessMoveLogic::isKingCheckmate() {
     return true;
 }
 
-bool ChessMoveLogic::isDraw() {
+bool ChessMoveLogic::isDraw(const bool white) {
     // if (isThreefoldRepetition()) // seems optional so deactivate for now
     // return true; // self explaining :)
-    if (getAllPossibleMoves(!board.isWhitesTurn()).size() <= 0 && !isKingChecked(!board.isWhitesTurn())) return true; // stalemate
+    if (getAllPossibleMoves(white).size() <= 0 && !isKingChecked(white)) {
+        return true; // stalemate
+    }
     // if (movesSinceLastCapture > 100) // maybe that is optional too but leave like this for now
     // return true; // 100 half turns with no capture or pawn move
     // check for any other dead position where a win is not possible anymore

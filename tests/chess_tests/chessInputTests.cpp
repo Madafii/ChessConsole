@@ -1,3 +1,5 @@
+#include "ChessBoard.h"
+#include "ChessBoardDraw.h"
 #include "ChessInterface.h"
 #include "ChessUtils.h"
 
@@ -49,17 +51,21 @@ auto readInputFile(const string &fileName) -> vector<pair<string, vector<string>
     return moveTests;
 }
 
-void doMovementsFromPGN(const strvec &moves) {
-    ChessInterface chessInterface;
-    bool whitesTurn = true;
-    int count = 0;
+GameState doMovementsFromPGN(ChessInterface &chessInterface, const strvec &moves) {
+    GameState currState = GameState::IN_PROGRESS;
     for (const std::string &move : moves) {
-        std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, chessInterface.getChessMoveLogic(), whitesTurn);
-        std::cout << "from: " << move << " to: " << inputMyChess << std::endl;
-        if (chessInterface.handleMoveInput(inputMyChess) != GameState::IN_PROGRESS) break;
-        whitesTurn = !whitesTurn;
-        count++;
+        if (move == "Kf5") {
+            std::cout << "found" << std::endl;
+        }
+        const bool white = chessInterface.getChessBoard().isWhitesTurn();
+        std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, chessInterface.getChessMoveLogic(), white);
+        // std::cout << "from: " << move << " to: " << inputMyChess << std::endl;
+        currState = chessInterface.handleMoveInput(inputMyChess);
+        if (currState != GameState::IN_PROGRESS) break;
     }
+    // ChessBoardDraw boardDraw;
+    // boardDraw.draw(chessInterface.getChessBoard());
+    return currState;
 }
 
 TEST(ChessInterfaceTests, testBasics) {
@@ -89,7 +95,7 @@ TEST(ChessInterfaceTests, testCheckmates) {
     }
 }
 
-TEST(basicChessTests, testPGNConverterDraw) {
+TEST(basicChessTests, testPGNDraw) {
     const strvec input = {"e4",   "e5",   "Nf3",  "d6",    "Bc4",  "a5",   "Nc3",  "c6",   "O-O",  "b5",   "Be2",  "a4",   "a3",   "Be7",
                           "d4",   "exd4", "Nxd4", "Nf6",   "Nf5",  "Bxf5", "exf5", "d5",   "Bf3",  "Qc8",  "Qe2",  "Qxf5", "Re1",  "O-O",
                           "Qxe7", "Qd7",  "Qxd7", "Nbxd7", "Bg5",  "Ne8",  "Rad1", "Nb6",  "Be7",  "Nc4",  "Bxf8", "Kxf8", "b3",   "axb3",
@@ -101,7 +107,11 @@ TEST(basicChessTests, testPGNConverterDraw) {
                           "g5",   "Ke3",  "Rg4",  "Nf2",   "g6",   "Nxg4", "g7",   "Kxf4", "g8=Q", "Ne3+", "Kf2",  "Ng4+", "Ke1",  "Ke3",
                           "Qxg4", "Kd3",  "Qg3+", "Ke4",   "Ke2",  "Kd5",  "Qg4",  "Ke5",  "Kd3",  "Kf6",  "Qf4+", "Ke6",  "Kd4",  "Ke7",
                           "Qe5+", "Kf7",  "Kd5",  "Kg6",   "Kd6",  "Kh6",  "Ke6",  "Kg6",  "Qf6+", "Kh5",  "Kf5"};
-    doMovementsFromPGN(input);
+
+    ChessInterface chessInterface;
+    GameState endState = doMovementsFromPGN(chessInterface, input);
+
+    EXPECT_EQ(GameState::DRAW, endState);
 }
 
 TEST(basicChessTests, testPGNConverterWin) {
@@ -109,7 +119,8 @@ TEST(basicChessTests, testPGNConverterWin) {
                           "Bd2", "Nf6", "Ne4",  "Qb6",  "Nxf6+", "exf6", "Qe2+", "Be6",  "O-O-O", "Be7", "g3",  "Bxa2",
                           "b3",  "c5",  "Kb2",  "cxd4", "Kxa2",  "Nc6",  "Bf4",  "Qa5+", "Kb2",   "Nb4", "Ra1", "Qf5",
                           "Bd6", "Nd5", "Nxd4", "Qg6",  "Bg2",   "Qg5",  "Bxd5", "Qxd5", "Qxe7#"};
-    doMovementsFromPGN(input);
+    ChessInterface chessInterface;
+    doMovementsFromPGN(chessInterface, input);
 }
 
 TEST(basicChessTests, testPGN50Moves) {
@@ -122,7 +133,8 @@ TEST(basicChessTests, testPGN50Moves) {
         "Rd6", "Rd3", "Re6", "Rc3", "Rf6", "Rb3", "Rg6", "Ra3", "Rh6", "Rb3", "Rg6", "Rc3", "Rf6", "Rd3", "Re6", "Re3", "Rd6", "Rf3", "Rc6",
         "Rg3", "Rb6", "Rh3", "Ra6", "Rg3", "Rb6", "Rf3", "Rc6", "Re3", "Rd6", "Rd3", "Re6", "Rc3", "Rf6", "Rb3", "Rg6", "Ra3", "Rh6", "Rb3",
         "Rg6", "Rc3", "Rf6", "Rd3", "Re6", "Re3", "Rd6", "Rf3", "Rc6", "Rg3", "Rb6", "Rh3", "Ra6", "Rg3", "Rb6", "Rf3", "Rc6"};
-    doMovementsFromPGN(input);
+    ChessInterface chessInterface;
+    doMovementsFromPGN(chessInterface, input);
 }
 
 TEST(basicChessTests, testThreefoldRepetition) {
@@ -138,5 +150,6 @@ TEST(basicChessTests, testTmp) {
                           "Ke2", "Rd7", "Rc1",  "b6",   "b4",   "Na6", "Na7",  "Kb7",   "Nb5", "Nxb4", "a4",   "c6",   "Nc3",  "Ka6",
                           "Rb1", "Ka5", "h4",   "Nd3",  "g4",   "Nf4", "Ke3",  "e5",    "h5",  "Rd3",  "Kf2",  "Rxc3", "Rd1",  "Rc2",
                           "Kg3", "Rg2", "Kh4",  "f6",   "Rd6",  "h6",  "Rd7",  "g5",    "hg6"};
-    doMovementsFromPGN(input);
+    ChessInterface chessInterface;
+    doMovementsFromPGN(chessInterface, input);
 }

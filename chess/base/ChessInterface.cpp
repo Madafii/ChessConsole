@@ -94,11 +94,11 @@ PiecePair ChessInterface::getMoveTilesFromInput(const std::string_view input) {
 }
 
 GameState ChessInterface::checkGameState() {
-    if (chessLogic.isDraw()) {
+    if (chessLogic.isDraw(chessBoard.isWhitesTurn())) {
         std::cout << "this game is a draw!" << std::endl;
         return GameState::DRAW;
     }
-    if (chessLogic.isKingCheckmate()) {
+    if (chessLogic.isKingCheckmate(chessBoard.isWhitesTurn())) {
         std::cout << "you won the game!" << std::endl;
         return GameState::WON;
     }

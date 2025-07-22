@@ -32,8 +32,8 @@ class ChessMoveLogic {
     bool isTileAttacked(bool white, const Pieces &tilesToCheck);
     bool isKingChecked(bool white);
     bool isKingCheckedAfterMove(const ChessTile &fromTile, const ChessTile &toTile);
-    bool isKingCheckmate();
-    bool isDraw();
+    bool isKingCheckmate(bool white);
+    bool isDraw(bool white);
     bool isThreefoldRepetition() const;
     bool isDeadPosition() const;
 
