@@ -54,17 +54,11 @@ auto readInputFile(const string &fileName) -> vector<pair<string, vector<string>
 GameState doMovementsFromPGN(ChessInterface &chessInterface, const strvec &moves) {
     GameState currState = GameState::IN_PROGRESS;
     for (const std::string &move : moves) {
-        if (move == "Kf5") {
-            std::cout << "found" << std::endl;
-        }
         const bool white = chessInterface.getChessBoard().isWhitesTurn();
         std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, chessInterface.getChessMoveLogic(), white);
-        // std::cout << "from: " << move << " to: " << inputMyChess << std::endl;
         currState = chessInterface.handleMoveInput(inputMyChess);
         if (currState != GameState::IN_PROGRESS) break;
     }
-    // ChessBoardDraw boardDraw;
-    // boardDraw.draw(chessInterface.getChessBoard());
     return currState;
 }
 

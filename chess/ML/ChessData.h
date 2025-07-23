@@ -4,8 +4,8 @@
 #include "ChessDatabaseInterface.h"
 #include "ChessInterface.h"
 #include "ChessLinkedListMoves.h"
-#include "ChessMoveLogic.h"
 #include <string>
+#include <string_view>
 
 class ChessBoard;
 
@@ -17,6 +17,7 @@ class ChessData {
     explicit ChessData();
 
     void readSimpleGames(const std::string &filename);
+    void convertPGNToMoves(std::string_view fromFileName, std::string_view toFileName);
 
     void flushMovesToDB(const std::string &dbName);
 
@@ -29,7 +30,12 @@ class ChessData {
 
     ResultPair getResult(std::string_view result);
     void processLine(std::string_view line);
-    void addPGNMove(const std::string &pgnMove, ChessInterface &chessInterface, bool &whitesTurn, const ResultPair &gameResult);
+    void processLine(std::ofstream &outStream, std::string_view line);
+    void addPGNMove(const std::string &pgnMove, ChessInterface &chessInterface, const ResultPair &gameResult);
+
+    static std::ifstream getInputFile(std::string_view inFileName);
+    static std::ofstream getOutputFile(std::string_view outFileName);
+    static std::string doPGNMove(const std::string &pgnMove, ChessInterface &chessInterface);
 };
 
 #endif
