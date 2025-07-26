@@ -4,8 +4,8 @@ add_library(
   ChessData.cpp
   ChessLinkedListMoves.h
   ChessLinkedListMoves.cpp
-  # ChessPeepo.h
-  # ChessPeepo.cpp
+  ChessPeepo.h
+  ChessPeepo.cpp
   ChessDatabaseInterface.h
   ChessDatabaseInterface.cpp)
 

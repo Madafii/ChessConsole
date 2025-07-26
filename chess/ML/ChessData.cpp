@@ -15,6 +15,7 @@
 
 ChessData::ChessData() : movesLinkedList(std::make_unique<ChessLinkedListMoves>()) {}
 
+// reads data from pgn file and converts them into a ChessLinkedListMoves structure
 void ChessData::readSimpleGames(const std::string &filename) {
     const auto start = std::chrono::high_resolution_clock::now();
 

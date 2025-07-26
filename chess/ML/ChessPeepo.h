@@ -3,13 +3,14 @@
 
 #include "ChessBoard.h"
 #include "ChessData.h"
+#include "ChessInterface.h"
 #include "ChessLinkedListMoves.h"
 #include "ChessDatabaseInterface.h"
 #include <sys/types.h>
 
 class ChessPeepo {
   public:
-    explicit ChessPeepo(ChessBoard &board, ChessData &data);
+    explicit ChessPeepo(ChessInterface &setChessInterface, ChessData &data);
 
     // all the moves peeop can do
     GameState makeMostPlayedMove();
@@ -21,12 +22,12 @@ class ChessPeepo {
     bool makeBestDBMove();
 
     static MoveCompressed *getMostPlayedMove(const std::vector<MoveCompressed*> &moves);
-    static std::string getRandomInputMove(ChessBoard &board);
+    static std::string getRandomInputMove(ChessInterface &chessI);
 
     inline static uint64_t playedMoves(const MoveCompressed *move) { return move->wins + move->loses + move->draws; }
 
   private:
-    ChessBoard &board;
+    ChessInterface &chessInterface;
     ChessData &data;
 
     /*std::vector<std::string> getSmartMoveSelection();*/

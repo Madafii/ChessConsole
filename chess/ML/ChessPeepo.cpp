@@ -1,13 +1,14 @@
 #include "ChessPeepo.h"
 #include "ChessBoard.h"
 #include "ChessDatabaseInterface.h"
+#include "ChessInterface.h"
 #include "ChessLinkedListMoves.h"
 #include "ChessMoveLogic.h"
 #include <iostream>
 #include <memory>
 #include <random>
 
-ChessPeepo::ChessPeepo(ChessBoard &chessBoard, ChessData &chessData) : board(chessBoard), data(chessData) {}
+ChessPeepo::ChessPeepo(ChessInterface &setChessInterface, ChessData &chessData) : chessInterface(setChessInterface), data(chessData) {}
 
 GameState ChessPeepo::makeMostPlayedMove() {
     // get the move random or most played
@@ -15,7 +16,7 @@ GameState ChessPeepo::makeMostPlayedMove() {
     std::string inputMove;
     if (moveHead == nullptr || moveHead->nexts.empty()) {
         std::cout << "no more suggestions for moves, next move will be random" << std::endl;
-        inputMove = getRandomInputMove(board);
+        inputMove = getRandomInputMove(chessInterface);
     } else {
         std::vector<MoveCompressed *> currNexts;
         currNexts.reserve(moveHead->nexts.size());
@@ -29,7 +30,7 @@ GameState ChessPeepo::makeMostPlayedMove() {
     // play the move
     // TODO: enPassant thing probaply should be checked inside ChessBoard so could remove that parameter later
     std::cout << "peepo plays the move: " << inputMove << std::endl;
-    return board.handleMoveInput(inputMove);
+    return chessInterface.handleMoveInput(inputMove);
 }
 
 void ChessPeepo::makeHighesWinRateMove() {}
@@ -57,10 +58,13 @@ MoveCompressed *ChessPeepo::getMostPlayedMove(const std::vector<MoveCompressed*>
     return mostPlayedMove;
 }
 
-std::string ChessPeepo::getRandomInputMove(ChessBoard &board) {
+std::string ChessPeepo::getRandomInputMove(ChessInterface &chessI) {
     // random seeder thing
     std::random_device rd;
     std::mt19937 gen(rd());
+
+    const ChessBoard &board = chessI.getChessBoard();
+    ChessMoveLogic &logic = chessI.getChessMoveLogic();
 
     // get respective color pieces
     Pieces allPieces = board.isWhitesTurn() ? board.getAllWhiteTiles() : board.getAllBlackTiles();
@@ -73,7 +77,7 @@ std::string ChessPeepo::getRandomInputMove(ChessBoard &board) {
     while (true) {
         const int rndFromPiece = distrFrom(gen);
         const ChessTile *fromTile = allPieces.at(rndFromPiece);
-        possMoves = ChessMoveLogic::getPossibleMoves(board, fromTile);
+        possMoves = logic.getPossibleMoves(*fromTile);
         if (!possMoves.empty()) {
             input += fromTile->getMove() + ":";
             break;

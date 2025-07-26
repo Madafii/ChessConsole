@@ -233,65 +233,66 @@ void ChessInstance::runAgainstPeepo() {
 }
 
 void ChessInstance::runAgainstDatabase() {
-    // ChessBoard chessBoard;
-    // ChessBoardDraw chessDraw;
-    //
-    // // your opponent
-    // ChessDatabaseInterface chessDB("chessMoves");
-    //
-    // // setup
-    // ChessDatabaseInterface::table_pair gameDepth(0, false);
-    // int fromMoveId = 1; // is the from id for the empty board
-    //
-    // chessDraw.draw(chessBoard);
-    // while (true) {
-    //     std::string input;
-    //     std::cin >> input;
-    //     if (input == "quit") break;
-    //
-    //     // handle players move
-    //     GameState game_state = chessBoard.handleInput(input);
-    //     chessDraw.draw(chessBoard);
-    //
-    //     // get oponents move id
-    //     if (auto whiteMoveId = chessDB.getMoveId(gameDepth, fromMoveId, ChessLinkedListMoves::createData(input, true))) {
-    //         fromMoveId = *whiteMoveId;
-    //
-    //         // increment after getting the id
-    //         ChessDatabaseInterface::incrementTable(gameDepth);
-    //
-    //         // get move from oponent and get best next move from db
-    //         auto nextMoves = chessDB.getNextMoves(gameDepth, fromMoveId);
-    //
-    //         // transform to pointer vector
-    //         std::vector<MoveCompressed *> nextMovePtrs;
-    //         nextMovePtrs.reserve(nextMoves.size());
-    //         std::ranges::transform(nextMoves, std::back_inserter(nextMovePtrs), [](MoveCompressed &move) { return &move; });
-    //
-    //         // get the move string
-    //         auto bestMove = ChessPeepo::getMostPlayedMove(nextMovePtrs);
-    //         std::string dbMove = ChessLinkedListMoves::getMoveFromData(bestMove->data);
-    //         std::cout << "the db makes the move: " << dbMove << std::endl;
-    //
-    //         // make the move
-    //         game_state = chessBoard.handleInput(dbMove);
-    //
-    //         // increment turn
-    //         fromMoveId = *chessDB.getMoveId(gameDepth, fromMoveId, bestMove->data);
-    //         ChessDatabaseInterface::incrementTable(gameDepth);
-    //     } else {
-    //         // could not find the move so make a random move
-    //         const std::string randomMove = ChessPeepo::getRandomInputMove(chessBoard);
-    //         std::cout << "the db makes the random move: " << randomMove << std::endl;
-    //         game_state = chessBoard.handleInput(randomMove);
-    //     }
-    //
-    //     chessDraw.draw(chessBoard);
-    //
-    //     if (game_state != GameState::IN_PROGRESS) {
-    //         break;
-    //     }
-    // }
+    ChessInterface chessInterface;
+    const ChessBoard &chessBoard = chessInterface.getChessBoard();
+    ChessBoardDraw chessDraw;
+
+    // your opponent
+    ChessDatabaseInterface chessDB("chessMoves");
+
+    // setup
+    ChessDatabaseInterface::table_pair gameDepth(0, false);
+    int fromMoveId = 1; // is the from id for the empty board
+
+    chessDraw.draw(chessBoard);
+    while (true) {
+        std::string input;
+        std::cin >> input;
+        if (input == "quit") break;
+
+        // handle players move
+        GameState game_state = chessInterface.handleInput(input);
+        chessDraw.draw(chessBoard);
+
+        // get oponents move id
+        if (auto whiteMoveId = chessDB.getMoveId(gameDepth, fromMoveId, ChessLinkedListMoves::createData(input, true))) {
+            fromMoveId = *whiteMoveId;
+
+            // increment after getting the id
+            ChessDatabaseInterface::incrementTable(gameDepth);
+
+            // get move from oponent and get best next move from db
+            auto nextMoves = chessDB.getNextMoves(gameDepth, fromMoveId);
+
+            // transform to pointer vector
+            std::vector<MoveCompressed *> nextMovePtrs;
+            nextMovePtrs.reserve(nextMoves.size());
+            std::ranges::transform(nextMoves, std::back_inserter(nextMovePtrs), [](MoveCompressed &move) { return &move; });
+
+            // get the move string
+            auto bestMove = ChessPeepo::getMostPlayedMove(nextMovePtrs);
+            std::string dbMove = ChessLinkedListMoves::getMoveFromData(bestMove->data);
+            std::cout << "the db makes the move: " << dbMove << std::endl;
+
+            // make the move
+            game_state = chessInterface.handleInput(dbMove);
+
+            // increment turn
+            fromMoveId = *chessDB.getMoveId(gameDepth, fromMoveId, bestMove->data);
+            ChessDatabaseInterface::incrementTable(gameDepth);
+        } else {
+            // could not find the move so make a random move
+            const std::string randomMove = ChessPeepo::getRandomInputMove(chessInterface);
+            std::cout << "the db makes the random move: " << randomMove << std::endl;
+            game_state = chessInterface.handleInput(randomMove);
+        }
+
+        chessDraw.draw(chessBoard);
+
+        if (game_state != GameState::IN_PROGRESS) {
+            break;
+        }
+    }
 }
 
 inline void ChessInstance::printGameOptions() {
