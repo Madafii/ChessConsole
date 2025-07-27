@@ -6,14 +6,31 @@
 #include <memory>
 #include <sstream>
 
-#include "ChessBoard.h"
+// #include "ChessBoard.h"
 // #include "ChessBoardDraw.h"
-#include "ChessDatabaseInterface.h"
-#include "ChessInterface.h"
-#include "ChessLinkedListMoves.h"
-#include "ChessUtils.h"
 
 ChessData::ChessData() : movesLinkedList(std::make_unique<ChessLinkedListMoves>()) {}
+
+void ChessData::pushMovesToDB(std::string_view fromFileName, std::string_view dbName) {
+    std::cout << "started reading the games" << std::endl;
+
+    const auto start = std::chrono::high_resolution_clock::now();
+
+    std::ifstream fromFile = getInputFile(fromFileName);
+    if (!fromFile) return;
+
+    while (!fromFile.eof()) {
+        readLines(fromFile, 500);
+        flushMovesToDB(dbName);
+    }
+
+    fromFile.close();
+
+    const auto end = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<double> duration = end - start;
+
+    std::cout << "reading the games took: " << duration.count() << " seconds\n";
+}
 
 // reads data from pgn file and converts them into a ChessLinkedListMoves structure
 void ChessData::readSimpleGames(const std::string &filename) {
@@ -36,6 +53,15 @@ void ChessData::readSimpleGames(const std::string &filename) {
     const std::chrono::duration<double> duration = end - start;
 
     std::cout << "reading the games took: " << duration.count() << " seconds\n";
+}
+
+void ChessData::flushMovesToDB(std::string_view dbName) {
+    ChessDatabaseInterface db(dbName.data());
+
+    // simulate its blacks turn because then next move is white, which is the start move
+    db.pushMovesToDB(*getMoves(), {0, false});
+
+    clearMoves();
 }
 
 void ChessData::convertPGNToMoves(std::string_view fromFileName, std::string_view toFileName) {
@@ -61,15 +87,6 @@ void ChessData::convertPGNToMoves(std::string_view fromFileName, std::string_vie
     const std::chrono::duration<double> duration = end - start;
 
     std::cout << "reading the games took: " << duration.count() << " seconds\n";
-}
-
-void ChessData::flushMovesToDB(const std::string &dbName) {
-    ChessDatabaseInterface db(dbName);
-
-    // simulate its blacks turn because then next move is white, which is the start move
-    db.pushMovesToDB(*getMoves(), {0, false});
-
-    clearMoves();
 }
 
 ChessData::ResultPair ChessData::getResult(const std::string_view result) {
@@ -108,6 +125,17 @@ void ChessData::processLine(const std::string_view line) {
     movesLinkedList->setMoveHead(movesLinkedList->getMoveRoot());
 }
 
+// reads lines returns true when end was reached
+void ChessData::readLines(std::ifstream &file, int lines) {
+    int lineCounter = 0;
+    std::string line;
+    while (std::getline(file, line) && lineCounter <= lines) {
+        processLine(line);
+        ++lineCounter;
+        std::cout << "processed lines: " << lineCounter << std::endl;
+    }
+}
+
 void ChessData::processLine(std::ofstream &outStream, std::string_view line) {
     std::istringstream iss(line.data());
     std::string pgnMove;
@@ -122,12 +150,6 @@ void ChessData::processLine(std::ofstream &outStream, std::string_view line) {
         outStream << boardMove << " ";
     }
     outStream << std::endl;
-}
-
-void ChessData::addPGNMove(const std::string &pgnMove, ChessInterface &chessInterface, const ResultPair &gameResult) {
-    const std::string boardMove = doPGNMove(pgnMove, chessInterface);
-    bool white = chessInterface.getChessBoard().isWhitesTurn();
-    movesLinkedList->addMoveCompressed(boardMove, white ? gameResult.first : gameResult.second, white);
 }
 
 std::ifstream ChessData::getInputFile(std::string_view inFileName) {
@@ -148,12 +170,6 @@ std::ofstream ChessData::getOutputFile(std::string_view outFileName) {
     return outFile;
 }
 
-std::string ChessData::doPGNMove(const std::string &pgnMove, ChessInterface &chessInterface) {
-    bool white = chessInterface.getChessBoard().isWhitesTurn();
-    const std::string boardMove = ChessUtils::convertPGNToMyInput(pgnMove, chessInterface.getChessMoveLogic(), white);
-    chessInterface.handleMoveInputNoChecks(boardMove, false);
-    return boardMove;
-}
 // example data
 /*1-0 : e4 e6 d4 b6 a3 Bb7 Nc3 Nh6 Bxh6 gxh6 Be2 Qg5 Bg4 h5 Nf3 Qg6 Nh4 Qg5 Bxh5
  * Qxh4 Qf3 Kd8 Qxf7 Nc6 Qe8#*/

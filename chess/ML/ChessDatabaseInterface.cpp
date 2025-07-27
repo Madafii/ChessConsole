@@ -108,6 +108,8 @@ std::vector<MoveCompressed> ChessDatabaseInterface::getNextMoves(const table_pai
 void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves, table_pair table) {
     if (!llMoves.getMoveHead()) return;
 
+    std::cout << "started pushing moves to db" << std::endl;
+
     const auto start = std::chrono::high_resolution_clock::now();
 
     std::stack<std::tuple<const MoveCompressed *, table_pair, int>> moveStack;

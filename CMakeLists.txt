@@ -11,6 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/chess/base)
 add_executable(chess_control main.cpp)
 
 add_subdirectory(chess)
+add_subdirectory(scripts)
 add_subdirectory(tests)
 add_subdirectory(libs/libpqxx build-pqxx)
 add_subdirectory(libs/spdlog spdlog)
