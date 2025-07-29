@@ -241,7 +241,7 @@ void ChessInstance::runAgainstDatabase() {
     ChessDatabaseInterface chessDB("chessMoves");
 
     // setup
-    ChessDatabaseInterface::table_pair gameDepth(0, false);
+    table_pair gameDepth(0, false);
     int fromMoveId = 1; // is the from id for the empty board
 
     chessDraw.draw(chessBoard);
@@ -259,7 +259,7 @@ void ChessInstance::runAgainstDatabase() {
             fromMoveId = *whiteMoveId;
 
             // increment after getting the id
-            ChessDatabaseInterface::incrementTable(gameDepth);
+            ++gameDepth;
 
             // get move from oponent and get best next move from db
             auto nextMoves = chessDB.getNextMoves(gameDepth, fromMoveId);
@@ -267,7 +267,7 @@ void ChessInstance::runAgainstDatabase() {
             // transform to pointer vector
             std::vector<MoveCompressed *> nextMovePtrs;
             nextMovePtrs.reserve(nextMoves.size());
-            std::ranges::transform(nextMoves, std::back_inserter(nextMovePtrs), [](MoveCompressed &move) { return &move; });
+            std::ranges::transform(nextMoves, std::back_inserter(nextMovePtrs), [](auto &move) { return &move.second; });
 
             // get the move string
             auto bestMove = ChessPeepo::getMostPlayedMove(nextMovePtrs);
@@ -279,7 +279,7 @@ void ChessInstance::runAgainstDatabase() {
 
             // increment turn
             fromMoveId = *chessDB.getMoveId(gameDepth, fromMoveId, bestMove->data);
-            ChessDatabaseInterface::incrementTable(gameDepth);
+            ++gameDepth;
         } else {
             // could not find the move so make a random move
             const std::string randomMove = ChessPeepo::getRandomInputMove(chessInterface);

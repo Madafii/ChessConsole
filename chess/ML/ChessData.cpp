@@ -17,10 +17,10 @@ void ChessData::pushMovesToDB(std::string_view fromFileName, std::string_view db
     const auto start = std::chrono::high_resolution_clock::now();
 
     std::ifstream fromFile = getInputFile(fromFileName);
-    if (!fromFile) return;
+    if (!fromFile.is_open()) return;
 
     while (!fromFile.eof()) {
-        readLines(fromFile, 500);
+        readLines(fromFile, 50000);
         flushMovesToDB(dbName);
     }
 
@@ -59,7 +59,8 @@ void ChessData::flushMovesToDB(std::string_view dbName) {
     ChessDatabaseInterface db(dbName.data());
 
     // simulate its blacks turn because then next move is white, which is the start move
-    db.pushMovesToDB(*getMoves(), {0, false});
+    // db.pushMovesToDBOld(*getMoves(), {0, false});
+    db.pushMovesToDB(*getMoves());
 
     clearMoves();
 }

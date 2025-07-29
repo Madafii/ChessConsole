@@ -11,7 +11,7 @@
 
 class ChessData {
   public:
-    using RecursiveFunc = std::function<void(ChessDatabaseInterface::table_pair &, MoveCompressed &)>;
+    using RecursiveFunc = std::function<void(table_pair &, MoveCompressed &)>;
     using ResultPair = std::pair<RESULT, RESULT>;
 
     explicit ChessData();
@@ -22,7 +22,10 @@ class ChessData {
 
     static void convertPGNToMoves(std::string_view fromFileName, std::string_view toFileName);
 
-    inline void clearMoves() { movesLinkedList.reset(); };
+    inline void clearMoves() {
+        movesLinkedList.reset();
+        movesLinkedList = std::make_unique<ChessLinkedListMoves>();
+    };
 
     [[nodiscard]] ChessLinkedListMoves *getMoves() const { return movesLinkedList.get(); };
 

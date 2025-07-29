@@ -23,6 +23,6 @@ TEST(dbInterfaceTests, selectMove) {
 
     auto moves = chessDB.getNextMoves({num, white}, 3);
     for (const auto &move : moves) {
-        std::cout << ChessLinkedListMoves::getBasicInfo(&move);
+        std::cout << ChessLinkedListMoves::getBasicInfo(&move.second);
     }
 }

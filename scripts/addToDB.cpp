@@ -9,7 +9,8 @@ int main(int argc, char* argv[]) {
     //
     // const std::string fromFileName = argv[1];
     // const std::string dbName = argv[2];
-    const std::string fromFileName = "../data/lichess/outDataPGN/lichess_db_standard.rated_2013-01.txt";
+    // const std::string fromFileName = "../data/lichess/outDataPGN/lichess_db_standard.rated_2013-01_backup.txt";
+    const std::string fromFileName = "/home/finnp/Documents/GitRepos/ChessConsole/data/lichess/outDataPGN/lichess_db_standard.rated_2013-01_backup.txt";
     const std::string dbName = "chessMovesTest";
 
     ChessData chessData;
