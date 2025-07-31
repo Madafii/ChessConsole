@@ -4,6 +4,7 @@
 #include "ChessLinkedListMoves.h"
 #include <cstdint>
 #include <pqxx/pqxx>
+#include <queue>
 #include <string>
 #include <string_view>
 #include <sys/types.h>
@@ -13,9 +14,12 @@
 using table_pair = std::pair<int, bool>;
 
 struct DataBitsHash {
-    std::size_t operator()(const DataBits &data) const {
-        return static_cast<std::size_t>(data.to_ulong());
-    }
+    std::size_t operator()(const DataBits &data) const { return static_cast<std::size_t>(data.to_ulong()); }
+};
+struct TabelUpdateData {
+    std::vector<MoveCompressed *> insertMovesDatas;
+    std::vector<int> insertFromMoveIds;
+    std::vector<std::pair<int, MoveCompressed *>> updateMovesDatas;
 };
 
 class ChessDatabaseInterface {
@@ -49,10 +53,15 @@ class ChessDatabaseInterface {
   private:
     pqxx::connection connection;
 
+    // querys
     std::optional<pqxx::result> executeSQL(const std::string &sql, const pqxx::params &pars);
     std::optional<MoveCompressed> queryMove(const std::string &sql, const pqxx::params &pars);
     std::optional<int> queryMoveId(const std::string &sql, const pqxx::params &pars);
     std::vector<std::pair<int, MoveCompressed>> queryMoves(const std::string &sql, const pqxx::params &pars);
+
+    void updateTable(table_pair &nextMoveTable, table_pair &connectTable, std::queue<std::pair<int, MoveCompressed *>> moveQueue, TabelUpdateData &updateData);
+    void fillTableData(std::pair<int, MoveCompressed *> currentMoveData,
+                       const std::unordered_map<DataBits, int, DataBitsHash> &dbNextMovesMap, TabelUpdateData &updateData);
 
     const std::string selectCompressedMoveFrom = "SELECT moveData, wins, loses, draws FROM ";
     const std::string selectAllMoveTable = "SELECT mt.id, movedata, wins, loses, draws FROM ";
@@ -90,6 +99,5 @@ inline table_pair operator++(table_pair &pair) {
     pair.second = !pair.second;
     return pair;
 }
-
 
 #endif // CHESSDATABASEINTERFACE_H

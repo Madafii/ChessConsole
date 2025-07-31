@@ -11,7 +11,7 @@
 
 ChessData::ChessData() : movesLinkedList(std::make_unique<ChessLinkedListMoves>()) {}
 
-void ChessData::pushMovesToDB(std::string_view fromFileName, std::string_view dbName) {
+void ChessData::pushMovesToDB(const std::string_view fromFileName, const std::string_view dbName, const int lineBuffer) {
     std::cout << "started reading the games" << std::endl;
 
     const auto start = std::chrono::high_resolution_clock::now();
@@ -20,7 +20,7 @@ void ChessData::pushMovesToDB(std::string_view fromFileName, std::string_view db
     if (!fromFile.is_open()) return;
 
     while (!fromFile.eof()) {
-        readLines(fromFile, 50000);
+        readLines(fromFile, lineBuffer);
         flushMovesToDB(dbName);
     }
 
@@ -130,7 +130,7 @@ void ChessData::processLine(const std::string_view line) {
 void ChessData::readLines(std::ifstream &file, int lines) {
     int lineCounter = 0;
     std::string line;
-    while (std::getline(file, line) && lineCounter <= lines) {
+    while (std::getline(file, line) && lineCounter < lines) {
         processLine(line);
         ++lineCounter;
         std::cout << "processed lines: " << lineCounter << std::endl;

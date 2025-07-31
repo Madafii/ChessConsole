@@ -7,7 +7,6 @@
 #include <iostream>
 #include <memory>
 #include <optional>
-#include <queue>
 #include <stack>
 #include <string>
 #include <string_view>
@@ -121,7 +120,7 @@ void ChessDatabaseInterface::connectMoves(const table_pair &table, int sourceId,
 void ChessDatabaseInterface::connectMoves(const table_pair &table, const std::vector<int> &sourceIds, const std::vector<int> &targetIds) {
     pqxx::work worker(connection);
     pqxx::stream_to connectTableStream = pqxx::stream_to::table(worker, {getChessLinkerTable(table)}, {"chess_move_id", "next_id"});
-    const int connectionsSize = sourceIds.size(); 
+    const int connectionsSize = sourceIds.size();
     for (int i = 0; i < connectionsSize; i++) {
         connectTableStream.write_values(sourceIds.at(i), targetIds.at(i));
     }
@@ -218,10 +217,7 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves) 
     ++nextMoveTable;
 
     // check to either insert or update existing move
-    std::vector<MoveCompressed *> insertMovesDatas;
-    std::vector<int> insertFromMoveIds;
-    std::vector<std::pair<int, MoveCompressed *>> updateMovesDatas;
-    // std::vector<int> updateFromMoveIds;
+    TabelUpdateData tableUpdateData;
 
     MoveCompressed *lastDepthElement = headMove;
     while (!moveQueue.empty()) {
@@ -230,52 +226,14 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves) 
 
         // get db nexts
         const auto dbNextMovesMap = getNextMovesDataMap(connectTable, currentId);
-
-        for (const auto &nextMove : currentMove->nexts) {
-            if (dbNextMovesMap.contains(nextMove->data)) {
-                updateMovesDatas.emplace_back(dbNextMovesMap.at(nextMove->data), nextMove.get());
-                // updateFromMoveIds.emplace_back(currentId);
-            } else {
-                insertMovesDatas.push_back(nextMove.get());
-                insertFromMoveIds.push_back(currentId);
-            }
-        }
+        fillTableData({currentId, currentMove}, dbNextMovesMap, tableUpdateData);
 
         // reached last element for this move depth
         if (lastDepthElement == currentMove) {
-            // insert new moves first
-            // as all inserts all happen in the same table. I can take the current max and deduce the new ids from that
-            const int maxIdTable = getMaxIdTable(nextMoveTable);
-            const int insertMovesSize = insertMovesDatas.size();
-            insertMoves(nextMoveTable, insertMovesDatas);
-
-            std::vector<int> insertMoveIds;
-            insertMoveIds.resize(insertMovesSize);
-            std::iota(insertMoveIds.begin(), insertMoveIds.end(), maxIdTable);
-
-            // connect the new moves
-            connectMoves(connectTable, insertFromMoveIds, insertMoveIds);
-
-            // updating move data
-            updateMoves(nextMoveTable, updateMovesDatas);
-
-            // add them to the queue
-            for (size_t i = 0; i < insertMoveIds.size();i++) {
-                moveQueue.emplace(insertMoveIds.at(i), insertMovesDatas.at(i));
-            }
-            moveQueue.push_range(updateMovesDatas);
-
+            updateTable(nextMoveTable, connectTable, moveQueue, tableUpdateData);
             // new last element to start writign in this depth
             if (moveQueue.empty()) break;
             lastDepthElement = moveQueue.back().second;
-
-            // setup for next table
-            ++connectTable;
-            ++nextMoveTable;
-            insertMovesDatas.clear();
-            insertFromMoveIds.clear();
-            updateMovesDatas.clear();
-            // updateFromMoveIds.clear();
         }
     }
 
@@ -356,4 +314,60 @@ std::vector<std::pair<int, MoveCompressed>> ChessDatabaseInterface::queryMoves(c
 
     worker.commit();
     return moves;
+}
+
+void ChessDatabaseInterface::updateTable(table_pair &nextMoveTable, table_pair &connectTable,
+                                         std::queue<std::pair<int, MoveCompressed *>> moveQueue, TabelUpdateData &updateData) {
+
+    // std::cout << "started writing to table" << getChessMoveTable(nextMoveTable) << std::endl;
+    // const auto startTable = std::chrono::high_resolution_clock::now();
+
+    // insert new moves first
+    // as all inserts all happen in the same table. I can take the current max and deduce the new ids from that
+    const int maxIdTable = getMaxIdTable(nextMoveTable);
+    const int insertMovesSize = updateData.insertMovesDatas.size();
+    insertMoves(nextMoveTable, updateData.insertMovesDatas);
+
+    std::vector<int> insertMoveIds;
+    insertMoveIds.resize(insertMovesSize);
+    std::iota(insertMoveIds.begin(), insertMoveIds.end(), maxIdTable);
+
+    // connect the new moves
+    connectMoves(connectTable, updateData.insertFromMoveIds, insertMoveIds);
+
+    // updating move data
+    updateMoves(nextMoveTable, updateData.updateMovesDatas);
+
+    // add them to the queue
+    for (size_t i = 0; i < insertMoveIds.size(); i++) {
+        moveQueue.emplace(insertMoveIds.at(i), updateData.insertMovesDatas.at(i));
+    }
+    moveQueue.push_range(updateData.updateMovesDatas);
+
+    // setup for next table
+    ++connectTable;
+    ++nextMoveTable;
+    updateData.insertMovesDatas.clear();
+    updateData.insertFromMoveIds.clear();
+    updateData.updateMovesDatas.clear();
+
+    // const auto endTable = std::chrono::high_resolution_clock::now();
+    // const std::chrono::duration<double> durationTable = endTable - startTable;
+    //
+    // std::cout << "done writing to current table in: " << durationTable.count() << " seconds\n";
+}
+
+void ChessDatabaseInterface::fillTableData(const std::pair<int, MoveCompressed *> currentMoveData,
+                                           const std::unordered_map<DataBits, int, DataBitsHash> &dbNextMovesMap,
+                                           TabelUpdateData &updateData) {
+
+    for (const auto &nextMove : currentMoveData.second->nexts) {
+        if (dbNextMovesMap.contains(nextMove->data)) {
+            updateData.updateMovesDatas.emplace_back(dbNextMovesMap.at(nextMove->data), nextMove.get());
+            // updateFromMoveIds.emplace_back(currentId);
+        } else {
+            updateData.insertMovesDatas.push_back(nextMove.get());
+            updateData.insertFromMoveIds.push_back(currentMoveData.first);
+        }
+    }
 }

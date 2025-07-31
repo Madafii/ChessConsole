@@ -1,8 +1,11 @@
 #include "ChessDatabaseInterface.h"
+#include "ChessData.h"
 #include "ChessLinkedListMoves.h"
 #include "gtest/gtest.h"
 #include <optional>
 #include <string>
+
+const std::string dbTestName = "chessMovesTest";
 
 TEST(dbInterfaceTests, selectMove) {
     ChessDatabaseInterface chessDB("chessMoves");
@@ -26,3 +29,23 @@ TEST(dbInterfaceTests, selectMove) {
         std::cout << ChessLinkedListMoves::getBasicInfo(&move.second);
     }
 }
+
+// very slow each iteration of reading moves/pushing them takes around 1.5-2.0 seconds totaling at around 3 min
+TEST(dbInterfacePerformanceTests, pushMoves5) {
+    // ChessData chessData;
+    // chessData.pushMovesToDB("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/liches_db_tests_500.txt", dbTestName, 5);
+}
+
+// 11.5-14.0 seconds totaling at 2 min
+TEST(dbInterfacePerformanceTests, pushMoves50) {
+    ChessData chessData;
+    chessData.pushMovesToDB("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/liches_db_tests_500.txt", dbTestName, 50);
+}
+
+// test case 500 lines long so total time is 2.4 min
+TEST(dbInterfacePerformanceTests, pushMoves500) {
+    ChessData chessData;
+    chessData.pushMovesToDB("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/liches_db_tests_500.txt", dbTestName, 500);
+}
+
+// kinda tested 50000 lines at once which took 30 mins, which is only a litle better than 50 each iteration

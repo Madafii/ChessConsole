@@ -100,4 +100,6 @@ class ChessLinkedListMoves {
     std::unique_ptr<MoveCompressed> root;
 };
 
+using MoveCompressedVec = std::vector<MoveCompressed *>;
+
 #endif
