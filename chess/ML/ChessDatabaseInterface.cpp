@@ -1,18 +1,12 @@
 #include "ChessDatabaseInterface.h"
 #include "ChessLinkedListMoves.h"
-#include "pqxx/internal/concat.hxx"
 #include "pqxx/internal/statement_parameters.hxx"
 #include <cstdint>
 #include <exception>
 #include <iostream>
 #include <memory>
-#include <optional>
 #include <stack>
-#include <string>
-#include <string_view>
-#include <sys/types.h>
 #include <tuple>
-#include <unordered_map>
 
 ChessDatabaseInterface::ChessDatabaseInterface(const std::string &dbName)
     : connection("dbname=" + dbName + " user=finnp password=Mcstinki+2314") {
@@ -23,22 +17,19 @@ ChessDatabaseInterface::ChessDatabaseInterface(const std::string &dbName)
     }
 }
 
-std::optional<int> ChessDatabaseInterface::insertMove(const table_pair &table, const MoveCompressed &move) {
+int ChessDatabaseInterface::insertMove(const table_pair &table, const MoveCompressed &move) {
     const std::string sql =
         "INSERT INTO " + getChessMoveTable(table) + " (movedata, wins, loses, draws) VALUES ($1, $2, $3, $4) RETURNING id;";
 
+    // why does this not work anymoooore
     // const auto sqlBytes = getBytesFromDataBits(move.data);
     // std::cout << getDBHexStringFromMoveData(move.data) << std::endl;
     const auto sqlBytes = getDBHexStringFromMoveData(move.data);
     const pqxx::params par(sqlBytes, move.wins, move.loses, move.draws);
 
-    if (const auto result = executeSQL(sql, par)) {
-        // get first value which is the id of the created move
-        return result->begin()->at(0).as<int>();
-    }
-
-    std::cerr << "error: pushing the move " << ChessLinkedListMoves::getBasicInfo(&move);
-    return std::nullopt;
+    const auto result = executeSQL(sql, par);
+    // get first value which is the id of the created move
+    return result.begin()->at(0).as<int>();
 }
 
 void ChessDatabaseInterface::insertMoves(const table_pair &table, const std::vector<MoveCompressed *> &moves) {
@@ -56,7 +47,6 @@ void ChessDatabaseInterface::insertMoves(const table_pair &table, const std::vec
     worker.commit();
 }
 
-// TODO:
 void ChessDatabaseInterface::updateMove(const table_pair &table, int moveId, int newWins, int newLoses, int newDraws) {
     const std::string sql = "UPDATE " + getChessMoveTable(table) + " SET wins=wins+$1, loses=loses+$2, draws=draws+$3 WHERE id=$4";
     pqxx::params par{newWins, newLoses, newDraws, moveId};
@@ -72,25 +62,25 @@ void ChessDatabaseInterface::updateMoves(const table_pair &table, const std::vec
     }
 }
 
-std::optional<MoveCompressed> ChessDatabaseInterface::getMove(const table_pair &table, const int moveId) {
-    const std::string sql = selectCompressedMoveFrom + getChessMoveTable(table) + " WHERE id = $1";
+MoveCompressed ChessDatabaseInterface::getMove(const table_pair &table, const int moveId) {
+    const std::string sql = "SELECT moveData, wins, loses, draws FROM " + getChessMoveTable(table) + " WHERE id = $1";
     pqxx::params pars(moveId);
 
     return queryMove(sql, pars);
 }
 
-std::optional<MoveCompressed> ChessDatabaseInterface::getMove(const table_pair &table, const int fromMoveId, const DataBits &moveData) {
+MoveCompressed ChessDatabaseInterface::getMove(const table_pair &table, const int fromMoveId, const DataBits &moveData) {
     table_pair nextMoveTable(table);
     ++nextMoveTable;
 
-    const std::string sql =
-        selectCompressedMoveFrom + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1 AND mt.movedata = $2";
+    const std::string sql = "SELECT moveData, wins, loses, draws FROM " + joinMoveLinker(table, nextMoveTable) +
+                            " WHERE lt.chess_move_id = $1 AND mt.movedata = $2";
     pqxx::params pars(fromMoveId, getDBHexStringFromMoveData(moveData));
 
     return queryMove(sql, pars);
 }
 
-std::optional<int> ChessDatabaseInterface::getMoveId(const table_pair &table, int fromMoveId, const DataBits &moveData) {
+int ChessDatabaseInterface::getMoveId(const table_pair &table, int fromMoveId, const DataBits &moveData) {
     table_pair nextMoveTable(table);
     ++nextMoveTable;
 
@@ -130,67 +120,29 @@ void ChessDatabaseInterface::connectMoves(const table_pair &table, const std::ve
 }
 
 std::vector<std::pair<int, MoveCompressed>> ChessDatabaseInterface::getNextMoves(const table_pair &table, int moveId) {
-    std::vector<MoveCompressed> resultMoves;
-
     table_pair nextMoveTable(table);
     ++nextMoveTable;
 
-    const std::string sql = selectAllMoveTable + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1";
+    const std::string sql =
+        "SELECT mt.id, movedata, wins, loses, draws " + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1";
     const pqxx::params par(moveId);
 
-    return queryMoves(sql, par);
+    return queryMovesToVec(sql, par);
 }
 
-std::unordered_map<DataBits, int, DataBitsHash> ChessDatabaseInterface::getNextMovesDataMap(const table_pair &table, int moveId) {
-    const auto dbNextMoves = getNextMoves(table, moveId);
-    std::unordered_map<DataBits, int, DataBitsHash> dbNextMovesMap;
-    for (const auto &dbNextMove : dbNextMoves) {
-        dbNextMovesMap[dbNextMove.second.data] = dbNextMove.first;
-        // dbNextMovesMap.insert(dbNextMove.second.data, dbNextMove.second);
-    }
-    return dbNextMovesMap;
+ChessDatabaseInterface::nexts_ids_map ChessDatabaseInterface::getNextMovesDataMap(const table_pair &table, int moveId) {
+    table_pair nextMoveTable(table);
+    ++nextMoveTable;
+
+    const std::string sql = "SELECT mt.id, movedata" + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1";
+    const pqxx::params par(moveId);
+
+    return queryMovesToMap(sql, par);
 }
 
 int ChessDatabaseInterface::getMaxIdTable(const table_pair &table) {
     const std::string sql = "SELECT COALESCE((SELECT id FROM " + getChessMoveTable(table) + " ORDER BY id DESC LIMIT 1), 1) as first_id";
-    return *queryMoveId(sql, {});
-}
-
-// starts from the head of the linked list (so set to root if wanted)
-void ChessDatabaseInterface::pushMovesToDBOld(const ChessLinkedListMoves &llMoves, table_pair table) {
-    if (!llMoves.getMoveHead()) return;
-
-    std::cout << "started pushing moves to db" << std::endl;
-
-    const auto start = std::chrono::high_resolution_clock::now();
-
-    std::stack<std::tuple<const MoveCompressed *, table_pair, int>> moveStack;
-
-    if (auto connectFromId = insertMove(table, *llMoves.getMoveHead())) {
-        moveStack.emplace(llMoves.getMoveHead(), table, *connectFromId);
-    }
-
-    while (!moveStack.empty()) {
-        auto [currentMove, currentTable, currentId] = moveStack.top();
-        moveStack.pop();
-
-        const table_pair connectTable(currentTable);
-
-        ++currentTable;
-
-        for (const auto &nextMove : currentMove->nexts) {
-            if (auto connectToId = insertMove(currentTable, *nextMove)) {
-                moveStack.emplace(nextMove.get(), currentTable, *connectToId);
-
-                connectMove(connectTable, currentId, *connectToId);
-            }
-        }
-    }
-
-    const auto end = std::chrono::high_resolution_clock::now();
-    const std::chrono::duration<double> duration = end - start;
-
-    std::cout << "pushing move to DB took: " << duration.count() << " seconds\n";
+    return queryMoveId(sql, {});
 }
 
 void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves) {
@@ -204,10 +156,6 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves) 
     MoveCompressed *headMove = llMoves.getMoveHead();
     constexpr table_pair baseTable = {false, 0};
     constexpr int baseId = 1;
-    // create base board in case it does not exist
-    if (getMove(baseTable, baseId) == std::nullopt) {
-        insertMove(baseTable, *headMove);
-    }
 
     std::queue<std::pair<int, MoveCompressed *>> moveQueue;
     moveQueue.emplace(baseId, headMove);
@@ -243,63 +191,29 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves) 
     std::cout << "pushing moves to DB took: " << duration.count() << " seconds\n";
 }
 
-std::optional<pqxx::result> ChessDatabaseInterface::executeSQL(const std::string &sql, const pqxx::params &pars) {
+pqxx::result ChessDatabaseInterface::executeSQL(const std::string &sql, const pqxx::params &pars) {
     pqxx::work worker(connection);
-    pqxx::result result;
-    try {
-        result = worker.exec(sql, pars);
-    } catch (const pqxx::sql_error &e) {
-        std::cerr << "SQL error: " << e.what() << std::endl;
-        std::cerr << "SQL state: " << e.sqlstate() << std::endl;
-        worker.commit();
-        return std::nullopt;
-    } catch (const std::exception &e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        worker.commit();
-        return std::nullopt;
-    }
+    pqxx::result result = worker.exec(sql, pars);
     worker.commit();
     return result;
 }
 
-std::optional<MoveCompressed> ChessDatabaseInterface::queryMove(const std::string &sql, const pqxx::params &pars) {
+MoveCompressed ChessDatabaseInterface::queryMove(const std::string &sql, const pqxx::params &pars) {
     pqxx::work worker(connection);
-    move_tuple results;
-    try {
-        results = worker.query1<std::string_view, uint64_t, uint64_t, uint64_t>(sql, pars);
-    } catch (const pqxx::unexpected_rows &e) {
-        std::cerr << "SQL error: " << e.what() << std::endl;
-        worker.commit();
-        return std::nullopt;
-    } catch (std::exception &e) {
-        std::cerr << "error: " << e.what() << std::endl;
-        worker.commit();
-        return std::nullopt;
-    }
+    move_tuple results = worker.query1<std::string_view, uint64_t, uint64_t, uint64_t>(sql, pars);
     worker.commit();
-    const DataBits bits(getBitsFromDB(std::string_view(std::get<0>(results)).substr(2)));
+    const DataBits bits(getBitsFromDB(std::get<0>(results).substr(2)));
     return MoveCompressed(bits, std::get<1>(results), std::get<2>(results), std::get<3>(results));
 }
 
-std::optional<int> ChessDatabaseInterface::queryMoveId(const std::string &sql, const pqxx::params &pars) {
+int ChessDatabaseInterface::queryMoveId(const std::string &sql, const pqxx::params &pars) {
     pqxx::work worker(connection);
-    std::tuple<int> results;
-    try {
-        results = worker.query1<int>(sql, pars);
-    } catch (const pqxx::unexpected_rows &e) {
-        std::cerr << "SQL error: " << e.what() << std::endl;
-        worker.commit();
-        return std::nullopt;
-    } catch (std::exception &e) {
-        std::cerr << "error: " << e.what() << std::endl;
-        worker.commit();
-        return std::nullopt;
-    }
+    std::tuple<int> results = worker.query1<int>(sql, pars);
     worker.commit();
     return std::get<0>(results);
 }
 
-std::vector<std::pair<int, MoveCompressed>> ChessDatabaseInterface::queryMoves(const std::string &sql, const pqxx::params &pars) {
+std::vector<std::pair<int, MoveCompressed>> ChessDatabaseInterface::queryMovesToVec(const std::string &sql, const pqxx::params &pars) {
     pqxx::work worker(connection);
     std::vector<std::pair<int, MoveCompressed>> moves;
 
@@ -316,9 +230,38 @@ std::vector<std::pair<int, MoveCompressed>> ChessDatabaseInterface::queryMoves(c
     return moves;
 }
 
-void ChessDatabaseInterface::updateTable(table_pair &nextMoveTable, table_pair &connectTable,
-                                         std::queue<std::pair<int, MoveCompressed *>> moveQueue, TabelUpdateData &updateData) {
+ChessDatabaseInterface::nexts_ids_map ChessDatabaseInterface::queryMovesToMap(const std::string &sql, const pqxx::params &pars) {
+    pqxx::work worker(connection);
+    nexts_ids_map moves;
 
+    try {
+        for (auto [id, moveData] : worker.query<int, std::string_view>(sql, pars)) {
+            const DataBits bits(getBitsFromDB(moveData.substr(2)));
+            moves.emplace(bits, id);
+        }
+    } catch (std::exception &e) {
+        std::cerr << "error: " << e.what() << std::endl;
+    }
+
+    worker.commit();
+    return moves;
+}
+
+void ChessDatabaseInterface::fillTableData(const std::pair<int, MoveCompressed *> &currentMoveData, const nexts_ids_map &dbNextMovesMap,
+                                           TabelUpdateData &updateData) {
+    for (const auto &nextMove : currentMoveData.second->nexts) {
+        if (dbNextMovesMap.contains(nextMove->data)) {
+            updateData.updateMovesDatas.emplace_back(dbNextMovesMap.at(nextMove->data), nextMove.get());
+            // updateFromMoveIds.emplace_back(currentId);
+        } else {
+            updateData.insertMovesDatas.push_back(nextMove.get());
+            updateData.insertFromMoveIds.push_back(currentMoveData.first);
+        }
+    }
+}
+
+void ChessDatabaseInterface::updateTable(table_pair &nextMoveTable, table_pair &connectTable,
+                                         std::queue<std::pair<int, MoveCompressed *>> &moveQueue, TabelUpdateData &updateData) {
     // std::cout << "started writing to table" << getChessMoveTable(nextMoveTable) << std::endl;
     // const auto startTable = std::chrono::high_resolution_clock::now();
 
@@ -355,19 +298,4 @@ void ChessDatabaseInterface::updateTable(table_pair &nextMoveTable, table_pair &
     // const std::chrono::duration<double> durationTable = endTable - startTable;
     //
     // std::cout << "done writing to current table in: " << durationTable.count() << " seconds\n";
-}
-
-void ChessDatabaseInterface::fillTableData(const std::pair<int, MoveCompressed *> currentMoveData,
-                                           const std::unordered_map<DataBits, int, DataBitsHash> &dbNextMovesMap,
-                                           TabelUpdateData &updateData) {
-
-    for (const auto &nextMove : currentMoveData.second->nexts) {
-        if (dbNextMovesMap.contains(nextMove->data)) {
-            updateData.updateMovesDatas.emplace_back(dbNextMovesMap.at(nextMove->data), nextMove.get());
-            // updateFromMoveIds.emplace_back(currentId);
-        } else {
-            updateData.insertMovesDatas.push_back(nextMove.get());
-            updateData.insertFromMoveIds.push_back(currentMoveData.first);
-        }
-    }
 }

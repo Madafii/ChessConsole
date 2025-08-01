@@ -60,7 +60,14 @@ void ChessData::flushMovesToDB(std::string_view dbName) {
 
     // simulate its blacks turn because then next move is white, which is the start move
     // db.pushMovesToDBOld(*getMoves(), {0, false});
-    db.pushMovesToDB(*getMoves());
+    try {
+        db.pushMovesToDB(*getMoves());
+    } catch (const pqxx::sql_error &e) {
+        std::cerr << "SQL error: " << e.what() << std::endl;
+        std::cerr << "SQL state: " << e.sqlstate() << std::endl;
+    } catch (std::exception &e) {
+        std::cerr << "pushing moves to db error: " << e.what() << std::endl;
+    }
 
     clearMoves();
 }

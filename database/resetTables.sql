@@ -104,3 +104,5 @@ BEGIN
         RAISE NOTICE 'Created Connect Table: linker_table_%_%', i, black_char;
     END LOOP;
 END $$;
+
+INSERT INTO chess_move_d0_b (movedata, wins, loses, draws) VALUES (E'\\x0000', 0, 0, 0);

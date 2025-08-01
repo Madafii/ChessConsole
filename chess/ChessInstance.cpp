@@ -153,7 +153,7 @@ void ChessInstance::runWithChessData() {
         bool white = inputCol == "w" ? true : false;
 
         auto move = chessDB.getMove({num, white}, 1);
-        std::cout << ChessLinkedListMoves::getFullInfo(&*move) << std::endl;
+        std::cout << ChessLinkedListMoves::getFullInfo(&move) << std::endl;
     }
 
     /*ChessBoard chessBoard(false);*/

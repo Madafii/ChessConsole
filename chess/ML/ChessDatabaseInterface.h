@@ -11,6 +11,14 @@
 #include <unordered_map>
 #include <utility>
 
+// Ideas for improvement:
+// -- technically all select statements besides the parameter values are know at compile time, so constexpr could do something
+// -- use prepared statements
+// -- use streams
+// -- db settings (more querys?)
+// -- using threads (might do nothing because writing to db is the bottleneck?)
+// -- optimize way to check if values have to be inserted or updated
+
 using table_pair = std::pair<int, bool>;
 
 struct DataBitsHash {
@@ -25,12 +33,13 @@ struct TabelUpdateData {
 class ChessDatabaseInterface {
   public:
     using move_tuple = std::tuple<std::string_view, uint64_t, uint64_t, uint64_t>;
+    using nexts_ids_map = std::unordered_map<DataBits, int, DataBitsHash>;
 
     explicit ChessDatabaseInterface(const std::string &dbName);
     ~ChessDatabaseInterface() = default;
 
     // insertions
-    std::optional<int> insertMove(const table_pair &table, const MoveCompressed &move);
+    int insertMove(const table_pair &table, const MoveCompressed &move);
     void insertMoves(const table_pair &table, const std::vector<MoveCompressed *> &move);
     void connectMove(const table_pair &table, int sourceId, int targetId);
     void connectMoves(const table_pair &table, int sourceId, const std::vector<int> &targetIds);
@@ -40,31 +49,30 @@ class ChessDatabaseInterface {
     void updateMoves(const table_pair &table, const std::vector<std::pair<int, MoveCompressed *>> &move);
 
     // getters
-    std::optional<MoveCompressed> getMove(const table_pair &table, int moveId);
-    std::optional<MoveCompressed> getMove(const table_pair &table, int fromMoveId, const DataBits &moveData);
-    std::optional<int> getMoveId(const table_pair &table, int fromMoveId, const DataBits &moveData);
+    MoveCompressed getMove(const table_pair &table, int moveId);
+    MoveCompressed getMove(const table_pair &table, int fromMoveId, const DataBits &moveData);
+    int getMoveId(const table_pair &table, int fromMoveId, const DataBits &moveData);
     std::vector<std::pair<int, MoveCompressed>> getNextMoves(const table_pair &table, int moveId);
-    std::unordered_map<DataBits, int, DataBitsHash> getNextMovesDataMap(const table_pair &table, int moveId);
+    nexts_ids_map getNextMovesDataMap(const table_pair &table, int moveId);
     int getMaxIdTable(const table_pair &table);
 
-    void pushMovesToDBOld(const ChessLinkedListMoves &llMoves, table_pair table);
     void pushMovesToDB(const ChessLinkedListMoves &llMoves);
 
   private:
     pqxx::connection connection;
 
     // querys
-    std::optional<pqxx::result> executeSQL(const std::string &sql, const pqxx::params &pars);
-    std::optional<MoveCompressed> queryMove(const std::string &sql, const pqxx::params &pars);
-    std::optional<int> queryMoveId(const std::string &sql, const pqxx::params &pars);
-    std::vector<std::pair<int, MoveCompressed>> queryMoves(const std::string &sql, const pqxx::params &pars);
+    pqxx::result executeSQL(const std::string &sql, const pqxx::params &pars);
+    MoveCompressed queryMove(const std::string &sql, const pqxx::params &pars);
+    int queryMoveId(const std::string &sql, const pqxx::params &pars);
+    std::vector<std::pair<int, MoveCompressed>> queryMovesToVec(const std::string &sql, const pqxx::params &pars);
+    nexts_ids_map queryMovesToMap(const std::string &sql, const pqxx::params &pars);
 
-    void updateTable(table_pair &nextMoveTable, table_pair &connectTable, std::queue<std::pair<int, MoveCompressed *>> moveQueue, TabelUpdateData &updateData);
-    void fillTableData(std::pair<int, MoveCompressed *> currentMoveData,
-                       const std::unordered_map<DataBits, int, DataBitsHash> &dbNextMovesMap, TabelUpdateData &updateData);
+    void fillTableData(const std::pair<int, MoveCompressed *> &currentMoveData, const nexts_ids_map &dbNextMovesMap, TabelUpdateData &updateData);
+    void updateTable(table_pair &nextMoveTable, table_pair &connectTable, std::queue<std::pair<int, MoveCompressed *>> &moveQueue,
+                     TabelUpdateData &updateData);
 
-    const std::string selectCompressedMoveFrom = "SELECT moveData, wins, loses, draws FROM ";
-    const std::string selectAllMoveTable = "SELECT mt.id, movedata, wins, loses, draws FROM ";
+    const std::string selectMoveFrom = "SELECT moveData, wins, loses, draws FROM ";
 
     static inline std::string joinMoveLinker(const table_pair &tableLT, const table_pair &tableMT) {
         return getChessLinkerTable(tableLT) + " lt JOIN " + getChessMoveTable(tableMT) + " mt ON lt.next_id = mt.id ";
