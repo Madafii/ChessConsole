@@ -255,7 +255,7 @@ void ChessInstance::runAgainstDatabase() {
         chessDraw.draw(chessBoard);
 
         // get oponents move id
-        if (auto whiteMoveId = chessDB.getMoveId(gameDepth, fromMoveId, ChessLinkedListMoves::createData(input, true))) {
+        if (auto whiteMoveId = chessDB.getMoveIdOpt(gameDepth, fromMoveId, ChessLinkedListMoves::createData(input, true))) {
             fromMoveId = *whiteMoveId;
 
             // increment after getting the id
@@ -278,7 +278,7 @@ void ChessInstance::runAgainstDatabase() {
             game_state = chessInterface.handleInput(dbMove);
 
             // increment turn
-            fromMoveId = *chessDB.getMoveId(gameDepth, fromMoveId, bestMove->data);
+            fromMoveId = *chessDB.getMoveIdOpt(gameDepth, fromMoveId, bestMove->data);
             ++gameDepth;
         } else {
             // could not find the move so make a random move
