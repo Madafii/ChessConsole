@@ -137,7 +137,7 @@ std::vector<table_move> ChessDatabaseInterface::getNextMoves(const table_pair &t
     ++nextMoveTable;
 
     const std::string sql =
-        "SELECT mt.id, movedata, wins, loses, draws " + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1";
+        "SELECT mt.id, movedata, wins, loses, draws FROM " + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1";
     const pqxx::params par(moveId);
 
     return queryMovesToVec(sql, par);
@@ -147,7 +147,7 @@ ChessDatabaseInterface::nexts_ids_map ChessDatabaseInterface::getNextMovesDataMa
     table_pair nextMoveTable(table);
     ++nextMoveTable;
 
-    const std::string sql = "SELECT mt.id, movedata" + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1";
+    const std::string sql = "SELECT mt.id, movedata FROM " + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1";
     const pqxx::params par(moveId);
 
     return queryMovesToMap(sql, par);

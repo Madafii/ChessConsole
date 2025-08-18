@@ -2,16 +2,16 @@
 #include <iostream>
 
 int main(int argc, char* argv[]) {
-    // if (argc != 3) {
-    //     std::cerr << "from_file to_db" << std::endl;
-    //     return 0;
-    // }
-    //
-    // const std::string fromFileName = argv[1];
-    // const std::string dbName = argv[2];
+    if (argc != 3) {
+        std::cerr << "from_file to_db" << std::endl;
+        return 0;
+    }
+
+    const std::string fromFileName = argv[1];
+    const std::string dbName = argv[2];
     // const std::string fromFileName = "../data/lichess/outDataPGN/lichess_db_standard.rated_2013-01_backup.txt";
-    const std::string fromFileName = "/home/finnp/Documents/GitRepos/ChessConsole/data/lichess/outDataPGN/lichess_db_standard.rated_2013-01_backup.txt";
-    const std::string dbName = "chessMovesTest";
+    // const std::string fromFileName = "/home/finnp/Documents/GitRepos/ChessConsole/data/lichess/outDataPGN/lichess_db_standard.rated_2013-01_backup.txt";
+    // const std::string dbName = "chessMovesTest";
 
     ChessData chessData;
     chessData.pushMovesToDB(fromFileName, dbName);
