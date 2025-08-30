@@ -52,6 +52,7 @@ void ChessDatabaseInterface::updateMove(const table_pair &table, int moveId, int
 
 void ChessDatabaseInterface::updateMoves(const table_pair &table, const std::vector<table_move_ptr> &move) {
     const std::string sql = "UPDATE " + getChessMoveTable(table) + " SET wins=wins+$1, loses=loses+$2, draws=draws+$3 WHERE id=$4";
+    connection.prepare("update_statement", sql);
 
     for (const auto &[fromId, moveData] : move) {
         pqxx::params par{moveData->wins, moveData->loses, moveData->draws, fromId};
@@ -202,6 +203,13 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves) 
     const std::chrono::duration<double> duration = end - start;
 
     std::cout << "pushing moves to DB took: " << duration.count() << " seconds\n";
+}
+
+pqxx::result ChessDatabaseInterface::executeSQL(const std::string &sql, const pqxx::params &pars) {
+    pqxx::work worker(connection);
+    pqxx::result result = worker.exec(sql, pars);
+    worker.commit();
+    return result;
 }
 
 pqxx::result ChessDatabaseInterface::executeSQL(const std::string &sql, const pqxx::params &pars) {

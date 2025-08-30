@@ -2,6 +2,7 @@
 #define CHESSDATABASEINTERFACE_H
 
 #include "ChessLinkedListMoves.h"
+#include "pqxx/prepared_statement.hxx"
 #include <cstdint>
 #include <pqxx/pqxx>
 #include <queue>
@@ -66,6 +67,7 @@ class ChessDatabaseInterface {
 
     // querys
     pqxx::result executeSQL(const std::string &sql, const pqxx::params &pars);
+    pqxx::result executeSQL(const pqxx::prepped &sql, const pqxx::params &pars);
     MoveCompressed queryMove(const std::string &sql, const pqxx::params &pars);
     int queryMoveId(const std::string &sql, const pqxx::params &pars);
     std::vector<table_move> queryMovesToVec(const std::string &sql, const pqxx::params &pars);

@@ -40,13 +40,13 @@ TEST(dbInterfacePerformanceTests, pushMoves5) {
 // 11.5-14.0 seconds totaling at 2 min
 TEST(dbInterfacePerformanceTests, pushMoves50) {
     ChessData chessData;
-    chessData.pushMovesToDB("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/liches_db_tests_100.txt", db, 50);
+    chessData.pushMovesToDB("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/liches_db_tests_100.txt", dbTestName, 50);
 }
 
 // test case 500 lines long so total time is 2.4 min
 TEST(dbInterfacePerformanceTests, pushMoves500) {
     ChessData chessData;
-    chessData.pushMovesToDB("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/liches_db_tests_500.txt", db, 500);
+    chessData.pushMovesToDB("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/liches_db_tests_500.txt", dbTestName, 500);
 }
 
 // kinda tested 50000 lines at once which took 30 mins, which is only a litle better than 50 each iteration
