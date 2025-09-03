@@ -33,17 +33,17 @@ GameState ChessPeepo::makeMostPlayedMove() {
     return chessInterface.handleMoveInput(inputMove);
 }
 
-void ChessPeepo::makeHighesWinRateMove() {}
-
-void ChessPeepo::makeBestMove() {}
-
-void ChessPeepo::makeRandomBestMove(const int &randomRange) {}
-
-void ChessPeepo::makeRandomMove() {}
-
-bool ChessPeepo::makeBestDBMove() {
-    
-}
+// void ChessPeepo::makeHighesWinRateMove() {}
+//
+// void ChessPeepo::makeBestMove() {}
+//
+// void ChessPeepo::makeRandomBestMove(const int &randomRange) {}
+//
+// void ChessPeepo::makeRandomMove() {}
+//
+// bool ChessPeepo::makeBestDBMove() {
+//
+// }
 
 MoveCompressed *ChessPeepo::getMostPlayedMove(const std::vector<MoveCompressed*> &moves) {
     MoveCompressed *mostPlayedMove = nullptr;

@@ -112,15 +112,6 @@ void ChessDatabaseInterface::connectMove(const table_pair &table, const int sour
     executeSQL(sql, par);
 }
 
-// unused TODO:
-void ChessDatabaseInterface::connectMoves(const table_pair &table, int sourceId, const std::vector<int> &targetIds) {
-    pqxx::work worker(connection);
-    for (const int targetId : targetIds) {
-        worker.exec(std::format("INSERT INTO {} (chess_move_id, next_id) VALUES ({}, {})", getChessLinkerTable(table), sourceId, targetId));
-    }
-    worker.commit();
-}
-
 void ChessDatabaseInterface::connectMoves(const table_pair &table, const std::vector<int> &sourceIds, const std::vector<int> &targetIds) {
     pqxx::work worker(connection);
     pqxx::stream_to connectTableStream = pqxx::stream_to::table(worker, {getChessLinkerTable(table)}, {"chess_move_id", "next_id"});
@@ -205,40 +196,41 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves) 
     std::cout << "pushing moves to DB took: " << duration.count() << " seconds\n";
 }
 
-pqxx::result ChessDatabaseInterface::executeSQL(const std::string &sql, const pqxx::params &pars) {
+pqxx::result ChessDatabaseInterface::executeSQL(const std::string_view sql, const pqxx::params &pars) {
     pqxx::work worker(connection);
     pqxx::result result = worker.exec(sql, pars);
     worker.commit();
     return result;
 }
 
-pqxx::result ChessDatabaseInterface::executeSQL(const std::string &sql, const pqxx::params &pars) {
+pqxx::result ChessDatabaseInterface::executePreppedSQL(const pqxx::prepped &prepped, const pqxx::params &pars) {
     pqxx::work worker(connection);
-    pqxx::result result = worker.exec(sql, pars);
+    pqxx::result result = worker.exec(prepped, pars);
     worker.commit();
     return result;
 }
 
-MoveCompressed ChessDatabaseInterface::queryMove(const std::string &sql, const pqxx::params &pars) {
+MoveCompressed ChessDatabaseInterface::queryMove(const std::string_view sql, const pqxx::params &pars) {
     pqxx::work worker(connection);
-    move_tuple results = worker.query1<std::string_view, uint64_t, uint64_t, uint64_t>(sql, pars);
+    const move_tuple results = worker.query1<std::string_view, uint64_t, uint64_t, uint64_t>(pqxx::zview(sql, pars));
     worker.commit();
     const DataBits bits(getBitsFromDB(std::get<0>(results).substr(2)));
     return MoveCompressed(bits, std::get<1>(results), std::get<2>(results), std::get<3>(results));
 }
 
-int ChessDatabaseInterface::queryMoveId(const std::string &sql, const pqxx::params &pars) {
+int ChessDatabaseInterface::queryMoveId(const std::string_view sql, const pqxx::params &pars) {
     pqxx::work worker(connection);
-    const auto results = worker.query1<int>(sql, pars);
+    const auto results = worker.query1<int>(pqxx::zview(sql, pars));
     worker.commit();
     return std::get<0>(results);
 }
 
-std::vector<table_move> ChessDatabaseInterface::queryMovesToVec(const std::string &sql, const pqxx::params &pars) {
+std::vector<table_move> ChessDatabaseInterface::queryMovesToVec(const std::string_view sql, const pqxx::params &pars) {
     pqxx::work worker(connection);
     std::vector<table_move> moves;
 
-    for (auto [id, moveData, wins, loses, draws] : worker.query<int, std::string_view, uint64_t, uint64_t, uint64_t>(sql, pars)) {
+    const pqxx::zview zviewSQL(sql, pars);
+    for (auto [id, moveData, wins, loses, draws] : worker.query<int, std::string_view, uint64_t, uint64_t, uint64_t>(zviewSQL)) {
         const DataBits bits(getBitsFromDB(std::string_view(moveData).substr(2)));
         moves.emplace_back(id, MoveCompressed{bits, wins, loses, draws});
     }
@@ -247,7 +239,7 @@ std::vector<table_move> ChessDatabaseInterface::queryMovesToVec(const std::strin
     return moves;
 }
 
-ChessDatabaseInterface::nexts_ids_map ChessDatabaseInterface::queryMovesToMap(const std::string &sql, const pqxx::params &pars) {
+ChessDatabaseInterface::nexts_ids_map ChessDatabaseInterface::queryMovesToMap(const std::string_view sql, const pqxx::params &pars) {
     pqxx::work worker(connection);
     nexts_ids_map moves;
 
@@ -299,7 +291,7 @@ void ChessDatabaseInterface::updateTable(table_pair &nextMoveTable, table_pair &
         moveQueue.emplace(insertMoveIds.at(i), updateData.insertMovesDatas.at(i));
     }
     for (auto &updateMoves : updateData.updateMovesDatas) {
-        moveQueue.emplace(updateMoves.first, updateMoves.second);
+        moveQueue.emplace(updateMoves);
     }
     // TODO: check remember that worked???
     // moveQueue.push_range(updateData.updateMovesDatas);

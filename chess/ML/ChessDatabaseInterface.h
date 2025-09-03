@@ -8,7 +8,6 @@
 #include <queue>
 #include <string>
 #include <string_view>
-#include <sys/types.h>
 #include <unordered_map>
 #include <utility>
 
@@ -45,7 +44,6 @@ class ChessDatabaseInterface {
     int insertMove(const table_pair &table, const MoveCompressed &move);
     void insertMoves(const table_pair &table, const std::vector<MoveCompressed *> &moves);
     void connectMove(const table_pair &table, int sourceId, int targetId);
-    void connectMoves(const table_pair &table, int sourceId, const std::vector<int> &targetIds);
     void connectMoves(const table_pair &table, const std::vector<int> &sourceIds, const std::vector<int> &targetIds);
 
     void updateMove(const table_pair &table, int moveId, int newWins, int newLoses, int newDraws);
@@ -66,12 +64,12 @@ class ChessDatabaseInterface {
     pqxx::connection connection;
 
     // querys
-    pqxx::result executeSQL(const std::string &sql, const pqxx::params &pars);
-    pqxx::result executeSQL(const pqxx::prepped &sql, const pqxx::params &pars);
-    MoveCompressed queryMove(const std::string &sql, const pqxx::params &pars);
-    int queryMoveId(const std::string &sql, const pqxx::params &pars);
-    std::vector<table_move> queryMovesToVec(const std::string &sql, const pqxx::params &pars);
-    nexts_ids_map queryMovesToMap(const std::string &sql, const pqxx::params &pars);
+    pqxx::result executeSQL(std::string_view sql, const pqxx::params &pars);
+    pqxx::result executePreppedSQL(const pqxx::prepped &prepped, const pqxx::params &pars);
+    MoveCompressed queryMove(std::string_view sql, const pqxx::params &pars);
+    int queryMoveId(std::string_view sql, const pqxx::params &pars);
+    std::vector<table_move> queryMovesToVec(std::string_view sql, const pqxx::params &pars);
+    nexts_ids_map queryMovesToMap(std::string_view sql, const pqxx::params &pars);
 
     void fillTableData(const table_move_ptr &currentMoveData, const nexts_ids_map &dbNextMovesMap, TabelUpdateData &updateData);
     void updateTable(table_pair &nextMoveTable, table_pair &connectTable, std::queue<table_move_ptr> &moveQueue,

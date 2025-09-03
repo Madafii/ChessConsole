@@ -14,12 +14,12 @@ class ChessPeepo {
 
     // all the moves peeop can do
     GameState makeMostPlayedMove();
-    void makeHighesWinRateMove();
-    void makeBestMove();
-    void makeRandomBestMove(const int &randomRange = -1);
-    void makeRandomMove();
-
-    bool makeBestDBMove();
+    // void makeHighesWinRateMove();
+    // void makeBestMove();
+    // void makeRandomBestMove(const int &randomRange = -1);
+    // void makeRandomMove();
+    //
+    // bool makeBestDBMove();
 
     static MoveCompressed *getMostPlayedMove(const std::vector<MoveCompressed*> &moves);
     static std::string getRandomInputMove(ChessInterface &chessI);
