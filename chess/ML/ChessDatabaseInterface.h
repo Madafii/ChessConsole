@@ -2,14 +2,13 @@
 #define CHESSDATABASEINTERFACE_H
 
 #include "ChessLinkedListMoves.h"
-#include "pqxx/prepared_statement.hxx"
 #include <cstdint>
-#include <pqxx/pqxx>
 #include <queue>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <pqxx/pqxx>
 
 // Ideas for improvement:
 // -- technically all select statements besides the parameter values are know at compile time, so constexpr could do something
@@ -60,22 +59,27 @@ class ChessDatabaseInterface {
 
     void pushMovesToDB(const ChessLinkedListMoves &llMoves);
 
+    void createPreppareds(int depth);
+
   private:
     pqxx::connection connection;
+    std::map<table_pair, std::string> prepUpdates;
+    std::map<table_pair, std::string> prepSelectIds;
+    const std::string selectMoveFrom = "SELECT moveData, wins, loses, draws FROM ";
 
-    // querys
-    pqxx::result executeSQL(std::string_view sql, const pqxx::params &pars);
+    // executes
+    pqxx::result executeSQL(pqxx::zview sql, const pqxx::params &pars);
     pqxx::result executePreppedSQL(const pqxx::prepped &prepped, const pqxx::params &pars);
-    MoveCompressed queryMove(std::string_view sql, const pqxx::params &pars);
-    int queryMoveId(std::string_view sql, const pqxx::params &pars);
-    std::vector<table_move> queryMovesToVec(std::string_view sql, const pqxx::params &pars);
-    nexts_ids_map queryMovesToMap(std::string_view sql, const pqxx::params &pars);
+    // queries
+    auto queryMove(pqxx::zview sql, const pqxx::params &pars) -> MoveCompressed;
+    auto queryMoveId(pqxx::zview sql, const pqxx::params &pars) -> int;
+    auto queryMovesToVec(pqxx::zview sql, const pqxx::params &pars) -> std::vector<table_move>;
+    auto queryMovesToMap(pqxx::prepped prepSql, const pqxx::params &pars) -> nexts_ids_map;
+    // auto queryMovesToMap(pqxx::zview prepSql, const pqxx::params &pars) -> nexts_ids_map;
 
     void fillTableData(const table_move_ptr &currentMoveData, const nexts_ids_map &dbNextMovesMap, TabelUpdateData &updateData);
     void updateTable(table_pair &nextMoveTable, table_pair &connectTable, std::queue<table_move_ptr> &moveQueue,
                      TabelUpdateData &updateData);
-
-    const std::string selectMoveFrom = "SELECT moveData, wins, loses, draws FROM ";
 
   public:
     // some inline funcs

@@ -140,8 +140,8 @@ void ChessData::readLines(std::ifstream &file, int lines) {
     while (std::getline(file, line) && lineCounter < lines) {
         processLine(line);
         ++lineCounter;
-        std::cout << "processed lines: " << lineCounter << std::endl;
     }
+    std::cout << "processed lines: " << lineCounter << std::endl;
 }
 
 void ChessData::processLine(std::ofstream &outStream, std::string_view line) {

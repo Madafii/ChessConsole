@@ -1,17 +1,25 @@
 #include "ChessDatabaseInterface.h"
 #include "ChessLinkedListMoves.h"
+#include "pqxx/prepared_statement.hxx"
+#include "pqxx/zview.hxx"
+#include <chrono>
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <string>
+#include <string_view>
 #include <tuple>
+#include <set>
 
 ChessDatabaseInterface::ChessDatabaseInterface(const std::string &dbName)
-    : connection("dbname=" + dbName + " user=finnp password=password") {
+    : connection("dbname=" + dbName + " user=finnp password=Mcstinki+2314") {
     if (connection.is_open()) {
         std::cout << "Connected to: " << dbName << std::endl;
     } else {
         std::cout << "Could not open database: " << dbName << std::endl;
     }
+
+    createPreppareds(200)       ;
 }
 
 int ChessDatabaseInterface::insertMove(const table_pair &table, const MoveCompressed &move) {
@@ -51,12 +59,9 @@ void ChessDatabaseInterface::updateMove(const table_pair &table, int moveId, int
 }
 
 void ChessDatabaseInterface::updateMoves(const table_pair &table, const std::vector<table_move_ptr> &move) {
-    const std::string sql = "UPDATE " + getChessMoveTable(table) + " SET wins=wins+$1, loses=loses+$2, draws=draws+$3 WHERE id=$4";
-    connection.prepare("update_statement", sql);
-
     for (const auto &[fromId, moveData] : move) {
         pqxx::params par{moveData->wins, moveData->loses, moveData->draws, fromId};
-        executeSQL(sql, par);
+        executePreppedSQL({prepUpdates.at(table)}, par);
     }
 }
 
@@ -139,10 +144,7 @@ ChessDatabaseInterface::nexts_ids_map ChessDatabaseInterface::getNextMovesDataMa
     table_pair nextMoveTable(table);
     ++nextMoveTable;
 
-    const std::string sql = "SELECT mt.id, movedata FROM " + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1";
-    const pqxx::params par(moveId);
-
-    return queryMovesToMap(sql, par);
+    return queryMovesToMap({prepSelectIds.at(nextMoveTable)}, {moveId});
 }
 
 int ChessDatabaseInterface::getMaxIdTable(const table_pair &table) {
@@ -159,8 +161,8 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves) 
 
     // the board with no moves on it
     MoveCompressed *headMove = llMoves.getMoveHead();
-    constexpr table_pair baseTable = {false, 0};
-    constexpr int baseId = 1;
+    static constexpr table_pair baseTable = {false, 0};
+    static constexpr int baseId = 1;
 
     std::queue<table_move_ptr> moveQueue;
     moveQueue.emplace(baseId, headMove);
@@ -169,25 +171,43 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves) 
     table_pair nextMoveTable(baseTable);
     ++nextMoveTable;
 
+    auto startTable = std::chrono::high_resolution_clock::now();
+
     // check to either insert or update existing move
     TabelUpdateData tableUpdateData;
 
     MoveCompressed *lastDepthElement = headMove;
+    std::chrono::duration<double> durationSelectIds; 
+    std::chrono::duration<double> durationFillTable; 
     while (!moveQueue.empty()) {
         auto [currentId, currentMove] = moveQueue.front();
         moveQueue.pop();
 
         // get db nexts
         const auto dbNextMovesMap = getNextMovesDataMap(connectTable, currentId);
+        auto endSelectIds = std::chrono::high_resolution_clock::now();
+        durationSelectIds += endSelectIds - startTable;
+
         fillTableData({currentId, currentMove}, dbNextMovesMap, tableUpdateData);
+        auto endFillingTable = std::chrono::high_resolution_clock::now();
+        durationFillTable += endFillingTable - endSelectIds;
 
         // reached last element for this move depth
         if (lastDepthElement == currentMove) {
+            std::cout << "total duration of selecting Ids: " << durationSelectIds.count() << std::endl;
+            std::cout << "total duration of filling tables: " << durationFillTable.count() << std::endl;
+            // auto endTable = std::chrono::high_resolution_clock::now();
+            // std::chrono::duration<double> durationTable = endTable - startTable;
+            // std::cout << "done filling current depth after: " << durationTable.count() << " seconds\n";
+
             updateTable(nextMoveTable, connectTable, moveQueue, tableUpdateData);
             // new last element to start writign in this depth
             if (moveQueue.empty()) break;
             lastDepthElement = moveQueue.back().second;
+
+            // reset timer
         }
+        startTable = std::chrono::high_resolution_clock::now();
     }
 
     const auto end = std::chrono::high_resolution_clock::now();
@@ -196,7 +216,28 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves) 
     std::cout << "pushing moves to DB took: " << duration.count() << " seconds\n";
 }
 
-pqxx::result ChessDatabaseInterface::executeSQL(const std::string_view sql, const pqxx::params &pars) {
+void ChessDatabaseInterface::createPreppareds(int depth) {
+    table_pair connectTable{false, 0};
+    table_pair movesTable(connectTable);
+    ++movesTable;
+
+    for (int i = 0; i < depth; i++) {
+        const std::string updateSql = "UPDATE " + getChessMoveTable(movesTable) + " SET wins=wins+$1, loses=loses+$2, draws=draws+$3 WHERE id=$4";
+        const std::string prepUpdate = "update_statement " + getChessMoveTable(movesTable);
+        connection.prepare(prepUpdate, updateSql);
+        prepUpdates.emplace(movesTable, prepUpdate);
+
+        const std::string selectIdsSql = "SELECT mt.id, movedata FROM " + joinMoveLinker(connectTable, movesTable) + " WHERE lt.chess_move_id = $1";
+        const std::string prepSelect = "select_statement_id " + getChessMoveTable(movesTable);
+        connection.prepare(prepSelect, selectIdsSql);
+        prepSelectIds.emplace(movesTable, prepSelect);
+
+        ++movesTable;
+        ++connectTable;
+    }
+}
+
+pqxx::result ChessDatabaseInterface::executeSQL(const pqxx::zview sql, const pqxx::params &pars) {
     pqxx::work worker(connection);
     pqxx::result result = worker.exec(sql, pars);
     worker.commit();
@@ -210,27 +251,26 @@ pqxx::result ChessDatabaseInterface::executePreppedSQL(const pqxx::prepped &prep
     return result;
 }
 
-MoveCompressed ChessDatabaseInterface::queryMove(const std::string_view sql, const pqxx::params &pars) {
+MoveCompressed ChessDatabaseInterface::queryMove(const pqxx::zview sql, const pqxx::params &pars) {
     pqxx::work worker(connection);
-    const move_tuple results = worker.query1<std::string_view, uint64_t, uint64_t, uint64_t>(pqxx::zview(sql, pars));
+    const move_tuple results = worker.query1<pqxx::zview, uint64_t, uint64_t, uint64_t>(sql, pars);
     worker.commit();
     const DataBits bits(getBitsFromDB(std::get<0>(results).substr(2)));
     return MoveCompressed(bits, std::get<1>(results), std::get<2>(results), std::get<3>(results));
 }
 
-int ChessDatabaseInterface::queryMoveId(const std::string_view sql, const pqxx::params &pars) {
+int ChessDatabaseInterface::queryMoveId(const pqxx::zview sql, const pqxx::params &pars) {
     pqxx::work worker(connection);
-    const auto results = worker.query1<int>(pqxx::zview(sql, pars));
+    const auto results = worker.query1<int>(sql, pars);
     worker.commit();
     return std::get<0>(results);
 }
 
-std::vector<table_move> ChessDatabaseInterface::queryMovesToVec(const std::string_view sql, const pqxx::params &pars) {
+std::vector<table_move> ChessDatabaseInterface::queryMovesToVec(const pqxx::zview sql, const pqxx::params &pars) {
     pqxx::work worker(connection);
     std::vector<table_move> moves;
 
-    const pqxx::zview zviewSQL(sql, pars);
-    for (auto [id, moveData, wins, loses, draws] : worker.query<int, std::string_view, uint64_t, uint64_t, uint64_t>(zviewSQL)) {
+    for (auto [id, moveData, wins, loses, draws] : worker.query<int, std::string_view, uint64_t, uint64_t, uint64_t>(sql, pars)) {
         const DataBits bits(getBitsFromDB(std::string_view(moveData).substr(2)));
         moves.emplace_back(id, MoveCompressed{bits, wins, loses, draws});
     }
@@ -239,11 +279,12 @@ std::vector<table_move> ChessDatabaseInterface::queryMovesToVec(const std::strin
     return moves;
 }
 
-ChessDatabaseInterface::nexts_ids_map ChessDatabaseInterface::queryMovesToMap(const std::string_view sql, const pqxx::params &pars) {
+ChessDatabaseInterface::nexts_ids_map ChessDatabaseInterface::queryMovesToMap(const pqxx::prepped prepSql, const pqxx::params &pars) {
+// ChessDatabaseInterface::nexts_ids_map ChessDatabaseInterface::queryMovesToMap(const pqxx::zview prepSql, const pqxx::params &pars) {
     pqxx::work worker(connection);
     nexts_ids_map moves;
 
-    for (auto [id, moveData] : worker.query<int, std::string_view>(sql, pars)) {
+    for (auto [id, moveData] : worker.query<int, std::string_view>(prepSql, pars)) {
         const DataBits bits(getBitsFromDB(moveData.substr(2)));
         moves.emplace(bits, id);
     }
@@ -267,14 +308,17 @@ void ChessDatabaseInterface::fillTableData(const table_move_ptr &currentMoveData
 
 void ChessDatabaseInterface::updateTable(table_pair &nextMoveTable, table_pair &connectTable,
                                          std::queue<table_move_ptr> &moveQueue, TabelUpdateData &updateData) {
-    // std::cout << "started writing to table" << getChessMoveTable(nextMoveTable) << std::endl;
-    // const auto startTable = std::chrono::high_resolution_clock::now();
+    std::cout << "started writing to table" << getChessMoveTable(nextMoveTable) << std::endl;
+    const auto startTable = std::chrono::high_resolution_clock::now();
 
     // insert new moves first
     // as all inserts all happen in the same table. I can take the current max and deduce the new ids from that
     const int maxIdTable = getMaxIdTable(nextMoveTable);
     const int insertMovesSize = updateData.insertMovesDatas.size();
     insertMoves(nextMoveTable, updateData.insertMovesDatas);
+
+    std::cout << "done inserting moves after: "
+              << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - startTable).count() << std::endl;
 
     std::vector<int> insertMoveIds;
     insertMoveIds.resize(insertMovesSize);
@@ -283,8 +327,14 @@ void ChessDatabaseInterface::updateTable(table_pair &nextMoveTable, table_pair &
     // connect the new moves
     connectMoves(connectTable, updateData.insertFromMoveIds, insertMoveIds);
 
+    std::cout << "done connecting moves after: "
+              << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - startTable).count() << std::endl;
+
     // updating move data
     updateMoves(nextMoveTable, updateData.updateMovesDatas);
+
+    std::cout << "done updating moves after: "
+              << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - startTable).count() << std::endl;
 
     // add them to the queue
     for (size_t i = 0; i < insertMoveIds.size(); i++) {
@@ -303,8 +353,8 @@ void ChessDatabaseInterface::updateTable(table_pair &nextMoveTable, table_pair &
     updateData.insertFromMoveIds.clear();
     updateData.updateMovesDatas.clear();
 
-    // const auto endTable = std::chrono::high_resolution_clock::now();
-    // const std::chrono::duration<double> durationTable = endTable - startTable;
-    //
-    // std::cout << "done writing to current table in: " << durationTable.count() << " seconds\n";
+    const auto endTable = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<double> durationTable = endTable - startTable;
+
+    std::cout << "done writing to current table in: " << durationTable.count() << " seconds\n" << std::endl;
 }
