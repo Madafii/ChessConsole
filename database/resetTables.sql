@@ -105,4 +105,5 @@ BEGIN
     END LOOP;
 END $$;
 
+-- base from from which the rest will go from
 INSERT INTO chess_move_d0_b (movedata, wins, loses, draws) VALUES (E'\\x0000', 0, 0, 0);

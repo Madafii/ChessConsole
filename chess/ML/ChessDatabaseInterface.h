@@ -69,13 +69,14 @@ class ChessDatabaseInterface {
 
     // executes
     pqxx::result executeSQL(pqxx::zview sql, const pqxx::params &pars);
-    pqxx::result executePreppedSQL(const pqxx::prepped &prepped, const pqxx::params &pars);
     // queries
     auto queryMove(pqxx::zview sql, const pqxx::params &pars) -> MoveCompressed;
     auto queryMoveId(pqxx::zview sql, const pqxx::params &pars) -> int;
     auto queryMovesToVec(pqxx::zview sql, const pqxx::params &pars) -> std::vector<table_move>;
     auto queryMovesToMap(pqxx::prepped prepSql, const pqxx::params &pars) -> nexts_ids_map;
     // auto queryMovesToMap(pqxx::zview prepSql, const pqxx::params &pars) -> nexts_ids_map;
+    void analyze();
+    void analyzeTable(const std::string &tableName);
 
     void fillTableData(const table_move_ptr &currentMoveData, const nexts_ids_map &dbNextMovesMap, TabelUpdateData &updateData);
     void updateTable(table_pair &nextMoveTable, table_pair &connectTable, std::queue<table_move_ptr> &moveQueue,

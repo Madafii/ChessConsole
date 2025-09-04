@@ -40,10 +40,10 @@ TEST(dbInterfacePerformanceTests, pushMoves5) {
 // 11.5-14.0 seconds totaling at 2 min
 TEST(dbInterfacePerformanceTests, pushMoves50) {
     // ChessData chessData;
-    // chessData.pushMovesToDB("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/liches_db_tests_100.txt", dbTestName, 50);
+    // chessData.pushMovesToDB("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/liches_db_tests_100.txt", db, 50);
 }
 
-// test case 500 lines long so total time is 2.4 min
+// test case 500 lines long so total time is 57-69 secs. (varies quite a lot tested with three runs) (seems better without analyze but makes sense because not using analyze for single iterations)
 TEST(dbInterfacePerformanceTests, pushMoves500) {
     ChessData chessData;
     chessData.pushMovesToDB("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/liches_db_tests_500.txt", db, 500);

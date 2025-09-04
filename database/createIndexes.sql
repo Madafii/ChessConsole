@@ -15,8 +15,6 @@ BEGIN
             -- Indizes für linker-Tabelle erstellen
             EXECUTE 'CREATE INDEX IF NOT EXISTS idx_' || linker_table_name || '_chess_move_id ON ' || linker_table_name || '(chess_move_id);';
             EXECUTE 'CREATE INDEX IF NOT EXISTS idx_' || linker_table_name || '_next_id ON ' || linker_table_name || '(next_id);';
-            -- Index für move-Tabelle erstellen
-            -- EXECUTE 'CREATE INDEX IF NOT EXISTS idx_' || move_table_name || '_id ON ' || move_table_name || '(id);';
         END LOOP;
     END LOOP;
 END $$;
