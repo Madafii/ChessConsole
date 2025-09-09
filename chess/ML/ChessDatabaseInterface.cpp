@@ -18,7 +18,7 @@ ChessDatabaseInterface::ChessDatabaseInterface(const std::string &dbName)
         std::cout << "Could not open database: " << dbName << std::endl;
     }
 
-    createPreppareds(200)       ;
+    createPreppareds(200);
 }
 
 int ChessDatabaseInterface::insertMove(const table_pair &table, const MoveCompressed &move) {
@@ -101,7 +101,7 @@ std::optional<int> ChessDatabaseInterface::getMoveIdOpt(const table_pair &table,
     ++nextMoveTable;
 
     const std::string sql =
-        "SELECT exists (SELECT 1 FROM " + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1 AND mt.movedata = $2 LIMIT 1);";
+        "SELECT COALESCE ((SELECT mt.id FROM " + joinMoveLinker(table, nextMoveTable) + " WHERE lt.chess_move_id = $1 AND mt.movedata = $2 LIMIT 1), -1) AS id;";
     const pqxx::params pars(fromMoveId, getDBHexStringFromMoveData(moveData));
 
     int moveId = queryMoveId(sql, pars);
@@ -172,7 +172,7 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves) 
     table_pair nextMoveTable(baseTable);
     ++nextMoveTable;
 
-    auto startTable = std::chrono::high_resolution_clock::now();
+    // auto startTable = std::chrono::high_resolution_clock::now();
 
     // check to either insert or update existing move
     TabelUpdateData tableUpdateData;
@@ -197,9 +197,9 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves) 
         if (lastDepthElement == currentMove) {
             // std::cout << "total duration of selecting Ids: " << durationSelectIds.count() << std::endl;
             // std::cout << "total duration of filling tables: " << durationFillTable.count() << std::endl;
-            auto endTable = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double> durationTable = endTable - startTable;
-            std::cout << "done filling current depth after: " << durationTable.count() << " seconds\n";
+            // auto endTable = std::chrono::high_resolution_clock::now();
+            // std::chrono::duration<double> durationTable = endTable - startTable;
+            // std::cout << "done filling current depth after: " << durationTable.count() << " seconds\n";
 
             updateTable(nextMoveTable, connectTable, moveQueue, tableUpdateData);
 
@@ -212,7 +212,7 @@ void ChessDatabaseInterface::pushMovesToDB(const ChessLinkedListMoves &llMoves) 
             lastDepthElement = moveQueue.back().second;
 
             // reset timer
-            startTable = std::chrono::high_resolution_clock::now();
+            // startTable = std::chrono::high_resolution_clock::now();
         }
     }
 
@@ -227,7 +227,7 @@ void ChessDatabaseInterface::createPreppareds(int depth) {
     table_pair movesTable(connectTable);
     ++movesTable;
 
-    for (int i = 0; i < depth; i++) {
+    for (int i = 0; i < depth * 2; i++) {
         const std::string updateSql = "UPDATE " + getChessMoveTable(movesTable) + " SET wins=wins+$1, loses=loses+$2, draws=draws+$3 WHERE id=$4";
         const std::string prepUpdate = "update_statement " + getChessMoveTable(movesTable);
         connection.prepare(prepUpdate, updateSql);
@@ -319,8 +319,8 @@ void ChessDatabaseInterface::fillTableData(const table_move_ptr &currentMoveData
 
 void ChessDatabaseInterface::updateTable(table_pair &nextMoveTable, table_pair &connectTable,
                                          std::queue<table_move_ptr> &moveQueue, TabelUpdateData &updateData) {
-    std::cout << "started writing to table: " << getChessMoveTable(nextMoveTable) << std::endl;
-    const auto startTable = std::chrono::high_resolution_clock::now();
+    // std::cout << "started writing to table: " << getChessMoveTable(nextMoveTable) << std::endl;
+    // const auto startTable = std::chrono::high_resolution_clock::now();
 
     // insert new moves first
     // as all inserts all happen in the same table. I can take the current max and deduce the new ids from that
@@ -328,8 +328,8 @@ void ChessDatabaseInterface::updateTable(table_pair &nextMoveTable, table_pair &
     const int insertMovesSize = updateData.insertMovesDatas.size();
     insertMoves(nextMoveTable, updateData.insertMovesDatas);
 
-    std::cout << "done inserting moves after: "
-              << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - startTable).count() << std::endl;
+    // std::cout << "done inserting moves after: "
+    //           << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - startTable).count() << std::endl;
 
     std::vector<int> insertMoveIds;
     insertMoveIds.resize(insertMovesSize);
@@ -338,14 +338,14 @@ void ChessDatabaseInterface::updateTable(table_pair &nextMoveTable, table_pair &
     // connect the new moves
     connectMoves(connectTable, updateData.insertFromMoveIds, insertMoveIds);
 
-    std::cout << "done connecting moves after: "
-              << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - startTable).count() << std::endl;
+    // std::cout << "done connecting moves after: "
+    //           << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - startTable).count() << std::endl;
 
     // updating move data
     updateMoves(nextMoveTable, updateData.updateMovesDatas);
 
-    std::cout << "done updating moves after: "
-              << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - startTable).count() << std::endl;
+    // std::cout << "done updating moves after: "
+    //           << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - startTable).count() << std::endl;
 
     // add them to the queue
     for (size_t i = 0; i < insertMoveIds.size(); i++) {

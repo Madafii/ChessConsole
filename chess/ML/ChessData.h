@@ -16,7 +16,7 @@ class ChessData {
 
     explicit ChessData();
 
-    void pushMovesToDB(std::string_view fromFileName, std::string_view dbName, int lineBuffer = 5000);
+    void pushMovesToDB(std::string_view fromFileName, std::string_view dbName, int lineBuffer = 50000);
     void readSimpleGames(const std::string &filename);
     void flushMovesToDB(std::string_view dbName);
 

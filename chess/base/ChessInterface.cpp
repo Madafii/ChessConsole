@@ -3,7 +3,9 @@
 #include "ChessBoardDraw.h"
 #include "ChessPiece.h"
 
+#include <algorithm>
 #include <iostream>
+#include <optional>
 
 ChessInterface::ChessInterface() : chessBoard(ChessBoard()), chessLogic(chessBoard), chessDraw(ChessBoardDraw()) { }
 
@@ -68,6 +70,23 @@ void ChessInterface::handleMoveInputNoChecks(const std::string_view input, const
 
     chessBoard.move(fromTile, toTile, pawnChangeTo);
     chessLogic.resetCache();
+}
+
+std::optional<Pieces> ChessInterface::handleFromInput(const std::string_view input) {
+    ChessTile &fromTile = chessBoard.getTileAt(input);
+    if (fromTile.hasWhitePiece() != chessBoard.isWhitesTurn()) {
+        std::cout << "that is not your piece. Select one of yours" << std::endl;
+        return std::nullopt;
+    }
+
+    auto possMoves = chessLogic.getPossibleMoves(fromTile);
+    chessLogic.filterPossibleMovesForChecks(fromTile, possMoves);
+    if (possMoves.size() <= 0) {
+        std::cout << "no possible moves for this piece" << std::endl;
+        return std::nullopt;
+    }
+
+    return possMoves;
 }
 
 PiecePair ChessInterface::getMoveTilesFromInput(const std::string_view input) {

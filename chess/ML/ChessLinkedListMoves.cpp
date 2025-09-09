@@ -123,6 +123,7 @@ std::bitset<16> ChessLinkedListMoves::createData(const std::string &nextMove, bo
         outSet.set(1, pawnLetter[0]);
     }
     outSet.set(0, nextWhite);
+    // is wrong way in db so check that
 
     return outSet;
 }

@@ -1,38 +1,55 @@
 #include "ChessBoardDraw.h"
+#include "ChessPiece.h"
 
 #include <iostream>
 
-ChessBoardDraw::ChessBoardDraw(const ChessBoardDrawSettings settings) : settings(settings) {}
+ChessBoardDraw::ChessBoardDraw(const ChessBoardDrawSettings settings) : _settings(settings) {}
 
 void ChessBoardDraw::draw(const ChessBoard &board) const {
-    if (settings.sysClear) system("clear");
+    if (_settings.sysClear) system("clear");
     // Print the chessboard with characters
     for (int y = 7; y >= 0; --y) {
         std::cout << " " << y + 1 << " ";
         for (int x = 0; x < 8; ++x) {
+            const ChessPiece &drawPiece = board.getTileAt(x, y).getPiece();
             if ((y + x) % 2 == 0) {
                 // Black square
-                std::cout << "\x1b[48;5;0m";
+                std::cout << _backgroundColorBlack;
             } else {
                 // White square
-                std::cout << "\x1b[48;5;231m";
+                std::cout << _backgroundColorWhite;
             }
-            if (board.getTileAt(x, y).getPiece().getType() == ChessPieceType::NONE) {
+            if (drawPiece.getType() == ChessPieceType::NONE) {
                 std::cout << "   ";
                 continue;
             }
-            if (board.getTileAt(x, y).getPiece().isWhite()) {
+            if (drawPiece.isWhite()) {
                 // green
-                std::cout << "\x1b[38;5;22m";
+                std::cout << _pieceColorWhite;
             } else {
                 // magenta
-                std::cout << "\x1b[38;5;126m";
+                std::cout << _pieceColorBlack;
             }
-            std::cout << " " << board.getTileAt(x, y).getPiece().getShortName() << " ";
+            if (_settings.useNerdFont) {
+                // use black pieces for both (still having different colors)
+                std::cout << " " << _blackNerdFontPieces.at(drawPiece.getShortName()) << " ";
+                // if (drawPiece.isWhite()) {
+                //     std::cout << " " << _blackNerdFontPieces.at(drawPiece.getShortName()) << " ";
+                // } else {
+                //     std::cout << " " << _blackNerdFontPieces.at(drawPiece.getShortName()) << " ";
+                // }
+            } else {
+                std::cout << " " << drawPiece.getShortName() << " ";
+            }
         }
-        std::cout << "\x1b[0m" << std::endl; // Reset to default color after each line
+        std::cout << _defaultColor << std::endl; // Reset to default color after each line
     }
     std::cout << "    a  b  c  d  e  f  g  h " << std::endl;
 }
 
-inline ChessBoardDrawSettings &ChessBoardDraw::getSettings() { return settings; }
+void ChessBoardDraw::drawHighlight(const ChessBoard &board, const Pieces &highlightTiles) const {
+    draw(board);
+    for (const auto &piece : highlightTiles) {
+
+    }
+}

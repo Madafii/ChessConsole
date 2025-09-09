@@ -235,7 +235,10 @@ void ChessInstance::runAgainstPeepo() {
 void ChessInstance::runAgainstDatabase() {
     ChessInterface chessInterface;
     const ChessBoard &chessBoard = chessInterface.getChessBoard();
-    ChessBoardDraw chessDraw;
+    ChessBoardDrawSettings drawSettings;
+    drawSettings.sysClear = true;
+    drawSettings.useNerdFont = true;
+    ChessBoardDraw chessDraw(drawSettings);
 
     // your opponent
     ChessDatabaseInterface chessDB("chessMoves");
@@ -250,12 +253,13 @@ void ChessInstance::runAgainstDatabase() {
         std::cin >> input;
         if (input == "quit") break;
 
-        // handle players move
+        // handle players move from:to
         GameState game_state = chessInterface.handleInput(input);
+        // auto highlightMoves = chessInterface.handleFromInput(input);
         chessDraw.draw(chessBoard);
 
         // get oponents move id
-        if (auto whiteMoveId = chessDB.getMoveIdOpt(gameDepth, fromMoveId, ChessLinkedListMoves::createData(input, true))) {
+        if (auto whiteMoveId = chessDB.getMoveIdOpt(gameDepth, fromMoveId, ChessLinkedListMoves::createData(input, false))) {
             fromMoveId = *whiteMoveId;
 
             // increment after getting the id

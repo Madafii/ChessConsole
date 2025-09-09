@@ -87,7 +87,7 @@ class ChessDatabaseInterface {
     static std::string joinMoveLinker(const table_pair &tableLT, const table_pair &tableMT) {
         return getChessLinkerTable(tableLT) + " lt JOIN " + getChessMoveTable(tableMT) + " mt ON lt.next_id = mt.id ";
     }
-    static char getColor(bool white) { return white ? 'w' : 'b'; }
+    static char getColor(const bool white) { return white ? 'w' : 'b'; }
     static std::string getChessMoveTable(const table_pair &table) {
         return std::format("chess_move_d{}_{}", table.first, getColor(table.second));
     }
@@ -99,7 +99,7 @@ class ChessDatabaseInterface {
         const std::byte bytes[2] = {static_cast<std::byte>(dataLong), static_cast<std::byte>(dataLong >> 8)};
         return pqxx::binary_cast(bytes, sizeof(bytes));
     }
-    static DataBits getBitsFromDB(std::string_view bytes) {
+    static DataBits getBitsFromDB(const std::string_view bytes) {
         unsigned int intMoveData;
         (std::stringstream() << std::hex << bytes) >> intMoveData;
         return {intMoveData};

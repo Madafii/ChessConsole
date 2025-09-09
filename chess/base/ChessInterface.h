@@ -13,6 +13,7 @@ class ChessInterface {
     GameState handleInput(std::string_view input);
     GameState handleMoveInput(std::string_view input);
     void handleMoveInputNoChecks(std::string_view input, bool enPassant);
+    std::optional<Pieces> handleFromInput(std::string_view input);
 
     // getters
     const ChessBoard &getChessBoard() const { return chessBoard; }
