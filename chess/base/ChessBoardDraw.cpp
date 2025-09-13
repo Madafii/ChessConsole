@@ -1,11 +1,14 @@
 #include "ChessBoardDraw.h"
+#include "ChessBoard.h"
 #include "ChessPiece.h"
+#include "ChessTile.h"
 
+#include <algorithm>
 #include <iostream>
 
 ChessBoardDraw::ChessBoardDraw(const ChessBoardDrawSettings settings) : _settings(settings) {}
 
-void ChessBoardDraw::draw(const ChessBoard &board) const {
+void ChessBoardDraw::draw(const ChessBoard &board, const Pieces &highlightTiles) const {
     if (_settings.sysClear) system("clear");
     // Print the chessboard with characters
     for (int y = 7; y >= 0; --y) {
@@ -19,16 +22,21 @@ void ChessBoardDraw::draw(const ChessBoard &board) const {
                 // White square
                 std::cout << _backgroundColorWhite;
             }
-            if (drawPiece.getType() == ChessPieceType::NONE) {
-                std::cout << "   ";
-                continue;
-            }
             if (drawPiece.isWhite()) {
                 // green
                 std::cout << _pieceColorWhite;
             } else {
                 // magenta
                 std::cout << _pieceColorBlack;
+            }
+            if (drawPiece.getType() == ChessPieceType::NONE) {
+                if (std::ranges::any_of(highlightTiles,
+                                        [x, y](const ChessTile *tile) { return tile->getX() == x && tile->getY() == y; })) {
+                    std::cout << "  ";
+                } else {
+                    std::cout << "   ";
+                }
+                continue;
             }
             if (_settings.useNerdFont) {
                 // use black pieces for both (still having different colors)
@@ -45,11 +53,4 @@ void ChessBoardDraw::draw(const ChessBoard &board) const {
         std::cout << _defaultColor << std::endl; // Reset to default color after each line
     }
     std::cout << "    a  b  c  d  e  f  g  h " << std::endl;
-}
-
-void ChessBoardDraw::drawHighlight(const ChessBoard &board, const Pieces &highlightTiles) const {
-    draw(board);
-    for (const auto &piece : highlightTiles) {
-
-    }
 }

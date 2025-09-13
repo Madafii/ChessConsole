@@ -24,7 +24,7 @@ class ChessPeepo {
     static MoveCompressed *getMostPlayedMove(const std::vector<MoveCompressed*> &moves);
     static std::string getRandomInputMove(ChessInterface &chessI);
 
-    inline static uint64_t playedMoves(const MoveCompressed *move) { return move->wins + move->loses + move->draws; }
+    static uint64_t playedMoves(const MoveCompressed *move) { return move->wins + move->loses + move->draws; }
 
   private:
     ChessInterface &chessInterface;

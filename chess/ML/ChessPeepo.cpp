@@ -30,7 +30,7 @@ GameState ChessPeepo::makeMostPlayedMove() {
     // play the move
     // TODO: enPassant thing probaply should be checked inside ChessBoard so could remove that parameter later
     std::cout << "peepo plays the move: " << inputMove << std::endl;
-    return chessInterface.handleMoveInput(inputMove);
+    return chessInterface.handleMoveInput(inputMove).value();
 }
 
 // void ChessPeepo::makeHighesWinRateMove() {}

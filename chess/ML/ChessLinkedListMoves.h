@@ -1,10 +1,8 @@
 #ifndef CHESSMOVE_H
 #define CHESSMOVE_H
 
-#include <array>
 #include <bitset>
 #include <cstdint>
-#include <cstring>
 #include <memory>
 #include <string>
 #include <sys/types.h>
@@ -58,11 +56,11 @@ class ChessLinkedListMoves {
     void addResult(const RESULT &result);
 
     // manually set the head to another move
-    inline void setMoveHead(MoveCompressed *move) { head = move; };
+    void setMoveHead(MoveCompressed *move) { head = move; };
 
     // get Move
-    [[nodiscard]] inline MoveCompressed *getMoveHead() const { return head; };
-    [[nodiscard]] inline MoveCompressed *getMoveRoot() const { return root.get(); };
+    [[nodiscard]] MoveCompressed *getMoveHead() const { return head; };
+    [[nodiscard]] MoveCompressed *getMoveRoot() const { return root.get(); };
     [[nodiscard]] MoveCompressed *getAtMove(const std::string &move) const;
     [[nodiscard]] std::vector<const MoveCompressed *> getAllMoves() const;
 
@@ -72,20 +70,16 @@ class ChessLinkedListMoves {
     static std::string getBasicInfo(const MoveCompressed *move);
     static std::string getInfoNextMoves(const MoveCompressed *move);
 
-    inline std::string getFullInfoHead() { return getFullInfo(head); };
-    inline std::string getInfoMoveHead() { return getInfoMove(head); };
-    inline std::string getBasicInfoHead() { return getBasicInfo(head); };
-    inline std::string getInfoNextMovesHead() { return getInfoNextMoves(head); };
+    std::string getFullInfoHead() { return getFullInfo(head); };
+    std::string getInfoMoveHead() { return getInfoMove(head); };
+    std::string getBasicInfoHead() { return getBasicInfo(head); };
+    std::string getInfoNextMovesHead() { return getInfoNextMoves(head); };
 
     // statics
-    static inline std::string createKey(const bool &white, const std::string &board) { return (white ? "W|" : "B|") + board; };
+    static std::string createKey(const bool &white, const std::string &board) { return (white ? "W|" : "B|") + board; };
     static DataBits createData(const std::string &nextMove, bool nextWhite);
     static std::string getMoveFromData(const DataBits &data);
     static bool getWhiteFromData(const DataBits &data);
-    // static inline std::array<char, 2> getCharFromData(const DataBits &data) {
-    //     return std::array<char, 2>({static_cast<char>(data.to_ulong() & 0xFF), static_cast<char>((data.to_ulong() >> 8) & 0xFF)});
-    // };
-    // static inline std::string getStringFromData(const DataBits &data) { return {getCharFromData(data).data()}; };
 
     // bit maps
     static const std::unordered_map<char, std::bitset<3>> xToBit;

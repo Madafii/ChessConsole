@@ -10,19 +10,21 @@
 #include <string>
 #include <vector>
 
+// TODO: update use of optional in handleMoveInput
+
 using strvec = std::vector<std::string>;
 using namespace std;
 
 void doMovements(const strvec &moves) {
     ChessInterface chessInterface;
     for (const std::string &move : moves) {
-        if (chessInterface.handleMoveInput(move) != GameState::IN_PROGRESS) break;
+        if (chessInterface.handleMoveInput(move).value() != GameState::IN_PROGRESS) break;
     }
 }
 
 void doMovements(ChessInterface &chessInterface, const strvec &moves) {
     for (const std::string &move : moves) {
-        if (chessInterface.handleMoveInput(move) != GameState::IN_PROGRESS) break;
+        if (chessInterface.handleMoveInput(move).value() != GameState::IN_PROGRESS) break;
     }
 }
 
@@ -56,7 +58,7 @@ GameState doMovementsFromPGN(ChessInterface &chessInterface, const strvec &moves
     for (const std::string &move : moves) {
         const bool white = chessInterface.getChessBoard().isWhitesTurn();
         std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, chessInterface.getChessMoveLogic(), white);
-        currState = chessInterface.handleMoveInput(inputMyChess);
+        currState = chessInterface.handleMoveInput(inputMyChess).value();
         if (currState != GameState::IN_PROGRESS) break;
     }
     return currState;
@@ -80,7 +82,7 @@ TEST(ChessInterfaceTests, testCheckmates) {
         GameState gameState = GameState::IN_PROGRESS;
         bool winningColor = gameOutcome[0] == '1';
         for (const auto &move : moves) {
-            gameState = chessInterface.handleMoveInput(move);
+            gameState = chessInterface.handleMoveInput(move).value();
         }
 
         // someone won and it is the correct color

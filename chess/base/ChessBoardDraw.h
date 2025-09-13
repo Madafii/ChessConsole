@@ -13,8 +13,7 @@ class ChessBoardDraw {
   public:
     explicit ChessBoardDraw(ChessBoardDrawSettings settings = ChessBoardDrawSettings());
 
-    void draw(const ChessBoard &board) const;
-    void drawHighlight(const ChessBoard &board, const Pieces &highlightTiles) const;
+    void draw(const ChessBoard &board, const Pieces &highlightTiles = {}) const;
 
     ChessBoardDrawSettings &getSettings() { return _settings; }
 
