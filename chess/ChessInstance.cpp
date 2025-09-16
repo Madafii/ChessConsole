@@ -1,10 +1,10 @@
 #include "ChessInstance.h"
 // #include "ChessAnalyzer.h"
+#include "ChessInterface.h"
 #include "ChessBoard.h"
 #include "ChessBoardDraw.h"
 #include "ChessData.h"
 #include "ChessDatabaseInterface.h"
-#include "ChessInterface.h"
 #include "ChessLinkedListMoves.h"
 #include "ChessMoveLogic.h"
 #include "ChessPeepo.h"
@@ -18,10 +18,13 @@
 ChessInstance::ChessInstance() {
     // all game options
     gameOptions.emplace("normal", [this] { run(); });
-    gameOptions.emplace("random", [this] { runRandom(); }), gameOptions.emplace("againstRandom", [this] { runAgainstRandom(); }),
-        gameOptions.emplace("data", [this] { runWithChessData(); }), gameOptions.emplace("database", [this] { runAgainstDatabase(); }),
-        gameOptions.emplace("peepo", [this] { runAgainstPeepo(); }), gameOptions.emplace("analyzer", [this] { runWithAnalyzer(); }),
-        gameOptions.emplace("loadDB", [this] { loadDB(); });
+    gameOptions.emplace("random", [this] { runRandom(); }),
+    gameOptions.emplace("againstRandom", [this] { runAgainstRandom(); }),
+    gameOptions.emplace("data", [this] { runWithChessData(); }),
+    gameOptions.emplace("database", [this] { runAgainstDatabase(); }),
+    gameOptions.emplace("peepo", [this] { runAgainstPeepo(); }),
+    gameOptions.emplace("analyzer", [this] { runWithAnalyzer(); }),
+    gameOptions.emplace("loadDB", [this] { loadDB(); });
 
     std::cout << "Select the game you want to play: " << std::endl;
     printGameOptions();
@@ -292,48 +295,48 @@ void ChessInstance::runAgainstDatabase() {
 }
 
 void ChessInstance::runWithAnalyzer() {
-    //     ChessBoard chessBoard(false);
-    //     ChessAnalyzer boardAnalyzer(chessBoard);
-    //     ChessBoardDraw boardDraw;
-    //
-    //     std::cout << "started a game with the analyzer..." << std::endl;
-    //     std::string input;
-    //     boardDraw.draw(chessBoard);
-    //     while (true) {
-    //         std::cin >> input;
-    //         if (input == "quit") break;
-    //         const GameState game_state = chessBoard.handleInput(input);
-    //         boardDraw.draw(chessBoard);
-    //         auto getAttackerBoard = boardAnalyzer.getAttackedMatrix();
-    //         auto getDefenderBoard = boardAnalyzer.getDefendedMatrix();
-    //         std::cout << std::format("attacking total: {}\ndefending total: {}",
-    //                                  ChessAnalyzer::boardMatrixSize(getAttackerBoard, chessBoard.isWhitesTurn()),
-    //                                  ChessAnalyzer::boardMatrixSize(getDefenderBoard, chessBoard.isWhitesTurn()))
-    //                   << std::endl;
-    //         auto freePieces = boardAnalyzer.getFreePieces(getAttackerBoard, getDefenderBoard, chessBoard.isWhitesTurn());
-    //         for (const auto *piece : freePieces) {
-    //             std::cout << std::format("can take: {} at x:{} y:{}", piece->piece->getFullName(), piece->getX() + 1, piece->getY() + 1)
-    //                       << std::endl;
-    //         }
-    //         std::cout << std::format("piece value of white: {}, black: {}", boardAnalyzer.getPieceValue(true),
-    //                                  boardAnalyzer.getPieceValue(false))
-    //                   << std::endl;
-    //         std::cout << std::format("pawn advancement of white: {}, black; {}", boardAnalyzer.evalPawnStruct(true),
-    //                                  boardAnalyzer.evalPawnStruct(false))
-    //                   << std::endl;
-    //         std::cout << std::format("the kings protection score is: {}", boardAnalyzer.evalKingProtection(true)) << std::endl;
-    //         std::cout << std::format("the evaluated result of this board for the current player is: {}",
-    //                                  boardAnalyzer.evalCurrPosition(chessBoard.isWhitesTurn()))
-    //                   << std::endl;
-    //         auto bestMovesSorted = boardAnalyzer.getBestEvalMoves(1);
-    //         std::cout << std::format("recommended next move is: {}, which has the evaluation of: {}", bestMovesSorted.at(0).second,
-    //                                  bestMovesSorted.at(0).first)
-    //                   << std::endl;
-    //
-    //         if (game_state != GameState::IN_PROGRESS) {
-    //             break;
-    //         }
-    //     }
+//     ChessBoard chessBoard(false);
+//     ChessAnalyzer boardAnalyzer(chessBoard);
+//     ChessBoardDraw boardDraw;
+//
+//     std::cout << "started a game with the analyzer..." << std::endl;
+//     std::string input;
+//     boardDraw.draw(chessBoard);
+//     while (true) {
+//         std::cin >> input;
+//         if (input == "quit") break;
+//         const GameState game_state = chessBoard.handleInput(input);
+//         boardDraw.draw(chessBoard);
+//         auto getAttackerBoard = boardAnalyzer.getAttackedMatrix();
+//         auto getDefenderBoard = boardAnalyzer.getDefendedMatrix();
+//         std::cout << std::format("attacking total: {}\ndefending total: {}",
+//                                  ChessAnalyzer::boardMatrixSize(getAttackerBoard, chessBoard.isWhitesTurn()),
+//                                  ChessAnalyzer::boardMatrixSize(getDefenderBoard, chessBoard.isWhitesTurn()))
+//                   << std::endl;
+//         auto freePieces = boardAnalyzer.getFreePieces(getAttackerBoard, getDefenderBoard, chessBoard.isWhitesTurn());
+//         for (const auto *piece : freePieces) {
+//             std::cout << std::format("can take: {} at x:{} y:{}", piece->piece->getFullName(), piece->getX() + 1, piece->getY() + 1)
+//                       << std::endl;
+//         }
+//         std::cout << std::format("piece value of white: {}, black: {}", boardAnalyzer.getPieceValue(true),
+//                                  boardAnalyzer.getPieceValue(false))
+//                   << std::endl;
+//         std::cout << std::format("pawn advancement of white: {}, black; {}", boardAnalyzer.evalPawnStruct(true),
+//                                  boardAnalyzer.evalPawnStruct(false))
+//                   << std::endl;
+//         std::cout << std::format("the kings protection score is: {}", boardAnalyzer.evalKingProtection(true)) << std::endl;
+//         std::cout << std::format("the evaluated result of this board for the current player is: {}",
+//                                  boardAnalyzer.evalCurrPosition(chessBoard.isWhitesTurn()))
+//                   << std::endl;
+//         auto bestMovesSorted = boardAnalyzer.getBestEvalMoves(1);
+//         std::cout << std::format("recommended next move is: {}, which has the evaluation of: {}", bestMovesSorted.at(0).second,
+//                                  bestMovesSorted.at(0).first)
+//                   << std::endl;
+//
+//         if (game_state != GameState::IN_PROGRESS) {
+//             break;
+//         }
+//     }
 }
 
 void ChessInstance::loadDB() {}
@@ -370,7 +373,7 @@ std::optional<std::string> ChessInstance::inputLoop(ChessInterface &chessInterfa
 
             // check if input was a selection of another piece of current player
             auto newHighlightMoves = chessInterface.handleFromInput(toInput);
-            if (newHighlightMoves == std::nullopt) continue; // no new piece got selected
+            if (newHighlightMoves == std::nullopt) continue; // no new piece got selected 
             // set new from input variables
             fromInput = toInput;
             highlightMoves = newHighlightMoves;

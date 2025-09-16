@@ -39,6 +39,7 @@ Input
 - ml with database data
 - better board analyzer
 - refactor chessInstance
+- add colors to current moves (from and where)
 
 ### Build
 

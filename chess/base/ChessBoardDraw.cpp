@@ -40,12 +40,12 @@ void ChessBoardDraw::draw(const ChessBoard &board, const Pieces &highlightTiles)
             }
             if (_settings.useNerdFont) {
                 // use black pieces for both (still having different colors)
-                std::cout << " " << _blackNerdFontPieces.at(drawPiece.getShortName()) << " ";
-                // if (drawPiece.isWhite()) {
-                //     std::cout << " " << _blackNerdFontPieces.at(drawPiece.getShortName()) << " ";
-                // } else {
-                //     std::cout << " " << _blackNerdFontPieces.at(drawPiece.getShortName()) << " ";
-                // }
+                // std::cout << " " << _blackNerdFontPieces.at(drawPiece.getShortName()) << " ";
+                if (drawPiece.isWhite()) {
+                    std::cout << " " << _whiteNerdFontPieces.at(drawPiece.getShortName()) << " ";
+                } else {
+                    std::cout << " " << _blackNerdFontPieces.at(drawPiece.getShortName()) << " ";
+                }
             } else {
                 std::cout << " " << drawPiece.getShortName() << " ";
             }

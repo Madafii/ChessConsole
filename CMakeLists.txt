@@ -10,10 +10,13 @@ include_directories(${CMAKE_SOURCE_DIR}/chess/base)
 
 add_executable(chess_control main.cpp)
 
+# find_package(httplib)
+
 add_subdirectory(chess)
 add_subdirectory(scripts)
 add_subdirectory(tests)
 add_subdirectory(libs/libpqxx build-pqxx)
 add_subdirectory(libs/spdlog spdlog)
+add_subdirectory(libs/cpp-httplib httplib)
 
 target_link_libraries(chess_control PRIVATE chess)
