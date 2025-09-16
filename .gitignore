@@ -43,4 +43,4 @@ data/
 .cache
 
 # typescript
-chess/web/www/node_modules/
+node_modules/

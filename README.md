@@ -52,3 +52,11 @@ mkdir build
 cd build  
 cmake --build .  
 ./chess_control  
+
+### webserver changes
+
+- install Node and npm
+- cd /chess/web/www/
+- npm init -y
+- npm install --save-dev typescript
+- npx tsc
