@@ -21,8 +21,6 @@ enum class GameState { WON, DRAW, IN_PROGRESS };
 class ChessBoard {
   public:
     ChessBoard() { initBoard(); };
-    ChessBoard(const ChessBoard &other) = default;
-    ~ChessBoard() = default;
 
     // create the board
     void initBoard();

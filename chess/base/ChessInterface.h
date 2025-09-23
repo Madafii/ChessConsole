@@ -8,6 +8,8 @@
 class ChessInterface {
   public:
     explicit ChessInterface();
+    ChessInterface(const ChessInterface &other) = default;
+    ChessInterface &operator=(const ChessInterface &other);
 
     // handle inputs to the game
     std::optional<GameState> handleInput(std::string_view input);
@@ -21,9 +23,9 @@ class ChessInterface {
     ChessMoveLogic &getChessMoveLogic() { return chessLogic; }
 
   private:
-    ChessBoard chessBoard;
-    ChessMoveLogic chessLogic;
-    ChessBoardDraw chessDraw;
+    ChessBoard chessBoard = ChessBoard();
+    ChessMoveLogic chessLogic = ChessMoveLogic(chessBoard);
+    ChessBoardDraw chessDraw = ChessBoardDraw();
 
     // options for performance
     bool doGameStateCheck = true;

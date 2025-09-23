@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2017",
     "module": "ES2015",
-    "outDir": "../",
+    "outDir": "javascript",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true

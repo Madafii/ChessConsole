@@ -8,6 +8,12 @@
 
 ChessInterface::ChessInterface() : chessBoard(ChessBoard()), chessLogic(chessBoard), chessDraw(ChessBoardDraw()) {}
 
+ChessInterface &ChessInterface::operator=(const ChessInterface &other) {
+    chessBoard = other.chessBoard;
+    chessDraw = other.chessDraw;
+    return *this;
+}
+
 // handles input usually by a user with checks for wrong inputs
 std::optional<GameState> ChessInterface::handleInput(const std::string_view input) {
     const std::string color = chessBoard.isWhitesTurn() ? "white " : "black ";
@@ -71,13 +77,13 @@ void ChessInterface::handleMoveInputNoChecks(const std::string_view input, const
     chessLogic.resetCache();
 }
 
+// nullopt, when anything but your own piece. 0 possMoves does not return nullopt
 std::optional<Pieces> ChessInterface::handleFromInput(const std::string_view input) {
     if (const auto fromTile = getMoveTileFromInput(input)) {
         auto possMoves = chessLogic.getPossibleMovesUncached(*fromTile);
         chessLogic.filterPossibleMovesForChecks(*fromTile, possMoves);
         if (possMoves.size() <= 0) {
             std::cout << "no possible moves for this piece" << std::endl;
-            return std::nullopt;
         }
         return possMoves;
     }

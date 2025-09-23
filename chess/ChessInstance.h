@@ -23,6 +23,7 @@ class ChessInstance {
     void runAgainstPeepo();
     void runAgainstDatabase();
     void runWithAnalyzer();
+    void runWebInterface();
 
     void loadDB();
 

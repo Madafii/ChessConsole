@@ -24,6 +24,7 @@ ChessInstance::ChessInstance() {
     gameOptions.emplace("database", [this] { runAgainstDatabase(); }),
     gameOptions.emplace("peepo", [this] { runAgainstPeepo(); }),
     gameOptions.emplace("analyzer", [this] { runWithAnalyzer(); }),
+    gameOptions.emplace("web", [this] {runWebInterface(); }),
     gameOptions.emplace("loadDB", [this] { loadDB(); });
 
     std::cout << "Select the game you want to play: " << std::endl;
@@ -337,6 +338,38 @@ void ChessInstance::runWithAnalyzer() {
 //             break;
 //         }
 //     }
+}
+
+void ChessInstance::runWebInterface() {
+    std::cout << "-------------------started web interface-------------------" << std::endl;
+
+    ChessInterface chessInterface;
+
+    while (true) {
+        // input from piece
+        std::string fromInput;
+        std::cin >> fromInput;
+
+        // give possible moves options
+        auto possInputs = chessInterface.handleFromInput(fromInput);
+        if (!possInputs) {
+            std::cout << std::endl;
+            continue;
+        }
+        for (const auto &input : *possInputs) {
+            std::cout << input->getMove() << " ";
+        }
+
+        std::string toInput;
+        std::cin >> toInput;
+
+        for (const ChessTile *tile : *possInputs) {
+            if (toInput == tile->getMove()) {
+                chessInterface.handleMoveInput(std::format("{}:{}", fromInput, toInput));
+                continue;
+            }
+        }
+    }
 }
 
 void ChessInstance::loadDB() {}

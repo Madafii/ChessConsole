@@ -6,7 +6,7 @@
 #include <functional>
 #include <utility>
 
-ChessMoveLogic::ChessMoveLogic(const ChessBoard &board) : board(board) {}
+ChessMoveLogic::ChessMoveLogic(ChessBoard &board) : board(board) {}
 
 Pieces ChessMoveLogic::getPossibleMoves(const ChessTile &fromTile) {
     switch (fromTile.getPieceType()) {

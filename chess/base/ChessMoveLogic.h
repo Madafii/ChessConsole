@@ -12,7 +12,7 @@ class ChessMoveLogic {
     using possibleMovesFunc = std::function<Pieces(const ChessTile &fromTile)>;
 
   public:
-    explicit ChessMoveLogic(const ChessBoard &board);
+    explicit ChessMoveLogic(ChessBoard &board);
 
     const ChessBoard &getChessBoard() const { return board; }
 
