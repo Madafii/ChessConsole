@@ -10,18 +10,18 @@ type Pieces = Record<Side, Record<PieceName, string>>;
 // Unicode chess pieces
 const PIECES: Pieces = {
     white: {
-        king: '<img src="./pics/king.png">',
-        queen: '<img src="./pics/queen.png">',
-        rook: '<img src="./pics/rook.png">',
-        bishop: '<img src="./pics/bishop.png">',
-        knight: '<img src="./pics/knight.png">',
-        pawn: '<img src="./pics/pawn.png">',
-        // king: '\u2654',
-        // queen: '\u2655',
-        // rook: '\u2656',
-        // bishop: '\u2657',
-        // knight: '\u2658',
-        // pawn: '\u2659',
+        // king: '<img src="./pics/king.png">',
+        // queen: '<img src="./pics/queen.png">',
+        // rook: '<img src="./pics/rook.png">',
+        // bishop: '<img src="./pics/bishop.png">',
+        // knight: '<img src="./pics/knight.png">',
+        // pawn: '<img src="./pics/pawn.png">',
+        king: '\u2654',
+        queen: '\u2655',
+        rook: '\u2656',
+        bishop: '\u2657',
+        knight: '\u2658',
+        pawn: '\u2659',
     },
     black: {
         king: '\u265A',
@@ -31,6 +31,21 @@ const PIECES: Pieces = {
         knight: '\u265E',
         pawn: '\u265F',
     },
+};
+
+const SVR_PIECES: Record<string, string> = {
+    'k': PIECES.white.king,
+    'q': PIECES.white.queen,
+    'r': PIECES.white.rook,
+    'b': PIECES.white.bishop,
+    'n': PIECES.white.knight,
+    'p': PIECES.white.pawn,
+    'K': PIECES.black.king,
+    'Q': PIECES.black.queen,
+    'R': PIECES.black.rook,
+    'B': PIECES.black.bishop,
+    'N': PIECES.black.knight,
+    'P': PIECES.black.pawn,
 };
 
 const makePiece = (side: Side, name: PieceName): Square => ({
@@ -93,23 +108,6 @@ function dropHandler(ev: DragEvent) {
     const to = toSquare.getAttribute('data-square')?.toString();
     if (!to || from === to) return;
 
-    // make the move on server
-    fetch('/drag-end', {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: from + ":" + to,
-    }).then(res => {
-        if (!res.ok) throw new Error(res.statusText);
-        return res.text();
-    }).then(text => {
-        if (!text) {
-            console.log('no res text');
-        }
-        console.log(text);
-    }).catch(err => {
-        console.log(err);
-    })
-
     const { r: fr, f: ff } = coordToIndices(from);
     const { r: tr, f: tf } = coordToIndices(to);
 
@@ -134,11 +132,32 @@ function dropHandler(ev: DragEvent) {
     addPieceDragHandlers(newSpan);
     toSquare.appendChild(newSpan);
 
+    // make the move on server
+    fetch('/drag-end', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: from + ":" + to,
+    }).then(res => {
+        if (!res.ok) throw new Error(res.statusText);
+        return res.text();
+    }).then(text => {
+        if (!text) {
+            console.log('no res text');
+        }
+        console.log(text);
+        syncBoard(text);
+    }).catch(err => {
+        console.log(err);
+    })
+
+
     white = !white;
     document.querySelectorAll('.piece').forEach(piece => {
         const whiteStr: string = white ? 'white' : 'black';
         if (piece.classList[1] === whiteStr) {
             piece.setAttribute('draggable', 'true');
+        } else {
+            piece.removeAttribute('draggable');
         }
     });
 }
@@ -157,6 +176,7 @@ function dragEnterHandler(ev: DragEvent) {
 }
 
 function dragStartHandler(ev: DragEvent, span: HTMLSpanElement) {
+    if (!span.hasAttribute('draggable')) return;
     const parentSquare = span.parentElement;
     if (!parentSquare) return;
     const from = parentSquare.getAttribute('data-square');
@@ -253,10 +273,53 @@ function createBoard(): void {
     }
 }
 
+// sync js board with the one from server
+function syncBoard(board: string) {
+    // server and client board are reversed
+    let i = 0;
+    for (let r = 7; r > 0; r--) {
+        let file = STARTING_POSITION[r];
+        for (let f = 0; f < 8; f++) {
+            const piece = file[f];
+            const boardChar: string = board.charAt(i);
+            const charCode: number = boardChar.charCodeAt(0);
+            // lowercase is a white piece
+            const pieceSide: boolean = charCode >= 'a'.charCodeAt(0) && charCode <= 'z'.charCodeAt(0);
+            const position = String.fromCharCode('a'.charCodeAt(0) + f) + (8 - r).toString();
+            const selector = `div[data-square="${CSS.escape(position)}"]`
+            const square = document.querySelector<HTMLDivElement>(selector);
+            const span = square?.querySelector('.piece');
+            if (!piece && boardChar != '_') {
+                // server has piece but client does not
+                if (!span) {
+                    const span = document.createElement('span');
+                    span.classList.add('piece');
+                    span.classList.add(pieceSide ? 'white' : 'black');
+                    span.innerHTML = SVR_PIECES[boardChar];
+                    addPieceDragHandlers(span);
+                    square?.appendChild(span);
+                }
+            } else if (piece && boardChar === '_') {
+                span?.remove();
+                file[f] = null;
+            } else if (piece && piece.symbol != SVR_PIECES[boardChar]) {
+                // both have a piece but it is not the same
+                if (!span) {
+                    console.log('should not happen');
+                    return;
+                }
+                span.classList[1] = pieceSide ? 'white' : 'black';
+                span.innerHTML = SVR_PIECES[boardChar];
+            }
+            i++;
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // reset game
     createBoard();
-    fetch('/').then(res => {
+    fetch('/reset').then(res => {
         if (!res.ok) throw new Error(res.statusText);
     }).catch(err => {
         console.log(err);

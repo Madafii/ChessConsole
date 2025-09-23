@@ -1,4 +1,5 @@
 #include "ChessWebInterface.h"
+#include "ChessBoard.h"
 #include "ChessInterface.h"
 #include "httplib.h"
 // #include "nlohmann/json.hpp"
@@ -57,10 +58,16 @@ ChessWebInterface::ChessWebInterface() {
             res.set_content("could not make move", "text/plain");
             return;
         }
+        if (gameState == GameState::WON) {
+            res.status = 200;
+            res.set_content("you win!", "text/plain");
+            return;
+        }
 
-        // TODO: response should return gameState, maybe changes of pieces on special move. might just do it in js
+        // return current board position
+        const auto board = chessInterface.getChessBoard().getGameHistory().back();
         res.status = 200;
-        res.set_content("game still going", "text/plain");
+        res.set_content(board, "text/plain");
     });
 
     std::cout << "starting server" << std::endl;

@@ -4,18 +4,18 @@
 // Unicode chess pieces
 const PIECES = {
     white: {
-        king: '<img src="./pics/king.png">',
-        queen: '<img src="./pics/queen.png">',
-        rook: '<img src="./pics/rook.png">',
-        bishop: '<img src="./pics/bishop.png">',
-        knight: '<img src="./pics/knight.png">',
-        pawn: '<img src="./pics/pawn.png">',
-        // king: '\u2654',
-        // queen: '\u2655',
-        // rook: '\u2656',
-        // bishop: '\u2657',
-        // knight: '\u2658',
-        // pawn: '\u2659',
+        // king: '<img src="./pics/king.png">',
+        // queen: '<img src="./pics/queen.png">',
+        // rook: '<img src="./pics/rook.png">',
+        // bishop: '<img src="./pics/bishop.png">',
+        // knight: '<img src="./pics/knight.png">',
+        // pawn: '<img src="./pics/pawn.png">',
+        king: '\u2654',
+        queen: '\u2655',
+        rook: '\u2656',
+        bishop: '\u2657',
+        knight: '\u2658',
+        pawn: '\u2659',
     },
     black: {
         king: '\u265A',
@@ -25,6 +25,20 @@ const PIECES = {
         knight: '\u265E',
         pawn: '\u265F',
     },
+};
+const SVR_PIECES = {
+    'k': PIECES.white.king,
+    'q': PIECES.white.queen,
+    'r': PIECES.white.rook,
+    'b': PIECES.white.bishop,
+    'n': PIECES.white.knight,
+    'p': PIECES.white.pawn,
+    'K': PIECES.black.king,
+    'Q': PIECES.black.queen,
+    'R': PIECES.black.rook,
+    'B': PIECES.black.bishop,
+    'N': PIECES.black.knight,
+    'P': PIECES.black.pawn,
 };
 const makePiece = (side, name) => ({
     side,
@@ -78,23 +92,6 @@ function dropHandler(ev) {
     const to = (_a = toSquare.getAttribute('data-square')) === null || _a === void 0 ? void 0 : _a.toString();
     if (!to || from === to)
         return;
-    // make the move on server
-    fetch('/drag-end', {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: from + ":" + to,
-    }).then(res => {
-        if (!res.ok)
-            throw new Error(res.statusText);
-        return res.text();
-    }).then(text => {
-        if (!text) {
-            console.log('no res text');
-        }
-        console.log(text);
-    }).catch(err => {
-        console.log(err);
-    });
     const { r: fr, f: ff } = coordToIndices(from);
     const { r: tr, f: tf } = coordToIndices(to);
     const movingPiece = STARTING_POSITION[fr][ff];
@@ -115,11 +112,32 @@ function dropHandler(ev) {
     newSpan.innerHTML = movingPiece.symbol;
     addPieceDragHandlers(newSpan);
     toSquare.appendChild(newSpan);
+    // make the move on server
+    fetch('/drag-end', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: from + ":" + to,
+    }).then(res => {
+        if (!res.ok)
+            throw new Error(res.statusText);
+        return res.text();
+    }).then(text => {
+        if (!text) {
+            console.log('no res text');
+        }
+        console.log(text);
+        syncBoard(text);
+    }).catch(err => {
+        console.log(err);
+    });
     white = !white;
     document.querySelectorAll('.piece').forEach(piece => {
         const whiteStr = white ? 'white' : 'black';
         if (piece.classList[1] === whiteStr) {
             piece.setAttribute('draggable', 'true');
+        }
+        else {
+            piece.removeAttribute('draggable');
         }
     });
 }
@@ -138,6 +156,8 @@ function dragEnterHandler(ev) {
         ev.preventDefault();
 }
 function dragStartHandler(ev, span) {
+    if (!span.hasAttribute('draggable'))
+        return;
     const parentSquare = span.parentElement;
     if (!parentSquare)
         return;
@@ -220,6 +240,50 @@ function createBoard() {
             }
             addSquareDragHandlers(square);
             boardContainer.appendChild(square);
+        }
+    }
+}
+// sync js board with the one from server
+function syncBoard(board) {
+    // server and client board are reversed
+    let i = 0;
+    for (let r = 7; r > 0; r--) {
+        let file = STARTING_POSITION[r];
+        for (let f = 0; f < 8; f++) {
+            const piece = file[f];
+            const boardChar = board.charAt(i);
+            const charCode = boardChar.charCodeAt(0);
+            // lowercase is a white piece
+            const pieceSide = charCode >= 'a'.charCodeAt(0) && charCode <= 'z'.charCodeAt(0);
+            const position = String.fromCharCode('a'.charCodeAt(0) + f) + (8 - r).toString();
+            const selector = `div[data-square="${CSS.escape(position)}"]`;
+            const square = document.querySelector(selector);
+            const span = square === null || square === void 0 ? void 0 : square.querySelector('.piece');
+            if (!piece && boardChar != '_') {
+                // server has piece but client does not
+                if (!span) {
+                    const span = document.createElement('span');
+                    span.classList.add('piece');
+                    span.classList.add(pieceSide ? 'white' : 'black');
+                    span.innerHTML = SVR_PIECES[boardChar];
+                    addPieceDragHandlers(span);
+                    square === null || square === void 0 ? void 0 : square.appendChild(span);
+                }
+            }
+            else if (piece && boardChar === '_') {
+                span === null || span === void 0 ? void 0 : span.remove();
+                file[f] = null;
+            }
+            else if (piece && piece.symbol != SVR_PIECES[boardChar]) {
+                // both have a piece but it is not the same
+                if (!span) {
+                    console.log('should not happen');
+                    return;
+                }
+                span.classList[1] = pieceSide ? 'white' : 'black';
+                span.innerHTML = SVR_PIECES[boardChar];
+            }
+            i++;
         }
     }
 }
