@@ -77,7 +77,8 @@ std::string ChessPeepo::getRandomInputMove(ChessInterface &chessI) {
     while (true) {
         const int rndFromPiece = distrFrom(gen);
         const ChessTile *fromTile = allPieces.at(rndFromPiece);
-        possMoves = logic.getPossibleMoves(*fromTile);
+        possMoves = logic.getPossibleMovesUncached(*fromTile);
+        logic.filterPossibleMovesForChecks(*fromTile, possMoves);
         if (!possMoves.empty()) {
             input += fromTile->getMove() + ":";
             break;

@@ -11,7 +11,7 @@
 #include <tuple>
 
 ChessDatabaseInterface::ChessDatabaseInterface(const std::string &dbName)
-    : connection("dbname=" + dbName + " user=finnp password=Mcstinki+2314") {
+    : connection("dbname=" + dbName + " user=finnp password=password") {
     if (connection.is_open()) {
         std::cout << "Connected to: " << dbName << std::endl;
     } else {

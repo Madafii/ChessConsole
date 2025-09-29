@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "ESNext",
+    "strict": true,
+    "outDir": "javascript/",
+    "moduleResolution": "Node",
+    "skipLibCheck": true
+  },
+  // "include": ["src"]
+  "include": ["./**/*.ts"]
+}
