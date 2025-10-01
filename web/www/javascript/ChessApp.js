@@ -335,6 +335,6 @@ export class ChessApp {
         this.updateDraggableForTurn();
     }
     checkPawnWins(rank, piece) {
-        return piece.name == 'pawn' && rank == 0 || rank == 7;
+        return piece.name == 'pawn' && (rank == 0 || rank == 7);
     }
 }

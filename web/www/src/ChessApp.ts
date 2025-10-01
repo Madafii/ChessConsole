@@ -384,6 +384,6 @@ export class ChessApp {
     }
 
     private checkPawnWins(rank: number, piece: Piece): boolean {
-        return piece.name == 'pawn' && rank == 0 || rank == 7;
+        return piece.name == 'pawn' && (rank == 0 || rank == 7);
     }
 }
