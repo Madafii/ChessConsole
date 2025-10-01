@@ -51,7 +51,7 @@ std::string ChessBoard::getStringFromBoard() const {
         // black pieces in upper case
         outMoves += tile.getPiece().getShortName();
     }
-    // TODO: thinking of writing a separate function to know if a en Passant is possible
+    // TODO: thinking of writing a separate function to know if a en Passant is possible actual why I have this?
     if (enPassantPossibleLastMove) {
         outMoves += "1";
     }

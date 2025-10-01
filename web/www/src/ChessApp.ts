@@ -150,6 +150,32 @@ export class ChessApp {
         return span;
     }
 
+    private createPawnSelectionDiv(selectionDiv: HTMLDivElement, pieceChar: string, from: string, to: string): void {
+        const span = document.createElement('span');
+        span.classList.add('square');
+        span.classList.add('pawn-selection');
+        span.dataset.piece = pieceChar;
+        span.innerHTML = PIECES[this.turn][CHAR_TO_NAME[pieceChar.toLowerCase()]];
+        span.addEventListener('click', () => { this.onClickSelection(pieceChar, from, to); });
+        selectionDiv.appendChild(span);
+    }
+
+    private handlPawnWins(winSquare: HTMLDivElement, from: string, to: string): void {
+        // nothing draggable anymore
+        document.querySelectorAll<HTMLSpanElement>('.piece').forEach((el) => {
+            el.removeAttribute('draggable');
+        });
+
+        const selectionDiv = document.createElement('div');
+        selectionDiv.classList.add('selection');
+        winSquare.appendChild(selectionDiv);
+
+        this.createPawnSelectionDiv(selectionDiv, 'Q', from, to);
+        this.createPawnSelectionDiv(selectionDiv, 'R', from, to);
+        this.createPawnSelectionDiv(selectionDiv, 'B', from, to);
+        this.createPawnSelectionDiv(selectionDiv, 'N', from, to);
+    }
+
     private getSquareElement(coord: string): HTMLDivElement | null {
         return document.querySelector<HTMLDivElement>(`div[data-square="${CSS.escape(coord)}"]`);
     }
@@ -192,7 +218,17 @@ export class ChessApp {
         });
     }
 
-    // Drag & Drop Handlers
+    // Drag & Drop & Click Handlers
+    private onClickSelection(pieceChar: string, from: string, to: string) {
+        this.sendMove(from, to, '=' + pieceChar)
+            .then((serverBoard) => this.syncBoardFromString(serverBoard))
+            .catch(console.error);
+
+        this.updateDraggableForTurn();
+
+        // remove selection
+        document.querySelector('.selection')?.remove();
+    }
 
     private onDragStart(ev: DragEvent, span: HTMLSpanElement): void {
         if (!span.hasAttribute('draggable')) return;
@@ -261,6 +297,11 @@ export class ChessApp {
         this.dragFromSquare?.querySelector('.piece')?.remove();
         toSquareEl.querySelector('.piece')?.remove();
         toSquareEl.appendChild(this.createPieceElement(movingPiece));
+        if (this.checkPawnWins(tr, movingPiece)) {
+            this.onDragEnd(toSquareEl.querySelector('.piece') as HTMLSpanElement);
+            this.handlPawnWins(toSquareEl, from, to);
+            return;
+        }
 
         this.sendMove(from, to)
             .then((serverBoard) => this.syncBoardFromString(serverBoard))
@@ -304,11 +345,11 @@ export class ChessApp {
         return new Set(text.trim().length ? text.trim().split(/\s+/) : []);
     }
 
-    private async sendMove(from: string, to: string): Promise<string> {
+    private async sendMove(from: string, to: string, pawnChange: string = ''): Promise<string> {
         const res = await fetch(ENDPOINTS.DRAG_END, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
-            body: `${from}:${to}`,
+            body: `${from}:${to}${pawnChange}`,
         });
         if (!res.ok) throw new Error(res.statusText);
         return await res.text();
@@ -340,5 +381,9 @@ export class ChessApp {
             }
         }
         this.updateDraggableForTurn();
+    }
+
+    private checkPawnWins(rank: number, piece: Piece): boolean {
+        return piece.name == 'pawn' && rank == 0 || rank == 7;
     }
 }
