@@ -4,6 +4,7 @@
 #include "ChessInterface.h"
 #include "ChessLinkedListMoves.h"
 #include "ChessMoveLogic.h"
+#include "ChessPiece.h"
 #include <iostream>
 #include <memory>
 #include <random>
@@ -73,6 +74,7 @@ std::string ChessPeepo::getRandomInputMove(ChessInterface &chessI) {
     // find a random move
     Pieces possMoves;
     std::string input;
+    bool isPawn = false;
     // find a move that has at least one possible move
     while (true) {
         const int rndFromPiece = distrFrom(gen);
@@ -81,11 +83,23 @@ std::string ChessPeepo::getRandomInputMove(ChessInterface &chessI) {
         logic.filterPossibleMovesForChecks(*fromTile, possMoves);
         if (!possMoves.empty()) {
             input += fromTile->getMove() + ":";
+            if (fromTile->hasPiece(ChessPieceType::PAWN)) isPawn = true;
             break;
         }
     }
     std::uniform_int_distribution<> distrTo(0, static_cast<int>(possMoves.size()) - 1);
     const ChessTile *toTile = possMoves.at(distrTo(gen));
+    // pawn reached end rule
+    if (isPawn && (toTile->getY() == 7 || toTile->getY() == 0)) {
+        input += toTile->getMove();
+        std::uniform_int_distribution<> distrPawnWin(0, 3);
+        const int rndPawnWin = distrPawnWin(gen);
+        if (rndPawnWin == 0) input += "=q";
+        if (rndPawnWin == 1) input += "=r";
+        if (rndPawnWin == 2) input += "=b";
+        if (rndPawnWin == 3) input += "=n";
+        return input;
+    }
     input += toTile->getMove();
     return input;
 }

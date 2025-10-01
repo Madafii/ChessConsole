@@ -211,7 +211,7 @@ bool ChessBoard::validTilePos(std::string_view pos) {
 
 void ChessBoard::pawnWon(ChessTile &pawnTile, const char pawnToPiece) {
     const bool white = pawnTile.getPiece().isWhite();
-    switch (pawnToPiece) {
+    switch (std::toupper(pawnToPiece)) {
         case 'Q':
             pawnTile.changePiece(ChessPiece(ChessPieceType::QUEEN, white));
             break;
