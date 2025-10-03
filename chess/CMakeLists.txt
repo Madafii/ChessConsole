@@ -6,4 +6,4 @@ target_link_libraries(chess chessBase chessML)
 
 add_subdirectory(base)
 add_subdirectory(ML)
-# add_subdirectory(Analyzer)
+add_subdirectory(Analyzer)

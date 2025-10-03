@@ -82,6 +82,10 @@ Pieces ChessBoard::getAllBlackTiles() const {
     return blackTiles;
 }
 
+Pieces ChessBoard::getPieceType(bool white, ChessPieceType piece) const {
+    return white ? getWhitePieceType(piece) : getBlackPieceType(piece);
+}
+
 Pieces ChessBoard::getWhitePieceType(const ChessPieceType piece) const {
     Pieces whitePiecesType;
     for (auto &tile : board) {

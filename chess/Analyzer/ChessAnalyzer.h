@@ -5,6 +5,7 @@
 #include "ChessMoveLogic.h"
 #include "ChessPiece.h"
 #include <cstddef>
+#include <cstdint>
 #include <map>
 #include <string_view>
 #include <vector>
@@ -26,21 +27,24 @@
 class ChessAnalyzer {
   public:
     using oStrVec = std::optional<std::vector<std::string_view>>;
-    using boardMatrix = std::vector<std::pair<std::vector<ChessTile *>, std::vector<ChessTile *>>>;
+    using boardMatrix = std::array<std::pair<std::vector<const ChessTile *>, std::vector<const ChessTile *>>, boardSize>;
+    using valueMatrix = std::array<double, boardSize>;
     using int8Pair = std::pair<int8_t, int8_t>;
 
-    explicit ChessAnalyzer(ChessBoard &aboard);
+    explicit ChessAnalyzer(const ChessBoard &board);
 
     std::string startTerminalAnalyzer();
 
     oStrVec getForcedCheckmate(int depth);
-    std::vector<std::pair<double, std::string>> getBestEvalMoves();
-    std::vector<std::pair<double, std::string>> getBestEvalMoves(int depth);
+    // std::vector<std::pair<double, std::string>> getBestEvalMoves();
+    // std::vector<std::pair<double, std::string>> getBestEvalMoves(int depth);
 
     Pieces getFreePieces(const boardMatrix &attackMatr, const boardMatrix &defendMatr, bool white);
-
+    // get matrix covering all tiles by what piece is attacking it
     boardMatrix getAttackedMatrix();
+    // get matrix covering all defended pieces by who is defending it
     boardMatrix getDefendedMatrix();
+
     [[nodiscard]] static size_t boardMatrixSize(const boardMatrix &boardMatr, bool white);
     [[nodiscard]] Pieces getCoveredPieces(const boardMatrix &boardMat, bool white);
     [[nodiscard]] Pieces getCoveredTiles(const boardMatrix &boardMat, bool white);
@@ -48,16 +52,27 @@ class ChessAnalyzer {
     [[nodiscard]] int getPieceValue(bool white);
     [[nodiscard]] int getPieceValueDiff(bool white);
 
+    double evalBoardValue(bool white);
+    double evalPieceValue(bool white);
     double evalCurrPosition(bool white);
     double evalPawnStruct(bool white);
     double evalKingProtection(bool white);
     double evalKingFirstMove(bool white);
 
   private:
-    ChessBoard origBoard;
+    const ChessBoard &origBoard;
     ChessMoveLogic chessLogic;
     const std::map<ChessPieceType, int> pieceValue = {{ChessPieceType::KING, 0},   {ChessPieceType::QUEEN, 9},  {ChessPieceType::ROOK, 5},
-                                                      {ChessPieceType::BISHOP, 3}, {ChessPieceType::KNIGHT, 3}, {ChessPieceType::PAWN, 1}};
+                                                      {ChessPieceType::BISHOP, 3}, {ChessPieceType::KNIGHT, 3}, {ChessPieceType::PAWN, 1},
+                                                      {ChessPieceType::NONE, 0}};
+    static constexpr std::array<uint8_t, boardSize> boardValue = {0, 1, 1, 1, 1, 1, 1, 0,
+                                                                  1, 2, 2, 2, 2, 2, 2, 1,
+                                                                  1, 2, 3, 3, 3, 3, 2, 1,
+                                                                  1, 2, 3, 3, 3, 3, 2, 1,
+                                                                  1, 2, 3, 3, 3, 3, 2, 1,
+                                                                  1, 2, 3, 3, 3, 3, 2, 1,
+                                                                  1, 2, 2, 2, 2, 2, 2, 1,
+                                                                  0, 1, 1, 1, 1, 1, 1, 0};
     const std::vector<int8Pair> directionsBishop = {std::pair(1, 1), std::pair(1, -1), std::pair(-1, 1), std::pair(-1, -1)};
     const std::vector<int8Pair> directionsKnight = {std::pair(2, 1), std::pair(2, -1), std::pair(-2, 1), std::pair(-2, -1),
                                                     std::pair(1, 2), std::pair(-1, 2), std::pair(1, -2), std::pair(-1, -2)};
@@ -65,7 +80,7 @@ class ChessAnalyzer {
     const std::vector<int8Pair> directionsQueen = {std::pair(0, 1), std::pair(0, -1), std::pair(1, 1),  std::pair(1, -1),
                                                    std::pair(1, 0), std::pair(-1, 0), std::pair(-1, 1), std::pair(-1, -1)};
 
-    // ------ weights for evaluation should amount to one (100%)-------
+    // ------ weights for evaluation should amount to one (100)-------
     static constexpr double weightPieceValue = 0.825;
     static constexpr double weightPawnValue = 0.03;
     static constexpr double weightKingValue = 0.005;
@@ -80,14 +95,14 @@ class ChessAnalyzer {
     void addToDefendMatrix(boardMatrix &defendedBy, bool white);
 
     // helper for attacker matrix
-    Pieces getPawnAttackingTiles(const ChessTile *pawnTile);
+    Pieces getPawnAttackingTiles(const ChessTile &pawnTile);
 
     // helper for defender matrix
-    Pieces getDefendedPieces(const ChessTile *fromTile);
-    Pieces getDefendedPiecesPawn(const ChessTile *fromTile);
-    Pieces getDefendedPiecesByDirection(const ChessTile *fromTile, const std::vector<int8Pair> &directions);
-    Pieces getDefendedPiecesByDirectionSingle(const ChessTile *fromTile, const std::vector<int8Pair> &directions);
-    static bool addIfDefending(const ChessTile *fromTile, ChessTile *toTile, Pieces &defendingMoves);
+    Pieces getDefendedPieces(const ChessTile &fromTile);
+    Pieces getDefendedPiecesPawn(const ChessTile &fromTile);
+    Pieces getDefendedPiecesByDirection(const ChessTile &fromTile, const std::vector<int8Pair> &directions);
+    Pieces getDefendedPiecesByDirectionSingle(const ChessTile &fromTile, const std::vector<int8Pair> &directions);
+    static bool addIfDefending(const ChessTile &fromTile, const ChessTile &toTile, Pieces &defendingMoves);
 
     // eval helper
     [[nodiscard]] static double getDiffPercentage(double player, double opponent);
