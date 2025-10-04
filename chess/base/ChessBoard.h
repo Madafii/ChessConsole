@@ -14,7 +14,7 @@ static constexpr int boardWidth = 8;
 static constexpr int boardHeight = 8;
 static constexpr int boardSize = boardWidth * boardHeight;
 
-using Pieces = std::vector<const ChessTile *>;
+using PieceTiles = std::vector<const ChessTile *>;
 using PiecePair = std::optional<std::pair<ChessTile *, ChessTile *>>;
 
 enum class GameState { WON, DRAW, IN_PROGRESS };
@@ -52,13 +52,13 @@ class ChessBoard {
     auto getLastDoublePawnMove() const -> std::pair<int, int> { return doublePawnMoveAt; }
 
     // get tiles
-    Pieces getAllPiecesFor(bool white, ChessPieceType piece) const;
-    Pieces getAllTiles(bool white) const { return white ? getAllWhiteTiles() : getAllBlackTiles(); }
-    Pieces getAllWhiteTiles() const;
-    Pieces getAllBlackTiles() const;
-    Pieces getPieceType(bool white, ChessPieceType piece) const;
-    Pieces getWhitePieceType(ChessPieceType piece) const;
-    Pieces getBlackPieceType(ChessPieceType piece) const;
+    PieceTiles getAllPiecesFor(bool white, ChessPieceType piece) const;
+    PieceTiles getAllTiles(bool white) const { return white ? getAllWhiteTiles() : getAllBlackTiles(); }
+    PieceTiles getAllWhiteTiles() const;
+    PieceTiles getAllBlackTiles() const;
+    PieceTiles getPieceType(bool white, ChessPieceType piece) const;
+    PieceTiles getWhitePieceType(ChessPieceType piece) const;
+    PieceTiles getBlackPieceType(ChessPieceType piece) const;
 
     // setters
     void setTurn(const bool white) { whitesTurn = white; }
@@ -91,7 +91,7 @@ class ChessBoard {
     std::string getStringFromBoard() const;
 
     static std::string getMoveName(const ChessTile &fromTile, const ChessTile &toTile);
-    static void mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge);
+    static void mergePossVec(PieceTiles &possibleMoves, PieceTiles possibleMovesMerge);
 
   private:
     // data of the board

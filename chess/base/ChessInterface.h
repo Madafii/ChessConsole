@@ -8,15 +8,16 @@
 class ChessInterface {
   public:
     explicit ChessInterface();
+    ChessInterface(const ChessBoard &board);
     ChessInterface(const ChessInterface &other) = default;
     ChessInterface &operator=(const ChessInterface &other);
 
     // handle inputs to the game
     std::optional<GameState> handleInput(std::string_view input);
     std::optional<GameState> handleMoveInput(std::string_view input);
-    std::optional<Pieces> handleFromInput(std::string_view input);
-    std::optional<ChessTile> handleToInput(std::string_view input, const Pieces &possMoves);
-    void handleMoveInputNoChecks(std::string_view input, bool enPassant);
+    std::optional<PieceTiles> handleFromInput(std::string_view input);
+    std::optional<ChessTile> handleToInput(std::string_view input, const PieceTiles &possMoves);
+    void handleMoveInputNoChecks(std::string_view input);
 
     // getters
     const ChessBoard &getChessBoard() const { return chessBoard; }

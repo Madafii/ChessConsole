@@ -4,6 +4,7 @@
 #include "gtest/gtest.h"
 #include <algorithm>
 #include <iterator>
+#include <string>
 #include <utility>
 
 // match types in tiles vector
@@ -98,7 +99,7 @@ TEST(matrixTests, defendMatrix) {
     EXPECT_EQ(defenderMatrix.at(51).first.size(), 0);
 }
 
-TEST(matrixTests, atttackMatrix) {
+TEST(matrixTests, attackMatrix) {
     ChessInterface chessInterface;
     ChessAnalyzer chessAna(chessInterface.getChessBoard());
 
@@ -157,4 +158,24 @@ TEST(matrixTests, atttackMatrix) {
     EXPECT_EQ(attackMatrix.at(45).second.size(), 2);
     EXPECT_TRUE(match(attackMatrix.at(45).second, {ChessPieceType::PAWN, ChessPieceType::KNIGHT}));
     EXPECT_FALSE(attackMatrix.at(45).second.front()->hasWhitePiece());
+}
+
+TEST(bestMovesTests, basicTests) {
+    ChessInterface chessInterface;
+    ChessAnalyzer chessAna(chessInterface.getChessBoard());
+
+    chessInterface.handleMoveInput("d2:d4");
+    chessInterface.handleMoveInput("d7:d5");
+    chessInterface.handleMoveInput("c1:f4");
+    chessInterface.handleMoveInput("b8:c6");
+    chessInterface.handleMoveInput("e2:e3");
+    chessInterface.handleMoveInput("g8:f6");
+    chessInterface.handleMoveInput("b1:d2");
+    chessInterface.handleMoveInput("e7:e6");
+    chessInterface.handleMoveInput("f1:d3");
+
+    const auto bestMoves = chessAna.getBestEvalMoves(1);
+    for (const auto &[value, move] : bestMoves) {
+        std::cout << "The best move is: " << move << " with a value of: " << std::to_string(value) << std::endl;
+    }
 }

@@ -1,6 +1,9 @@
 #include "ChessWebInterface.h"
+#include "ChessAnalyzer.h"
 #include "ChessBoard.h"
+#ifdef DATABASE
 #include "ChessDatabaseInterface.h"
+#endif
 #include "ChessInterface.h"
 #include "ChessPeepo.h"
 #include "httplib.h"
@@ -13,13 +16,15 @@ ChessWebInterface::ChessWebInterface() {
     // for testing create one chessInstance. I guess that makes it for every user the same board. So gotta learn how every user has its own
     // instance
     ChessInterface chessInterface;
+#ifdef DATABASE
     ChessDatabaseInterface chessDB("chessMoves");
+#endif
 
     GameState game_state = GameState::IN_PROGRESS;
     // will point to base board without moves
     table_pair gameDepth(0, false);
     int fromMoveId = 1;
-    bool random = false;
+    bool analyzer = false;
 
     httplib::Server svr;
 
@@ -34,7 +39,7 @@ ChessWebInterface::ChessWebInterface() {
         game_state = GameState::IN_PROGRESS;
         gameDepth = {0, false};
         fromMoveId = 1;
-        random = false;
+        analyzer = false;
         std::cout << "reset chess game" << std::endl;
         res.status = 200;
         res.set_content("game reseted", "text/plain");
@@ -79,13 +84,20 @@ ChessWebInterface::ChessWebInterface() {
             return;
         }
 
-        // after first random all others also random
-        if (random) {
+
+#ifdef DATABASE
+        // after first analyzer move all others also by analyzer
+        if (analyzer) {
             // could not find the move so make a random move
-            const std::string randomMove = ChessPeepo::getRandomInputMove(chessInterface);
-            std::cout << "the db makes the random move: " << randomMove << std::endl;
-            game_state = chessInterface.handleInput(randomMove).value();
-            random = true;
+            // const std::string randomMove = ChessPeepo::getRandomInputMove(chessInterface);
+            // std::cout << "the db makes the random move: " << randomMove << std::endl;
+            // game_state = chessInterface.handleInput(randomMove).value();
+            ChessAnalyzer chessAna(chessInterface.getChessBoard());
+            const auto bestMoves = chessAna.getBestEvalMoves(1);
+            const std::string bestMove = bestMoves.front().second;
+            std::cout << "analyzer making the move: " << bestMove << std::endl;
+            game_state = chessInterface.handleInput(bestMove).value();
+            analyzer = true;
 
             // return current board position
             const auto board = chessInterface.getChessBoard().getGameHistory().back();
@@ -122,11 +134,23 @@ ChessWebInterface::ChessWebInterface() {
             ++gameDepth;
         } else {
             // could not find the move so make a random move
-            const std::string randomMove = ChessPeepo::getRandomInputMove(chessInterface);
-            std::cout << "the db makes the random move: " << randomMove << std::endl;
-            game_state = chessInterface.handleInput(randomMove).value();
-            random = true;
+            // const std::string randomMove = ChessPeepo::getRandomInputMove(chessInterface);
+            // std::cout << "the db makes the random move: " << randomMove << std::endl;
+            // game_state = chessInterface.handleInput(randomMove).value();
+            ChessAnalyzer chessAna(chessInterface.getChessBoard());
+            const auto bestMoves = chessAna.getBestEvalMoves(1);
+            const std::string bestMove = bestMoves.front().second;
+            std::cout << "analyzer making the move: " << bestMove << std::endl;
+            game_state = chessInterface.handleInput(bestMove).value();
+            analyzer = true;
         }
+#else
+        ChessAnalyzer chessAna(chessInterface.getChessBoard());
+        const auto bestMoves = chessAna.getBestEvalMoves(1);
+        const std::string bestMove = bestMoves.front().second;
+        std::cout << "analyzer making the move: " << bestMove << std::endl;
+        game_state = chessInterface.handleInput(bestMove).value();
+#endif
 
         // return current board position
         const auto board = chessInterface.getChessBoard().getGameHistory().back();

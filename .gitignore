@@ -44,3 +44,6 @@ data/
 
 # typescript
 node_modules/
+
+# private data
+private/

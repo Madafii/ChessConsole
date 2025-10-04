@@ -11,4 +11,4 @@ add_library(
 
 target_include_directories(chessML PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 # target_link_libraries(chessML chessBase chessAnalyzer pqxx spdlog)
-target_link_libraries(chessML chessBase pqxx spdlog)
+target_link_libraries(chessML chessBase pqxx)

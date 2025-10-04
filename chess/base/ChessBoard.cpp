@@ -64,8 +64,8 @@ std::string ChessBoard::getMoveName(const ChessTile &fromTile, const ChessTile &
     return fromStr + ":" + toStr;
 }
 
-Pieces ChessBoard::getAllWhiteTiles() const {
-    Pieces whiteTiles;
+PieceTiles ChessBoard::getAllWhiteTiles() const {
+    PieceTiles whiteTiles;
     for (auto &tile : board) {
         if (tile.hasPiece(ChessPieceType::NONE)) continue;
         if (tile.getPiece().isWhite()) whiteTiles.push_back(&tile);
@@ -73,8 +73,8 @@ Pieces ChessBoard::getAllWhiteTiles() const {
     return whiteTiles;
 }
 
-Pieces ChessBoard::getAllBlackTiles() const {
-    Pieces blackTiles;
+PieceTiles ChessBoard::getAllBlackTiles() const {
+    PieceTiles blackTiles;
     for (auto &tile : board) {
         if (tile.hasPiece(ChessPieceType::NONE)) continue;
         if (!tile.getPiece().isWhite()) blackTiles.push_back(&tile);
@@ -82,12 +82,12 @@ Pieces ChessBoard::getAllBlackTiles() const {
     return blackTiles;
 }
 
-Pieces ChessBoard::getPieceType(bool white, ChessPieceType piece) const {
+PieceTiles ChessBoard::getPieceType(bool white, ChessPieceType piece) const {
     return white ? getWhitePieceType(piece) : getBlackPieceType(piece);
 }
 
-Pieces ChessBoard::getWhitePieceType(const ChessPieceType piece) const {
-    Pieces whitePiecesType;
+PieceTiles ChessBoard::getWhitePieceType(const ChessPieceType piece) const {
+    PieceTiles whitePiecesType;
     for (auto &tile : board) {
         if (tile.hasPiece(ChessPieceType::NONE)) continue;
         if (tile.getPiece().isWhite() && tile.getPiece().getType() == piece) {
@@ -97,8 +97,8 @@ Pieces ChessBoard::getWhitePieceType(const ChessPieceType piece) const {
     return whitePiecesType;
 }
 
-Pieces ChessBoard::getBlackPieceType(const ChessPieceType piece) const {
-    Pieces blackPiecesType;
+PieceTiles ChessBoard::getBlackPieceType(const ChessPieceType piece) const {
+    PieceTiles blackPiecesType;
     for (auto &tile : board) {
         if (tile.hasPiece(ChessPieceType::NONE)) continue;
         if (!tile.getPiece().isWhite() && tile.getPiece().getType() == piece) {
@@ -108,9 +108,9 @@ Pieces ChessBoard::getBlackPieceType(const ChessPieceType piece) const {
     return blackPiecesType;
 }
 
-Pieces ChessBoard::getAllPiecesFor(const bool white, const ChessPieceType piece) const {
-    Pieces pieces;
-    const Pieces colorPieceTiles = white ? getAllWhiteTiles() : getAllBlackTiles();
+PieceTiles ChessBoard::getAllPiecesFor(const bool white, const ChessPieceType piece) const {
+    PieceTiles pieces;
+    const PieceTiles colorPieceTiles = white ? getAllWhiteTiles() : getAllBlackTiles();
     for (const ChessTile *tile : colorPieceTiles) {
         if (tile->hasPiece(piece)) {
             pieces.push_back(tile);
@@ -156,7 +156,7 @@ void ChessBoard::movePawn(const ChessTile &fromTile, const ChessTile &toTile) {
         setLastDoublePawnMove({toTile.getX(), toTile.getY()});
         setEnPassantMarker(whitesTurn); // mark this turn for enPassant
     }
-    // that special move happened so extra rule with capturing
+    // enPassant happened so extra rule with capturing
     if (fromTile.getX() != toTile.getX() && toTile.getPiece().getType() == ChessPieceType::NONE) {
         const int whiteMove = whitesTurn ? -1 : 1;
         ChessTile &capturedPiece = getTileAt(toTile.getX(), toTile.getY() + whiteMove);
@@ -233,6 +233,6 @@ void ChessBoard::pawnWon(ChessTile &pawnTile, const char pawnToPiece) {
     }
 }
 
-void ChessBoard::mergePossVec(Pieces &possibleMoves, Pieces possibleMovesMerge) {
+void ChessBoard::mergePossVec(PieceTiles &possibleMoves, PieceTiles possibleMovesMerge) {
     possibleMoves.insert(possibleMoves.end(), possibleMovesMerge.begin(), possibleMovesMerge.end());
 }

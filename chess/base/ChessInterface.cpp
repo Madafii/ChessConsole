@@ -6,7 +6,9 @@
 #include <iostream>
 #include <optional>
 
-ChessInterface::ChessInterface() : chessBoard(ChessBoard()), chessLogic(chessBoard), chessDraw(ChessBoardDraw()) {}
+ChessInterface::ChessInterface() : chessBoard(ChessBoard()), chessLogic(chessBoard) {}
+
+ChessInterface::ChessInterface(const ChessBoard &board) : chessBoard(board), chessLogic(chessBoard) {}
 
 ChessInterface &ChessInterface::operator=(const ChessInterface &other) {
     chessBoard = other.chessBoard;
@@ -63,8 +65,7 @@ std::optional<GameState> ChessInterface::handleMoveInput(const std::string_view 
 /// input
 /// @param input the input move in from:to format
 /// @param enPassant if a enPassant is possible during this move
-void ChessInterface::handleMoveInputNoChecks(const std::string_view input, const bool enPassant) {
-    chessBoard.setEnPassantPossible(enPassant);
+void ChessInterface::handleMoveInputNoChecks(const std::string_view input) {
     auto [inputMove, pawnChangeTo] = splitMoveInput(input);
 
     // get the tiles directly
@@ -74,11 +75,10 @@ void ChessInterface::handleMoveInputNoChecks(const std::string_view input, const
     ChessTile &toTile = chessBoard.getTileAt(inputMove.substr(3));
 
     chessBoard.move(fromTile, toTile, pawnChangeTo);
-    chessLogic.resetCache();
 }
 
 // nullopt, when anything but your own piece. 0 possMoves does not return nullopt
-std::optional<Pieces> ChessInterface::handleFromInput(const std::string_view input) {
+std::optional<PieceTiles> ChessInterface::handleFromInput(const std::string_view input) {
     if (const auto fromTile = getMoveTileFromInput(input)) {
         auto possMoves = chessLogic.getPossibleMovesUncached(*fromTile);
         chessLogic.filterPossibleMovesForChecks(*fromTile, possMoves);
@@ -90,7 +90,7 @@ std::optional<Pieces> ChessInterface::handleFromInput(const std::string_view inp
     return std::nullopt;
 }
 
-std::optional<ChessTile> ChessInterface::handleToInput(std::string_view input, const Pieces &possMoves) {
+std::optional<ChessTile> ChessInterface::handleToInput(std::string_view input, const PieceTiles &possMoves) {
     if (!checkInputLength(input, 2)) return std::nullopt;
 
     const std::string internalTo = getInternalInput(input);

@@ -8,7 +8,7 @@
 
 ChessMoveLogic::ChessMoveLogic(const ChessBoard &board) : board(board) {}
 
-Pieces ChessMoveLogic::getPossibleMoves(const ChessTile &fromTile) {
+PieceTiles ChessMoveLogic::getPossibleMoves(const ChessTile &fromTile) {
     switch (fromTile.getPieceType()) {
         case PAWN:
             return getPossibleMovesCached(fromTile, std::bind(&ChessMoveLogic::getPossibleMovesPawn, this, std::placeholders::_1));
@@ -33,7 +33,7 @@ Pieces ChessMoveLogic::getPossibleMoves(const ChessTile &fromTile) {
 }
 
 // added because of recursion issues when checking castling moves
-Pieces ChessMoveLogic::getPossibleMovesNoCastling(const ChessTile &fromTile) {
+PieceTiles ChessMoveLogic::getPossibleMovesNoCastling(const ChessTile &fromTile) {
     switch (fromTile.getPieceType()) {
         case PAWN:
             return getPossibleMovesCached(fromTile, std::bind(&ChessMoveLogic::getPossibleMovesPawn, this, std::placeholders::_1));
@@ -52,7 +52,7 @@ Pieces ChessMoveLogic::getPossibleMovesNoCastling(const ChessTile &fromTile) {
     }
 }
 
-Pieces ChessMoveLogic::getPossibleMovesUncached(const ChessTile &fromTile) {
+PieceTiles ChessMoveLogic::getPossibleMovesUncached(const ChessTile &fromTile) {
     switch (fromTile.getPieceType()) {
         case PAWN:
             return getPossibleMovesPawn(fromTile);
@@ -71,7 +71,7 @@ Pieces ChessMoveLogic::getPossibleMovesUncached(const ChessTile &fromTile) {
     }
 }
 
-Pieces ChessMoveLogic::getPossibleMovesCached(const ChessTile &fromTile, const possibleMovesFunc &func) {
+PieceTiles ChessMoveLogic::getPossibleMovesCached(const ChessTile &fromTile, const possibleMovesFunc &func) {
     // const auto possMovesNoCache = func(fromTile);
     // return possMovesNoCache;
     if (!possibleMovesCache.contains(&fromTile)) {
@@ -82,8 +82,8 @@ Pieces ChessMoveLogic::getPossibleMovesCached(const ChessTile &fromTile, const p
     return possibleMovesCache.at(&fromTile);
 }
 
-Pieces ChessMoveLogic::getPossibleMovesPawn(const ChessTile &fromTile) {
-    Pieces possibleMoves;
+PieceTiles ChessMoveLogic::getPossibleMovesPawn(const ChessTile &fromTile) {
+    PieceTiles possibleMoves;
     const int x = fromTile.getX();
     const int y = fromTile.getY();
     const int white = fromTile.getPiece().isWhite() ? 1 : -1;
@@ -113,54 +113,54 @@ Pieces ChessMoveLogic::getPossibleMovesPawn(const ChessTile &fromTile) {
     return possibleMoves;
 }
 
-Pieces ChessMoveLogic::getPossibleMovesBishop(const ChessTile &fromTile) {
+PieceTiles ChessMoveLogic::getPossibleMovesBishop(const ChessTile &fromTile) {
     static const std::vector directions = {std::pair(1, 1), std::pair(1, -1), std::pair(-1, 1), std::pair(-1, -1)};
     return getPossibleMovesByDirection(fromTile, directions);
 }
 
-Pieces ChessMoveLogic::getPossibleMovesKnight(const ChessTile &fromTile) {
+PieceTiles ChessMoveLogic::getPossibleMovesKnight(const ChessTile &fromTile) {
     static const std::vector directions = {std::pair(2, 1), std::pair(2, -1), std::pair(-2, 1), std::pair(-2, -1),
                                            std::pair(1, 2), std::pair(-1, 2), std::pair(1, -2), std::pair(-1, -2)};
     return getPossibleMovesByDirectionSingle(fromTile, directions);
 }
 
-Pieces ChessMoveLogic::getPossibleMovesRook(const ChessTile &fromTile) {
+PieceTiles ChessMoveLogic::getPossibleMovesRook(const ChessTile &fromTile) {
     static const std::vector directions = {std::pair(0, 1), std::pair(0, -1), std::pair(-1, 0), std::pair(1, 0)};
     return getPossibleMovesByDirection(fromTile, directions);
 }
 
-Pieces ChessMoveLogic::getPossibleMovesQueen(const ChessTile &fromTile) {
+PieceTiles ChessMoveLogic::getPossibleMovesQueen(const ChessTile &fromTile) {
     static const std::vector directions = {std::pair(0, 1), std::pair(0, -1), std::pair(1, 1),  std::pair(1, -1),
                                            std::pair(1, 0), std::pair(-1, 0), std::pair(-1, 1), std::pair(-1, -1)};
     return getPossibleMovesByDirection(fromTile, directions);
 }
 
-Pieces ChessMoveLogic::getPossibleMovesKing(const ChessTile &fromTile) {
-    Pieces possibleMoves = getPossibleMovesKingSingle(fromTile);
+PieceTiles ChessMoveLogic::getPossibleMovesKing(const ChessTile &fromTile) {
+    PieceTiles possibleMoves = getPossibleMovesKingSingle(fromTile);
     ChessBoard::mergePossVec(possibleMoves, getPossibleMovesCastling(fromTile));
     return possibleMoves;
 }
 
-Pieces ChessMoveLogic::getPossibleMovesKingSingle(const ChessTile &fromTile) {
+PieceTiles ChessMoveLogic::getPossibleMovesKingSingle(const ChessTile &fromTile) {
     static const std::vector directions = {std::pair(0, 1), std::pair(0, -1), std::pair(1, 1),  std::pair(1, -1),
                                            std::pair(1, 0), std::pair(-1, 0), std::pair(-1, 1), std::pair(-1, -1)};
     return getPossibleMovesByDirectionSingle(fromTile, directions);
 }
 
-Pieces ChessMoveLogic::getPossibleMovesCastling(const ChessTile &fromTile) {
-    Pieces possibleMoves;
+PieceTiles ChessMoveLogic::getPossibleMovesCastling(const ChessTile &fromTile) {
+    PieceTiles possibleMoves;
     const int x = fromTile.getX();
     const int y = fromTile.getY();
     if (board.isWhitesTurn()) {
         const auto &[whiteRookLeft, whiteRookRight] = board.getWhiteRookMoved();
         if (!whiteRookLeft) {
-            const Pieces tilesToCheckLeft = getLeftCastleTiles(x, y);
+            const PieceTiles tilesToCheckLeft = getLeftCastleTiles(x, y);
             if (!isTileAttacked(false, tilesToCheckLeft) && isTileFree(tilesToCheckLeft)) {
                 possibleMoves.push_back(&board.getTileAt(x - 2, y));
             }
         }
         if (!whiteRookRight) {
-            const Pieces tilesToCheckRight = getRightCastleTiles(x, y);
+            const PieceTiles tilesToCheckRight = getRightCastleTiles(x, y);
             if (!isTileAttacked(false, tilesToCheckRight) && isTileFree(tilesToCheckRight)) {
                 possibleMoves.push_back(&board.getTileAt(x + 2, y));
             }
@@ -168,13 +168,13 @@ Pieces ChessMoveLogic::getPossibleMovesCastling(const ChessTile &fromTile) {
     } else {
         const auto &[blackRookLeft, blackRookRight] = board.getBlackRookMoved();
         if (!blackRookLeft) {
-            const Pieces tilesToCheckLeft = getLeftCastleTiles(x, y);
+            const PieceTiles tilesToCheckLeft = getLeftCastleTiles(x, y);
             if (!isTileAttacked(true, tilesToCheckLeft) && isTileFree(tilesToCheckLeft)) {
                 possibleMoves.push_back(&board.getTileAt(x - 2, y));
             }
         }
         if (!blackRookRight) {
-            const Pieces tilesToCheckRight = getRightCastleTiles(x, y);
+            const PieceTiles tilesToCheckRight = getRightCastleTiles(x, y);
             if (!isTileAttacked(true, tilesToCheckRight) && isTileFree(tilesToCheckRight)) {
                 possibleMoves.push_back(&board.getTileAt(x + 2, y));
             }
@@ -183,8 +183,8 @@ Pieces ChessMoveLogic::getPossibleMovesCastling(const ChessTile &fromTile) {
     return possibleMoves;
 }
 
-Pieces ChessMoveLogic::getPossibleMovesByDirection(const ChessTile &fromTile, const std::vector<std::pair<int, int>> &directions) const {
-    Pieces possibleMoves;
+PieceTiles ChessMoveLogic::getPossibleMovesByDirection(const ChessTile &fromTile, const std::vector<std::pair<int, int>> &directions) const {
+    PieceTiles possibleMoves;
     const int x = fromTile.getX();
     const int y = fromTile.getY();
     for (const auto &[xDirection, yDirection] : directions) {
@@ -201,9 +201,9 @@ Pieces ChessMoveLogic::getPossibleMovesByDirection(const ChessTile &fromTile, co
     return possibleMoves;
 }
 
-Pieces ChessMoveLogic::getPossibleMovesByDirectionSingle(const ChessTile &fromTile,
+PieceTiles ChessMoveLogic::getPossibleMovesByDirectionSingle(const ChessTile &fromTile,
                                                          const std::vector<std::pair<int, int>> &directions) const {
-    Pieces possibleMoves;
+    PieceTiles possibleMoves;
     const int x = fromTile.getX();
     const int y = fromTile.getY();
     for (const auto &[xDirection, yDirection] : directions) {
@@ -217,11 +217,11 @@ Pieces ChessMoveLogic::getPossibleMovesByDirectionSingle(const ChessTile &fromTi
     return possibleMoves;
 }
 
-Pieces ChessMoveLogic::getAllPossibleMoves(const bool white) {
-    Pieces allPossibleMoves;
-    const Pieces pieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
+PieceTiles ChessMoveLogic::getAllPossibleMoves(const bool white) {
+    PieceTiles allPossibleMoves;
+    const PieceTiles pieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
     for (const ChessTile *tile : pieceTiles) {
-        Pieces newPossibleMoves = getPossibleMovesNoCastling(*tile);
+        PieceTiles newPossibleMoves = getPossibleMovesNoCastling(*tile);
         filterPossibleMovesForChecks(*tile, newPossibleMoves);
         ChessBoard::mergePossVec(allPossibleMoves, newPossibleMoves);
     }
@@ -230,9 +230,9 @@ Pieces ChessMoveLogic::getAllPossibleMoves(const bool white) {
 
 // TODO improve if I want to with better getAll.. but for single pieces not all
 // of them
-Pieces ChessMoveLogic::getAllPossibleMovesPiece(const bool white, const ChessPieceType piece) {
-    Pieces allPossibleMoves;
-    const Pieces colorPieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
+PieceTiles ChessMoveLogic::getAllPossibleMovesPiece(const bool white, const ChessPieceType piece) {
+    PieceTiles allPossibleMoves;
+    const PieceTiles colorPieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
     for (const ChessTile *tile : colorPieceTiles) {
         if (tile->hasPiece(piece)) {
             ChessBoard::mergePossVec(allPossibleMoves, getPossibleMoves(*tile));
@@ -243,14 +243,14 @@ Pieces ChessMoveLogic::getAllPossibleMovesPiece(const bool white, const ChessPie
 
 bool ChessMoveLogic::isInputMovePossible(const ChessTile &fromTile, const ChessTile &toTile) {
     // get the possible moves for the from tile
-    Pieces possibleMoves = getPossibleMoves(fromTile);
+    PieceTiles possibleMoves = getPossibleMoves(fromTile);
     filterPossibleMovesForChecks(fromTile, possibleMoves);
     // check if to tile is in those possible moves
     const auto itPossMove = std::ranges::find(possibleMoves, &toTile);
     return itPossMove != possibleMoves.end();
 }
 
-void ChessMoveLogic::filterPossibleMovesForChecks(const ChessTile &fromTile, Pieces &possibleMoves) {
+void ChessMoveLogic::filterPossibleMovesForChecks(const ChessTile &fromTile, PieceTiles &possibleMoves) {
     std::erase_if(possibleMoves, [this, &fromTile](const ChessTile *toTile) {
         // can not castle with checked king
         if (fromTile.hasPiece(KING) && std::abs(fromTile.getX() - toTile->getX()) == 2) {
@@ -261,7 +261,7 @@ void ChessMoveLogic::filterPossibleMovesForChecks(const ChessTile &fromTile, Pie
 }
 
 // returns true if it is a free tile
-bool ChessMoveLogic::addIfPossibleMove(const ChessTile &fromTile, const ChessTile &toTile, Pieces &possibleMoves) {
+bool ChessMoveLogic::addIfPossibleMove(const ChessTile &fromTile, const ChessTile &toTile, PieceTiles &possibleMoves) {
     if (!toTile.hasPiece(NONE)) {                                          // there is a piece
         if (fromTile.hasPiece(PAWN) && fromTile.getX() == toTile.getX()) { // pawn only piece that can't capture piece directly in its path
             return false;
@@ -279,10 +279,10 @@ bool ChessMoveLogic::addIfPossibleMove(const ChessTile &fromTile, const ChessTil
 }
 
 // check if tile attacked by @param white that color
-bool ChessMoveLogic::isTileAttacked(const bool white, const Pieces &tilesToCheck) {
-    const Pieces pieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
+bool ChessMoveLogic::isTileAttacked(const bool white, const PieceTiles &tilesToCheck) {
+    const PieceTiles pieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
     for (const ChessTile *tile : pieceTiles) {
-        const Pieces possMoves = getPossibleMovesNoCastling(*tile);
+        const PieceTiles possMoves = getPossibleMovesNoCastling(*tile);
         for (const ChessTile *tileToCheck : tilesToCheck) {
             if (std::ranges::find(possMoves, tileToCheck) != possMoves.end()) {
                 return true;
@@ -298,11 +298,11 @@ bool ChessMoveLogic::isTileAttacked(const bool white, const Pieces &tilesToCheck
 /// @param cached if the cached positions should be checked
 /// @return if color is checked
 bool ChessMoveLogic::isKingChecked(const bool white) {
-    const Pieces pieceTiles = !white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
+    const PieceTiles pieceTiles = !white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
     for (const ChessTile *tile : pieceTiles) {
         // if (tile->hasPiece(KING)) continue;
 
-        const Pieces possMoves = getPossibleMovesNoCastling(*tile);
+        const PieceTiles possMoves = getPossibleMovesNoCastling(*tile);
         const bool found = std::ranges::any_of(possMoves, [white](const ChessTile *possMove) {
             return possMove->hasPiece(KING) && possMove->hasWhitePiece() == white; 
         });
@@ -329,9 +329,9 @@ bool ChessMoveLogic::isKingCheckedAfterMove(const ChessTile &fromTile, const Che
 }
 
 bool ChessMoveLogic::isKingCheckmate(const bool white) {
-    const Pieces pieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
+    const PieceTiles pieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
     for (const ChessTile *tile : pieceTiles) {
-        Pieces possMoves = getPossibleMovesNoCastling(*tile);
+        PieceTiles possMoves = getPossibleMovesNoCastling(*tile);
         filterPossibleMovesForChecks(*tile, possMoves);
         if (!possMoves.empty()) {
             return false;
@@ -361,8 +361,8 @@ bool ChessMoveLogic::isThreefoldRepetition() const {
 }
 
 bool ChessMoveLogic::isDeadPosition() const {
-    const Pieces whitePieces = board.getAllWhiteTiles();
-    const Pieces blackPieces = board.getAllBlackTiles();
+    const PieceTiles whitePieces = board.getAllWhiteTiles();
+    const PieceTiles blackPieces = board.getAllBlackTiles();
     const size_t whiteSize = whitePieces.size();
     const size_t blackSize = blackPieces.size();
     if (whiteSize > 2 || blackSize > 2) return false;  // always still possible if more then two pieces

@@ -68,11 +68,11 @@ std::string ChessPeepo::getRandomInputMove(ChessInterface &chessI) {
     ChessMoveLogic &logic = chessI.getChessMoveLogic();
 
     // get respective color pieces
-    Pieces allPieces = board.isWhitesTurn() ? board.getAllWhiteTiles() : board.getAllBlackTiles();
+    PieceTiles allPieces = board.isWhitesTurn() ? board.getAllWhiteTiles() : board.getAllBlackTiles();
     std::uniform_int_distribution<> distrFrom(0, static_cast<int>(allPieces.size()) - 1);
 
     // find a random move
-    Pieces possMoves;
+    PieceTiles possMoves;
     std::string input;
     bool isPawn = false;
     // find a move that has at least one possible move

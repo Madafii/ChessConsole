@@ -61,11 +61,11 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, ChessMoveLogic &c
         if (Leftovers.size() >= 1) extra = input.substr(0, 1);
     }
     // find the piece To move
-    const Pieces pieces = chessLogic.getChessBoard().getAllPiecesFor(white, typeToMove);
+    const PieceTiles pieces = chessLogic.getChessBoard().getAllPiecesFor(white, typeToMove);
     const ChessTile *foundFromTile = nullptr;
     std::vector<std::pair<const ChessTile *, const ChessTile *>> foundMoves;
     for (const auto *piece : pieces) {
-        Pieces possibleMoves = chessLogic.getPossibleMoves(*piece);
+        PieceTiles possibleMoves = chessLogic.getPossibleMoves(*piece);
         auto it = std::ranges::find_if(possibleMoves, [&](const ChessTile *tile) {
             if (tile->getX() == ChessTile::mapXtoInt.at(moveTo[0]) && tile->getY() + 1 == moveTo[1] - '0') {
                 return true;
@@ -81,7 +81,7 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, ChessMoveLogic &c
     } else {
         for (const auto &[fromTile, toTile] : foundMoves) {
             // check if not possible by being checked
-            Pieces filterPieces{toTile};
+            PieceTiles filterPieces{toTile};
             chessLogic.filterPossibleMovesForChecks(*fromTile, filterPieces);
             if (filterPieces.size() == 0) continue;
             foundFromTile = fromTile;

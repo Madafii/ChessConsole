@@ -48,7 +48,7 @@ class ChessData {
     static std::string doPGNMove(const std::string &pgnMove, ChessInterface &chessInterface) {
         bool white = chessInterface.getChessBoard().isWhitesTurn();
         const std::string boardMove = ChessUtils::convertPGNToMyInput(pgnMove, chessInterface.getChessMoveLogic(), white);
-        chessInterface.handleMoveInputNoChecks(boardMove, false);
+        chessInterface.handleMoveInputNoChecks(boardMove);
         return boardMove;
     }
 
