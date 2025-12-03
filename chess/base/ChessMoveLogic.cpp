@@ -219,7 +219,7 @@ PieceTiles ChessMoveLogic::getPossibleMovesByDirectionSingle(const ChessTile &fr
 
 PieceTiles ChessMoveLogic::getAllPossibleMoves(const bool white) {
     PieceTiles allPossibleMoves;
-    const PieceTiles pieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
+    const PieceTiles pieceTiles = board.getAllTiles(white);
     for (const ChessTile *tile : pieceTiles) {
         PieceTiles newPossibleMoves = getPossibleMovesNoCastling(*tile);
         filterPossibleMovesForChecks(*tile, newPossibleMoves);
@@ -232,11 +232,22 @@ PieceTiles ChessMoveLogic::getAllPossibleMoves(const bool white) {
 // of them
 PieceTiles ChessMoveLogic::getAllPossibleMovesPiece(const bool white, const ChessPieceType piece) {
     PieceTiles allPossibleMoves;
-    const PieceTiles colorPieceTiles = white ? board.getAllWhiteTiles() : board.getAllBlackTiles();
+    const PieceTiles colorPieceTiles = board.getAllTiles(white);
     for (const ChessTile *tile : colorPieceTiles) {
         if (tile->hasPiece(piece)) {
             ChessBoard::mergePossVec(allPossibleMoves, getPossibleMoves(*tile));
         }
+    }
+    return allPossibleMoves;
+}
+
+std::map<ChessTile, PieceTiles> ChessMoveLogic::getAllPossibleMovesMap(bool white) {
+    std::map<ChessTile, PieceTiles> allPossibleMoves;
+    const PieceTiles pieceTiles = board.getAllTiles(white);
+    for (const ChessTile *fromMove : pieceTiles) {
+        PieceTiles possMoves = getPossibleMoves(*fromMove);
+        filterPossibleMovesForChecks(*fromMove, possMoves);
+        allPossibleMoves[*fromMove] = possMoves;
     }
     return allPossibleMoves;
 }

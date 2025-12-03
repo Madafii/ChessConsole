@@ -125,7 +125,7 @@ void ChessBoard::move(ChessTile &fromTile, ChessTile &toTile, const char pawnToP
         case ChessPieceType::PAWN:
             movePawn(fromTile, toTile);
             break;
-        case ChessPieceType::KNIGHT:
+        case ChessPieceType::ROOK:
             moveRook(fromTile);
             break;
         case ChessPieceType::KING:

@@ -141,7 +141,7 @@ void ChessInstance::runWithChessData() {
     ChessData data;
     const std::string filename = "../data/lichess/outDataPGN/lichess_db_standard.rated_2013-01.txt";
     const std::string outFilename = "../data/lichess/outDataMoves/liches_db_rated_2013-01.txt";
-    data.convertPGNToMoves(filename, outFilename);
+    ChessData::convertPGNToMoves(filename, outFilename);
     // data.readSimpleGames(filename);
     // data.flushMovesToDB("chessMoves");
 

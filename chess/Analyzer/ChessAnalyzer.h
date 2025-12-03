@@ -29,6 +29,7 @@ class ChessAnalyzer {
     using oStrVec = std::optional<std::vector<std::string_view>>;
     using boardMatrix = std::array<std::pair<std::vector<const ChessTile *>, std::vector<const ChessTile *>>, boardSize>;
     using valueMatrix = std::array<double, boardSize>;
+    using evalVec = std::vector<std::pair<double, std::string>>;
     using int8Pair = std::pair<int8_t, int8_t>;
 
     explicit ChessAnalyzer(const ChessBoard &board);
@@ -54,11 +55,16 @@ class ChessAnalyzer {
     [[nodiscard]] int getPieceValueDiff(bool white);
 
     double evalBoard();
+    double evalPiece();
 
-    // single evals
+    // evals for whole board
     double evalBoardValue(bool white);
     double evalPieceValue(bool white);
-    double evalCastle(bool white);
+
+    // evals for single pieces
+    double evalPiece(const ChessTile &pieceTile, const ChessTile &toTile);
+    double evalKingMoves(const ChessTile &kingTile, const ChessTile &toTile);
+    double evalRookMoves(const ChessTile &rookTile);
 
     // not used now
     double evalCurrPosition(bool white);
@@ -75,8 +81,8 @@ class ChessAnalyzer {
     static constexpr std::array<uint8_t, boardSize> boardValue = {0, 1, 1, 1, 1, 1, 1, 0,
                                                                   1, 2, 2, 2, 2, 2, 2, 1,
                                                                   1, 2, 3, 3, 3, 3, 2, 1,
-                                                                  1, 2, 3, 3, 3, 3, 2, 1,
-                                                                  1, 2, 3, 3, 3, 3, 2, 1,
+                                                                  1, 2, 3, 4, 4, 3, 2, 1,
+                                                                  1, 2, 3, 4, 4, 3, 2, 1,
                                                                   1, 2, 3, 3, 3, 3, 2, 1,
                                                                   1, 2, 2, 2, 2, 2, 2, 1,
                                                                   0, 1, 1, 1, 1, 1, 1, 0};

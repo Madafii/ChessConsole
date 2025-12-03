@@ -46,21 +46,21 @@ std::string ChessAnalyzer::startTerminalAnalyzer() {
 
 std::vector<std::pair<double, std::string>> ChessAnalyzer::getEvalMoves() {
     const bool white = origBoard.isWhitesTurn();
-    const PieceTiles pieces = origBoard.getAllTiles(white);
+    const auto moves = chessLogic.getAllPossibleMovesMap(white);
     std::vector<std::pair<double, std::string>> evalMovesList;
 
-    for (const ChessTile *fromMove : pieces) {
-        const std::string fromMoveStr = fromMove->getMove();
-        PieceTiles possMoves = chessLogic.getPossibleMoves(*fromMove);
-        chessLogic.filterPossibleMovesForChecks(*fromMove, possMoves);
-        for (const ChessTile *possMove : possMoves) {
+    for (const auto &[fromMove, toMoves] : moves) {
+        const std::string fromMoveStr = fromMove.getMove();
+        for (const ChessTile *possMove : toMoves) {
             // simulate move and analyze board after move was made
             ChessInterface simInterface(origBoard);
             const std::string move = fromMoveStr + ":" + possMove->getMove();
             simInterface.handleMoveInputNoChecks(move);
             ChessAnalyzer simAnalyzer(simInterface.getChessBoard());
             const double simEvalValue = white ? simAnalyzer.evalBoard() : -simAnalyzer.evalBoard();
-            evalMovesList.emplace_back(simEvalValue, move);
+            const double evalBonusValue = evalPiece(fromMove, *possMove) * std::abs(simEvalValue);
+            evalMovesList.emplace_back(simEvalValue + evalBonusValue, move);
+
         }
     }
 
@@ -71,15 +71,22 @@ std::vector<std::pair<double, std::string>> ChessAnalyzer::getEvalMoves() {
 
 // for now only implemented for depth of one, meaning check own board after a move and the possible reactions of opponent
 std::vector<std::pair<double, std::string>> ChessAnalyzer::getBestEvalMoves(const int depth) {
-    auto evalMoves = getEvalMoves();
+    const bool white = origBoard.isWhitesTurn();
+    const auto moves = chessLogic.getAllPossibleMovesMap(white);
+    evalVec evalMoves;
 
-    for (auto &[evalValue, move] : evalMoves) {
-        // make move and get eval moves for opponent. Choose their best move as new base eval move, so choose by worst case
-        ChessInterface simInterface(origBoard);
-        simInterface.handleMoveInputNoChecks(move);
-        ChessAnalyzer simAnalyzer(simInterface.getChessBoard());
-        const auto simEvalMoves = simAnalyzer.getEvalMoves();
-        evalValue = simEvalMoves.front().first;
+    for (const auto &[fromMove, toMoves] : moves) {
+        const std::string fromMoveStr = fromMove.getMove();
+        for (const ChessTile *toMove : toMoves) {
+            // make move and get eval moves for opponent. Choose their best move as new base eval move, so choose by worst case
+            ChessInterface simInterface(origBoard);
+            const std::string move = fromMoveStr + ":" + toMove->getMove();
+            simInterface.handleMoveInputNoChecks(move);
+            ChessAnalyzer simAnalyzer(simInterface.getChessBoard());
+            const auto simEvalMoves = simAnalyzer.getEvalMoves();
+            double evalValue = simEvalMoves.front().first;
+            evalMoves.emplace_back(evalValue, move);
+        }
     }
 
     // sort by lowest now because these values are the best for opponent
@@ -358,6 +365,44 @@ double ChessAnalyzer::evalPieceValue(bool white) {
         value += pieceValue.at(piece->getPieceType());
     }
     return value;
+}
+
+double ChessAnalyzer::evalPiece(const ChessTile &pieceTile, const ChessTile &toTile) {
+    switch (pieceTile.getPieceType()) {
+        case KING:
+            return evalKingMoves(pieceTile, toTile);
+        case ROOK:
+            return evalRookMoves(pieceTile);
+        default:
+            return 0;
+    }
+}
+
+double ChessAnalyzer::evalKingMoves(const ChessTile &kingTile, const ChessTile &toTile) {
+    double encourage = 0;
+    // encourage castling
+    if (std::abs(kingTile.getX() - toTile.getX()) >=2) {
+        encourage += 0.5;
+        return encourage;
+    }
+    // do not encourage moving before castling was done or is still possible
+    const auto &[leftRook, rightRook] = kingTile.hasWhitePiece() ? origBoard.getWhiteRookMoved() : origBoard.getBlackRookMoved();
+    if (!leftRook) encourage -= 0.25;
+    if (!rightRook) encourage -= 0.25;
+    return encourage;
+}
+
+double ChessAnalyzer::evalRookMoves(const ChessTile &rookTile) {
+    double encourage = 0;
+    const auto &[leftRook, rightRook] = rookTile.hasWhitePiece() ? origBoard.getWhiteRookMoved() : origBoard.getBlackRookMoved();
+    // do not encourage moving before castling was done or is still possible
+    if (!leftRook) {
+        if (rookTile.getX() == 0) encourage -= 0.25;
+    }
+    if (!rightRook) {
+        if (rookTile.getX() == 7) encourage -= 0.25;
+    }
+    return encourage;
 }
 
 void ChessAnalyzer::addToAttackedMatrix(boardMatrix &attackedBy, const bool white) {

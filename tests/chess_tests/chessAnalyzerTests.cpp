@@ -4,7 +4,6 @@
 #include "gtest/gtest.h"
 #include <algorithm>
 #include <iterator>
-#include <string>
 #include <utility>
 
 // match types in tiles vector
@@ -35,7 +34,7 @@ TEST(evalTests, evalBoardValue) {
     // make some moves then check board value
     chessInterface.handleInput("e2:e4"); // raise value by one
     chessInterface.handleInput("b8:a6"); // no change
-    EXPECT_EQ(chessAna.evalBoardValue(true), 21);
+    EXPECT_EQ(chessAna.evalBoardValue(true), 22);
     EXPECT_EQ(chessAna.evalBoardValue(false), 20);
 
     // some more inputs
@@ -43,7 +42,7 @@ TEST(evalTests, evalBoardValue) {
     chessInterface.handleInput("f7:f5"); // raise value by one
     chessInterface.handleInput("b1:c3"); // raise value by two
     chessInterface.handleInput("a6:c5"); // raise value by two
-    EXPECT_EQ(chessAna.evalBoardValue(true), 23);
+    EXPECT_EQ(chessAna.evalBoardValue(true), 24);
     EXPECT_EQ(chessAna.evalBoardValue(false), 23);
 }
 
@@ -70,6 +69,37 @@ TEST(evalTests, evalPieceValue) {
     chessInterface.handleInput("g4:d1");
     EXPECT_EQ(chessAna.evalPieceValue(true), 30);  // lost Queen -> lose 9 points
     EXPECT_EQ(chessAna.evalPieceValue(false), 36); // remains same
+}
+
+TEST(evalTests, evalKingMove) {
+    ChessBoard board;
+    ChessAnalyzer chessAna(board);
+    const ChessTile &kingTile = board.getTileAt(4);
+    // encourage castle move
+    EXPECT_GT(chessAna.evalKingMoves(kingTile, board.getTileAt(6)), 0);
+    // discourage king move if castling still possilbe
+    EXPECT_LT(chessAna.evalKingMoves(kingTile, board.getTileAt(5)), 0);
+    EXPECT_LT(chessAna.evalKingMoves(kingTile, board.getTileAt(3)), 0);
+}
+
+TEST(evalTests, evalRookMove) {
+    ChessInterface chessInterface;
+    const ChessBoard &board = chessInterface.getChessBoard();
+    ChessAnalyzer chessAna(board);
+    const ChessTile &leftRookTile = board.getTileAt(0);
+    const ChessTile &rightRookTile = board.getTileAt(7);
+    // discourage moving rook if castling still possible
+    EXPECT_LT(chessAna.evalRookMoves(leftRookTile), 0);
+    EXPECT_LT(chessAna.evalRookMoves(rightRookTile), 0);
+
+    chessInterface.handleMoveInput("b1:c3");
+    chessInterface.handleMoveInput("a7:a6");
+    chessInterface.handleMoveInput("a1:b1");
+    chessInterface.handleMoveInput("a6:a5");
+    chessInterface.handleMoveInput("b1:a1");
+
+    // left Rook already moved once so no encourage or discouragement for moving it
+    EXPECT_EQ(chessAna.evalRookMoves(leftRookTile), 0);
 }
 
 TEST(matrixTests, defendMatrix) {
@@ -175,7 +205,9 @@ TEST(bestMovesTests, basicTests) {
     chessInterface.handleMoveInput("f1:d3");
 
     const auto bestMoves = chessAna.getBestEvalMoves(1);
-    for (const auto &[value, move] : bestMoves) {
-        std::cout << "The best move is: " << move << " with a value of: " << std::to_string(value) << std::endl;
-    }
+    // for (const auto &[value, move] : bestMoves) {
+    //     std::cout << "The best move is: " << move << " with a value of: " << std::to_string(value) << std::endl;
+    // }
 }
+
+

@@ -22,6 +22,7 @@ class ChessMoveLogic {
     PieceTiles getPossibleMovesUncached(const ChessTile &fromTile);
     PieceTiles getAllPossibleMoves(bool white);
     PieceTiles getAllPossibleMovesPiece(bool white, ChessPieceType piece);
+    std::map<ChessTile, PieceTiles> getAllPossibleMovesMap(bool white);
 
     // manipulate a possible moves list
     void filterPossibleMovesForChecks(const ChessTile &fromTile, PieceTiles &possibleMoves);

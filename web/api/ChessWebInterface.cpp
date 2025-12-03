@@ -29,7 +29,7 @@ ChessWebInterface::ChessWebInterface() {
     httplib::Server svr;
 
     // auto ret = svr.set_mount_point("/", "/app/www");
-    auto ret = svr.set_mount_point("/", "./www"); // for localhost
+    auto ret = svr.set_mount_point("/", "./web/www"); // for localhost
     if (!ret) {
         std::cerr << "the specified mount point does not exist" << std::endl;
     }
