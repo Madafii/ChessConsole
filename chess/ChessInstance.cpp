@@ -1,13 +1,13 @@
 #include "ChessInstance.h"
-// #include "ChessAnalyzer.h"
 #include "ChessInterface.h"
 #include "ChessBoard.h"
 #include "ChessBoardDraw.h"
 #include "ChessData.h"
 #include "ChessDatabaseInterface.h"
 #include "ChessLinkedListMoves.h"
-#include "ChessMoveLogic.h"
 #include "ChessPeepo.h"
+#include "ChessConsoleUI.h"
+#include "ChessUI.h"
 
 #include <algorithm>
 #include <format>
@@ -25,7 +25,6 @@ ChessInstance::ChessInstance() {
     gameOptions.emplace("peepo", [this] { runAgainstPeepo(); }),
     gameOptions.emplace("analyzer", [this] { runWithAnalyzer(); }),
     gameOptions.emplace("web", [this] {runWebInterface(); }),
-    gameOptions.emplace("loadDB", [this] { loadDB(); });
 
     std::cout << "Select the game you want to play: " << std::endl;
     printGameOptions();
@@ -46,22 +45,8 @@ ChessInstance::ChessInstance() {
 ChessInstance::~ChessInstance() = default;
 
 void ChessInstance::run() {
-    ChessInterface chessInterface;
-    ChessBoardDraw boardDraw;
-
-    std::cout << "started a normal game..." << std::endl;
-    std::string input;
-    boardDraw.draw(chessInterface.getChessBoard());
-    while (true) {
-        std::cin >> input;
-        if (input == "quit") break;
-        if (const auto game_state = chessInterface.handleInput(input)) {
-            boardDraw.draw(chessInterface.getChessBoard());
-            if (game_state.value() != GameState::IN_PROGRESS) {
-                break;
-            }
-        }
-    }
+    ChessConsoleUI cc(PlayerType::ConsoleHuman, PlayerType::ConsoleHuman);
+    cc.start();
 }
 
 void ChessInstance::runRandom() {
@@ -241,7 +226,7 @@ void ChessInstance::runAgainstDatabase() {
     // your opponent
     ChessDatabaseInterface chessDB("chessMoves");
 
-    GameState game_state = GameState::IN_PROGRESS;
+    GameState game_state = GameState::InProgress;
 
     // setup
     table_pair gameDepth(0, false);
@@ -289,7 +274,7 @@ void ChessInstance::runAgainstDatabase() {
 
         chessDraw.draw(chessBoard);
 
-        if (game_state != GameState::IN_PROGRESS) {
+        if (game_state != GameState::InProgress) {
             break;
         }
     }
@@ -351,28 +336,26 @@ void ChessInstance::runWebInterface() {
         std::cin >> fromInput;
 
         // give possible moves options
-        auto possInputs = chessInterface.handleFromInput(fromInput);
+        auto possInputs = chessInterface.getPossibleMovesFromTile(fromInput);
         if (!possInputs) {
             std::cout << std::endl;
             continue;
         }
         for (const auto &input : *possInputs) {
-            std::cout << input->getMove() << " ";
+            std::cout << input->getPos() << " ";
         }
 
         std::string toInput;
         std::cin >> toInput;
 
         for (const ChessTile *tile : *possInputs) {
-            if (toInput == tile->getMove()) {
+            if (toInput == tile->getPos()) {
                 chessInterface.handleMoveInput(std::format("{}:{}", fromInput, toInput));
                 continue;
             }
         }
     }
 }
-
-void ChessInstance::loadDB() {}
 
 void ChessInstance::printGameOptions() {
     std::cout << "The options are: " << std::endl;
@@ -388,7 +371,7 @@ std::optional<std::string> ChessInstance::inputLoop(ChessInterface &chessInterfa
         std::cin >> fromInput;
         if (fromInput == "quit") return std::nullopt;
 
-        auto highlightMoves = chessInterface.handleFromInput(fromInput);
+        auto highlightMoves = chessInterface.getPossibleMovesFromTile(fromInput);
         if (highlightMoves == std::nullopt) continue; // no moves possible from this point
 
         chessDraw.draw(chessInterface.getChessBoard(), *highlightMoves);
@@ -400,12 +383,12 @@ std::optional<std::string> ChessInstance::inputLoop(ChessInterface &chessInterfa
             if (toInput == "quit") return std::nullopt;
 
             for (const ChessTile *tile : *highlightMoves) {
-                if (toInput == tile->getMove()) return std::format("{}:{}", fromInput, toInput);
+                if (toInput == tile->getPos()) return std::format("{}:{}", fromInput, toInput);
             }
             std::cout << "can not move to here, try another one" << std::endl;
 
             // check if input was a selection of another piece of current player
-            auto newHighlightMoves = chessInterface.handleFromInput(toInput);
+            auto newHighlightMoves = chessInterface.getPossibleMovesFromTile(toInput);
             if (newHighlightMoves == std::nullopt) continue; // no new piece got selected 
             // set new from input variables
             fromInput = toInput;

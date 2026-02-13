@@ -1,4 +1,5 @@
 #include "ChessBoard.h"
+#include "ChessPiece.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -59,8 +60,8 @@ std::string ChessBoard::getStringFromBoard() const {
 }
 
 std::string ChessBoard::getMoveName(const ChessTile &fromTile, const ChessTile &toTile) {
-    const std::string fromStr = ChessTile::mapIntToX.at(fromTile.getX()) + std::to_string(fromTile.getY() + 1);
-    const std::string toStr = ChessTile::mapIntToX.at(toTile.getX()) + std::to_string(toTile.getY() + 1);
+    const std::string fromStr = fromTile.getPos();
+    const std::string toStr = toTile.getPos();
     return fromStr + ":" + toStr;
 }
 
@@ -189,7 +190,7 @@ void ChessBoard::moveKing(const ChessTile &fromTile, const ChessTile &toTile) {
     }
 }
 
-inline void ChessBoard::moveRook(const ChessTile &fromTile) {
+void ChessBoard::moveRook(const ChessTile &fromTile) {
     const int x = fromTile.getX();
     const int y = fromTile.getY();
     // just mark them as moved
@@ -208,25 +209,20 @@ bool ChessBoard::validTilePos(std::string_view pos) {
     }
     const char xText = pos[0];
     if (xText != std::clamp(xText, 'a', 'h')) return false;
-    const int x = ChessTile::mapXtoInt.at(xText);
-    const int y = pos[1] - '0'; // is a trick to convert number char to int
+    const auto [x, y] = ChessTile::getPos(xText, pos[1]);
     return validTilePos(x, y);
 }
 
 void ChessBoard::pawnWon(ChessTile &pawnTile, const char pawnToPiece) {
     const bool white = pawnTile.getPiece().isWhite();
-    switch (std::toupper(pawnToPiece)) {
-        case 'Q':
-            pawnTile.changePiece(ChessPiece(ChessPieceType::QUEEN, white));
-            break;
-        case 'R':
-            pawnTile.changePiece(ChessPiece(ChessPieceType::ROOK, white));
-            break;
-        case 'B':
-            pawnTile.changePiece(ChessPiece(ChessPieceType::BISHOP, white));
-            break;
-        case 'N':
-            pawnTile.changePiece(ChessPiece(ChessPieceType::KNIGHT, white));
+    const ChessPieceType pieceType = ChessPiece::getTypeFromShort(std::toupper(pawnToPiece));
+
+    switch (pieceType) {
+        case ChessPieceType::QUEEN:
+        case ChessPieceType::ROOK:
+        case ChessPieceType::BISHOP:
+        case ChessPieceType::KNIGHT:
+            pawnTile.changePiece(ChessPiece(pieceType, white));
             break;
         default:
             break;

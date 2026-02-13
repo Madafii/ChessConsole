@@ -16,9 +16,10 @@ static constexpr int boardSize = boardWidth * boardHeight;
 
 using PieceTiles = std::vector<const ChessTile *>;
 using PiecePair = std::optional<std::pair<ChessTile *, ChessTile *>>;
+using PiecePairC = std::pair<const ChessTile *, const ChessTile *>;
 
-enum class GameState { WON, DRAW, IN_PROGRESS };
-enum class CastleSide { LEFT, RIGHT, BOTH, ANY };
+enum class GameState { Won, Draw, InProgress };
+enum class CastleSide { Left, Right, Both, Any };
 
 class ChessBoard {
   public:
@@ -31,14 +32,14 @@ class ChessBoard {
     bool isWhitesTurn() const { return whitesTurn; }
     bool isCastlePossible(CastleSide side, bool white) const { return white ? isWhiteCastlePossible(side) : isBlackCastlePossible(side); }
     bool isWhiteCastlePossible(CastleSide side) const {
-        return (side == CastleSide::LEFT && !whiteRookMoved.first) || (side == CastleSide::RIGHT && !whiteRookMoved.second) ||
-               (side == CastleSide::BOTH && !whiteRookMoved.first && !whiteRookMoved.second) || 
-               (side == CastleSide::ANY || !whiteRookMoved.first || !whiteRookMoved.second);
+        return (side == CastleSide::Left && !whiteRookMoved.first) || (side == CastleSide::Right && !whiteRookMoved.second) ||
+               (side == CastleSide::Both && !whiteRookMoved.first && !whiteRookMoved.second) ||
+               (side == CastleSide::Any || !whiteRookMoved.first || !whiteRookMoved.second);
     }
     bool isBlackCastlePossible(CastleSide side) const {
-        return (side == CastleSide::LEFT && !blackRookMoved.first) || (side == CastleSide::RIGHT && !blackRookMoved.second) ||
-               (side == CastleSide::BOTH && !blackRookMoved.first && !blackRookMoved.second) ||
-               (side == CastleSide::ANY || !blackRookMoved.first || !blackRookMoved.second);
+        return (side == CastleSide::Left && !blackRookMoved.first) || (side == CastleSide::Right && !blackRookMoved.second) ||
+               (side == CastleSide::Both && !blackRookMoved.first && !blackRookMoved.second) ||
+               (side == CastleSide::Any || !blackRookMoved.first || !blackRookMoved.second);
     }
     bool isEnPassantPossible() const { return enPassantPossibleLastMove; }
 
@@ -77,12 +78,14 @@ class ChessBoard {
 
     // board getters. direct access, so check valid pos first
     const ChessTile &getTileAt(const int x, const int y) const { return board[y * boardWidth + x]; }
+    const ChessTile &getTileAt(std::pair<int, int> pos) const { return board[pos.second * boardWidth + pos.first]; }
     const ChessTile &getTileAt(const int pos) const { return board[pos]; }
-    const ChessTile &getTileAt(const std::string_view pos) const { return getTileAt(ChessTile::mapXtoInt.at(pos[0]), pos[1] - '0'); }
+    const ChessTile &getTileAt(const std::string_view pos) const { return getTileAt(ChessTile::getPos(pos[0], pos[1])); }
 
     ChessTile &getTileAt(const int x, const int y) { return board[y * boardWidth + x]; }
+    ChessTile &getTileAt(const std::pair<int, int> &pos) { return board[pos.second * boardWidth + pos.first]; }
     ChessTile &getTileAt(const int pos) { return board[pos]; }
-    ChessTile &getTileAt(const std::string_view pos) { return getTileAt(ChessTile::mapXtoInt.at(pos[0]), pos[1] - '0'); }
+    ChessTile &getTileAt(const std::string_view pos) { return getTileAt(ChessTile::getPos(pos[0], pos[1])); }
 
     // TODO: might want to change this as it contains logic -> so split to logic?
     void move(ChessTile &fromTile, ChessTile &toTile, char pawnToPiece = '0');

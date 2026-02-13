@@ -25,8 +25,6 @@ class ChessInstance {
     void runWithAnalyzer();
     void runWebInterface();
 
-    void loadDB();
-
   private:
     std::map<std::string, runFunction> gameOptions;
 

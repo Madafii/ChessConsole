@@ -28,6 +28,10 @@ ChessPiece::ChessPiece(const ChessPieceType type, const bool white) : _type(type
             _short = 'P';
             _long = "Pawn";
             break;
+        case NONE:
+            _short = '_';
+            _long = "_";
+            break;
         default:
             _short = '?';
             _long = "?";
@@ -35,37 +39,10 @@ ChessPiece::ChessPiece(const ChessPieceType type, const bool white) : _type(type
     }
 }
 
-// ChessPiece::ChessPiece(const ChessPiece &other){
-//     _type = other._type;
-//     _white = other._white;
-//     _short = other._short;
-//     _long = other._long;
-// }
-
-// ChessPiece::ChessPiece(ChessPiece &&other) noexcept {
-//     this->_type = other._type;
-//     this->_long = other._long;
-//     this->_short = other._short;
-//     this->_white = other._white;
-// }
-
 ChessPieceType ChessPiece::getTypeFromShort(const char &shortName) {
-    using enum ChessPieceType;
-    switch (shortName) {
-        case 'K':
-            return KING;
-        case 'Q':
-            return QUEEN;
-        case 'B':
-            return BISHOP;
-        case 'N':
-            return KNIGHT;
-        case 'R':
-            return ROOK;
-        case 'P':
-            return PAWN;
-        default:
-            std::cout << "that is not a ChessPieceType" << std::endl;
-            return NONE;
+    if (_shortToEnum.contains(shortName)) {
+        return _shortToEnum[shortName];
     }
+    std::cerr << "that is not a ChessPieceType" << std::endl;
+    return ChessPieceType::NONE;
 }

@@ -34,6 +34,7 @@ std::string ChessAnalyzer::startTerminalAnalyzer() {
         std::cout << std::format("can take: {} at x:{} y:{}", piece->getPiece().getLongName(), piece->getX() + 1, piece->getY() + 1)
                   << std::endl;
     }
+    return "";
 }
 
 /// returns a vector of moves if a forced checkmate is possible
@@ -50,11 +51,11 @@ std::vector<std::pair<double, std::string>> ChessAnalyzer::getEvalMoves() {
     std::vector<std::pair<double, std::string>> evalMovesList;
 
     for (const auto &[fromMove, toMoves] : moves) {
-        const std::string fromMoveStr = fromMove.getMove();
+        const std::string fromMoveStr = fromMove.getPos();
         for (const ChessTile *possMove : toMoves) {
             // simulate move and analyze board after move was made
             ChessInterface simInterface(origBoard);
-            const std::string move = fromMoveStr + ":" + possMove->getMove();
+            const std::string move = fromMoveStr + ":" + possMove->getPos();
             simInterface.handleMoveInputNoChecks(move);
             ChessAnalyzer simAnalyzer(simInterface.getChessBoard());
             const double simEvalValue = white ? simAnalyzer.evalBoard() : -simAnalyzer.evalBoard();
@@ -76,11 +77,11 @@ std::vector<std::pair<double, std::string>> ChessAnalyzer::getBestEvalMoves(cons
     evalVec evalMoves;
 
     for (const auto &[fromMove, toMoves] : moves) {
-        const std::string fromMoveStr = fromMove.getMove();
+        const std::string fromMoveStr = fromMove.getPos();
         for (const ChessTile *toMove : toMoves) {
             // make move and get eval moves for opponent. Choose their best move as new base eval move, so choose by worst case
             ChessInterface simInterface(origBoard);
-            const std::string move = fromMoveStr + ":" + toMove->getMove();
+            const std::string move = fromMoveStr + ":" + toMove->getPos();
             simInterface.handleMoveInputNoChecks(move);
             ChessAnalyzer simAnalyzer(simInterface.getChessBoard());
             const auto simEvalMoves = simAnalyzer.getEvalMoves();
@@ -343,7 +344,7 @@ double ChessAnalyzer::evalKingProtection(const bool white) {
 
 // discourage moving the king before castling is still possible
 double ChessAnalyzer::evalKingFirstMove(bool white) {
-    if (origBoard.isCastlePossible(CastleSide::ANY, white)) return -100;
+    if (origBoard.isCastlePossible(CastleSide::Any, white)) return -100;
     return 0;
 }
 

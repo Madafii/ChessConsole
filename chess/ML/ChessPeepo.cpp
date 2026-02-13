@@ -82,7 +82,7 @@ std::string ChessPeepo::getRandomInputMove(ChessInterface &chessI) {
         possMoves = logic.getPossibleMovesUncached(*fromTile);
         logic.filterPossibleMovesForChecks(*fromTile, possMoves);
         if (!possMoves.empty()) {
-            input += fromTile->getMove() + ":";
+            input += fromTile->getPos() + ":";
             if (fromTile->hasPiece(ChessPieceType::PAWN)) isPawn = true;
             break;
         }
@@ -91,7 +91,7 @@ std::string ChessPeepo::getRandomInputMove(ChessInterface &chessI) {
     const ChessTile *toTile = possMoves.at(distrTo(gen));
     // pawn reached end rule
     if (isPawn && (toTile->getY() == 7 || toTile->getY() == 0)) {
-        input += toTile->getMove();
+        input += toTile->getPos();
         std::uniform_int_distribution<> distrPawnWin(0, 3);
         const int rndPawnWin = distrPawnWin(gen);
         if (rndPawnWin == 0) input += "=q";
@@ -100,7 +100,7 @@ std::string ChessPeepo::getRandomInputMove(ChessInterface &chessI) {
         if (rndPawnWin == 3) input += "=n";
         return input;
     }
-    input += toTile->getMove();
+    input += toTile->getPos();
     return input;
 }
 

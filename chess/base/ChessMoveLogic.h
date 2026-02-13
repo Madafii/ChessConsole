@@ -17,24 +17,24 @@ class ChessMoveLogic {
     const ChessBoard &getChessBoard() const { return board; }
 
     // finds possible moves
-    PieceTiles getPossibleMoves(const ChessTile &fromTile);
-    PieceTiles getPossibleMovesNoCastling(const ChessTile &fromTile);
-    PieceTiles getPossibleMovesUncached(const ChessTile &fromTile);
-    PieceTiles getAllPossibleMoves(bool white);
-    PieceTiles getAllPossibleMovesPiece(bool white, ChessPieceType piece);
-    std::map<ChessTile, PieceTiles> getAllPossibleMovesMap(bool white);
+    PieceTiles getPossibleMoves(const ChessTile &fromTile) const;
+    PieceTiles getPossibleMovesNoCastling(const ChessTile &fromTile) const;
+    PieceTiles getPossibleMovesUncached(const ChessTile &fromTile) const;
+    PieceTiles getAllPossibleMoves(bool white) const;
+    PieceTiles getAllPossibleMovesPiece(bool white, ChessPieceType piece) const;
+    std::map<ChessTile, PieceTiles> getAllPossibleMovesMap(bool white) const;
 
     // manipulate a possible moves list
-    void filterPossibleMovesForChecks(const ChessTile &fromTile, PieceTiles &possibleMoves);
+    void filterPossibleMovesForChecks(const ChessTile &fromTile, PieceTiles &possibleMoves) const;
     static bool addIfPossibleMove(const ChessTile &fromTile, const ChessTile &toTile, PieceTiles &possibleMoves);
 
     // checks for things on the board
-    bool isInputMovePossible(const ChessTile &fromTile, const ChessTile &toTile);
-    bool isTileAttacked(bool white, const PieceTiles &tilesToCheck);
-    bool isKingChecked(bool white);
-    bool isKingCheckedAfterMove(const ChessTile &fromTile, const ChessTile &toTile);
-    bool isKingCheckmate(bool white);
-    bool isDraw(bool white);
+    bool isInputMovePossible(const ChessTile &fromTile, const ChessTile &toTile) const;
+    bool isTileAttacked(bool white, const PieceTiles &tilesToCheck) const;
+    bool isKingChecked(bool white) const;
+    bool isKingCheckedAfterMove(const ChessTile &fromTile, const ChessTile &toTile) const;
+    bool isKingCheckmate(bool white) const;
+    bool isDraw(bool white) const;
     bool isThreefoldRepetition() const;
     bool isDeadPosition() const;
 
@@ -47,23 +47,23 @@ class ChessMoveLogic {
   private:
     const ChessBoard &board;
 
-    std::map<const ChessTile *, PieceTiles> possibleMovesCache;
+    mutable std::map<const ChessTile *, PieceTiles> possibleMovesCache;
 
     // helpers for find possible moves
-    PieceTiles getPossibleMovesCached(const ChessTile &fromTile, const possibleMovesFunc &func);
-    PieceTiles getPossibleMovesPawn(const ChessTile &fromTile);
-    PieceTiles getPossibleMovesBishop(const ChessTile &fromTile);
-    PieceTiles getPossibleMovesKnight(const ChessTile &fromTile);
-    PieceTiles getPossibleMovesRook(const ChessTile &fromTile);
-    PieceTiles getPossibleMovesQueen(const ChessTile &fromTile);
-    PieceTiles getPossibleMovesKing(const ChessTile &fromTile);
-    PieceTiles getPossibleMovesKingSingle(const ChessTile &fromTile);
-    PieceTiles getPossibleMovesCastling(const ChessTile &fromTile);
+    PieceTiles getPossibleMovesCached(const ChessTile &fromTile, const possibleMovesFunc &func) const;
+    PieceTiles getPossibleMovesPawn(const ChessTile &fromTile) const;
+    PieceTiles getPossibleMovesBishop(const ChessTile &fromTile) const;
+    PieceTiles getPossibleMovesKnight(const ChessTile &fromTile) const;
+    PieceTiles getPossibleMovesRook(const ChessTile &fromTile) const;
+    PieceTiles getPossibleMovesQueen(const ChessTile &fromTile) const;
+    PieceTiles getPossibleMovesKing(const ChessTile &fromTile) const;
+    PieceTiles getPossibleMovesKingSingle(const ChessTile &fromTile) const;
+    PieceTiles getPossibleMovesCastling(const ChessTile &fromTile) const;
     PieceTiles getPossibleMovesByDirection(const ChessTile &fromTile, const std::vector<std::pair<int, int>> &directions) const;
     PieceTiles getPossibleMovesByDirectionSingle(const ChessTile &fromTile, const std::vector<std::pair<int, int>> &directions) const;
 
-    PieceTiles getLeftCastleTiles(int x, int y) { return {&board.getTileAt(x - 1, y), &board.getTileAt(x - 2, y)}; }
-    PieceTiles getRightCastleTiles(int x, int y) { return {&board.getTileAt(x + 1, y), &board.getTileAt(x + 2, y)}; }
+    PieceTiles getLeftCastleTiles(int x, int y) const { return {&board.getTileAt(x - 1, y), &board.getTileAt(x - 2, y)}; }
+    PieceTiles getRightCastleTiles(int x, int y) const { return {&board.getTileAt(x + 1, y), &board.getTileAt(x + 2, y)}; }
 };
 
 #endif // CHESSMOVELOGIC_H

@@ -21,7 +21,7 @@ std::optional<GameState> ChessInterface::handleInput(const std::string_view inpu
     const std::string color = chessBoard.isWhitesTurn() ? "white " : "black ";
     if (input == "resign") {
         std::cout << color << "resigned" << std::endl;
-        return {GameState::WON};
+        return {GameState::Won};
     }
     if (input == "draw") {
         std::cout << color << "is offering a draw. Do you accept? Y or N" << std::endl;
@@ -29,9 +29,9 @@ std::optional<GameState> ChessInterface::handleInput(const std::string_view inpu
         std::cin >> answer;
         if (answer == "yes" || answer == "Yes" || answer == "y" || answer == "Y") {
             // every answer besides this is a no.
-            return {GameState::DRAW};
+            return {GameState::Draw};
         }
-        return {GameState::IN_PROGRESS};
+        return {GameState::InProgress};
     }
     // should be a move input
     return handleMoveInput(input);
@@ -78,7 +78,7 @@ void ChessInterface::handleMoveInputNoChecks(const std::string_view input) {
 }
 
 // nullopt, when anything but your own piece. 0 possMoves does not return nullopt
-std::optional<PieceTiles> ChessInterface::handleFromInput(const std::string_view input) {
+std::optional<PieceTiles> ChessInterface::getPossibleMovesFromTile(const std::string_view input) const {
     if (const auto fromTile = getMoveTileFromInput(input)) {
         auto possMoves = chessLogic.getPossibleMovesUncached(*fromTile);
         chessLogic.filterPossibleMovesForChecks(*fromTile, possMoves);
@@ -90,7 +90,7 @@ std::optional<PieceTiles> ChessInterface::handleFromInput(const std::string_view
     return std::nullopt;
 }
 
-std::optional<ChessTile> ChessInterface::handleToInput(std::string_view input, const PieceTiles &possMoves) {
+std::optional<ChessTile> ChessInterface::handleToInput(std::string_view input, const PieceTiles &possMoves) const {
     if (!checkInputLength(input, 2)) return std::nullopt;
 
     const std::string internalTo = getInternalInput(input);
@@ -103,14 +103,14 @@ std::optional<ChessTile> ChessInterface::handleToInput(std::string_view input, c
     return std::nullopt;
 }
 
-std::optional<ChessTile> ChessInterface::getMoveTileFromInput(const std::string_view input) {
+std::optional<ChessTile> ChessInterface::getMoveTileFromInput(const std::string_view input) const {
     if (!checkInputLength(input, 2)) return std::nullopt;
 
     // get position strings from the from:to format input
     const std::string internalFrom = getInternalInput(input);
     if (!checkValidTilePos({internalFrom})) return std::nullopt;
 
-    ChessTile &tile = chessBoard.getTileAt(internalFrom);
+    const ChessTile &tile = chessBoard.getTileAt(internalFrom);
     if (!checkFromTile(tile)) return std::nullopt;
     return tile;
 }
@@ -133,16 +133,16 @@ PiecePair ChessInterface::getMoveTilesFromInput(const std::string_view input) {
 GameState ChessInterface::checkGameState() {
     if (chessLogic.isDraw(chessBoard.isWhitesTurn())) {
         std::cout << "this game is a draw!" << std::endl;
-        return GameState::DRAW;
+        return GameState::Draw;
     }
     if (chessLogic.isKingCheckmate(chessBoard.isWhitesTurn())) {
         std::cout << "you won the game!" << std::endl;
-        return GameState::WON;
+        return GameState::Won;
     }
-    return GameState::IN_PROGRESS;
+    return GameState::InProgress;
 }
 
-bool ChessInterface::checkInputLength(std::string_view input, size_t length) {
+bool ChessInterface::checkInputLength(std::string_view input, size_t length) const {
     if (input.length() != length) {
         std::cout << std::format("length of the input should be {}", length) << std::endl;
         return false;
@@ -150,7 +150,7 @@ bool ChessInterface::checkInputLength(std::string_view input, size_t length) {
     return true;
 }
 
-bool ChessInterface::checkValidTilePos(const std::vector<std::string_view> &moves) {
+bool ChessInterface::checkValidTilePos(const std::vector<std::string_view> &moves) const {
     for (const std::string_view move : moves) {
         if (!ChessBoard::validTilePos(move)) {
             std::cout << "input not in range of the chess board" << std::endl;
@@ -160,7 +160,7 @@ bool ChessInterface::checkValidTilePos(const std::vector<std::string_view> &move
     return true;
 }
 
-bool ChessInterface::checkFromTile(const ChessTile &fromTile) {
+bool ChessInterface::checkFromTile(const ChessTile &fromTile) const {
     if (fromTile.hasPiece(ChessPieceType::NONE) || fromTile.hasWhitePiece() != chessBoard.isWhitesTurn()) {
         std::cout << "select one of your own pieces" << std::endl;
         return false;

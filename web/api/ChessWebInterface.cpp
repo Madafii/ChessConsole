@@ -20,7 +20,7 @@ ChessWebInterface::ChessWebInterface() {
     ChessDatabaseInterface chessDB("chessMoves");
 #endif
 
-    GameState game_state = GameState::IN_PROGRESS;
+    GameState game_state = GameState::InProgress;
     // will point to base board without moves
     table_pair gameDepth(0, false);
     int fromMoveId = 1;
@@ -36,7 +36,7 @@ ChessWebInterface::ChessWebInterface() {
 
     svr.Get("/reset", [&](const Request &req, Response &res) {
         chessInterface = ChessInterface();
-        game_state = GameState::IN_PROGRESS;
+        game_state = GameState::InProgress;
         gameDepth = {0, false};
         fromMoveId = 1;
         analyzer = false;
@@ -48,7 +48,7 @@ ChessWebInterface::ChessWebInterface() {
     svr.Post("/drag-start", [&](const Request &req, Response &res) {
         const std::string fromTile = req.body;
         std::cout << "fromTile: " << fromTile << std::endl;
-        const auto possMoves = chessInterface.handleFromInput(fromTile);
+        const auto possMoves = chessInterface.getPossibleMovesFromTile(fromTile);
         if (!possMoves) {
             // TODO: response for invalid input
             res.status = 400;
@@ -58,7 +58,7 @@ ChessWebInterface::ChessWebInterface() {
 
         std::string resPossMoves;
         for (const auto &possMove : *possMoves) {
-            resPossMoves.append(possMove->getMove() + " ");
+            resPossMoves.append(possMove->getPos() + " ");
         }
         if (resPossMoves.size() > 0) {
             resPossMoves.erase(resPossMoves.size() - 1);
@@ -78,7 +78,7 @@ ChessWebInterface::ChessWebInterface() {
             res.set_content("could not make move", "text/plain");
             return;
         }
-        if (gameState == GameState::WON) {
+        if (gameState == GameState::Won) {
             res.status = 200;
             res.set_content("you win!", "text/plain");
             return;

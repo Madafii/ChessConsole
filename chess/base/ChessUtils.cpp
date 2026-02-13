@@ -67,7 +67,8 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, ChessMoveLogic &c
     for (const auto *piece : pieces) {
         PieceTiles possibleMoves = chessLogic.getPossibleMoves(*piece);
         auto it = std::ranges::find_if(possibleMoves, [&](const ChessTile *tile) {
-            if (tile->getX() == ChessTile::mapXtoInt.at(moveTo[0]) && tile->getY() + 1 == moveTo[1] - '0') {
+            const auto [toX, toY] = ChessTile::getPos(moveTo[0], moveTo[1]);
+            if (tile->getX() == toX && tile->getY() + 1 == toY) {
                 return true;
             }
             return false;
@@ -86,7 +87,7 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, ChessMoveLogic &c
             if (filterPieces.size() == 0) continue;
             foundFromTile = fromTile;
             // is like a move hint if there are multiple same pieces that have the to move as a possibility
-            std::string tmpMoveTo = fromTile->getMove();
+            std::string tmpMoveTo = fromTile->getPos();
             if (extra.size() == 1) {
                 if (std::ranges::find(tmpMoveTo, extra[0]) != tmpMoveTo.end()) {
                     foundFromTile = fromTile;
@@ -101,7 +102,7 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, ChessMoveLogic &c
             }
         }
     }
-    std::string ret = foundFromTile->getMove() + ":" + std::string(moveTo);
+    std::string ret = foundFromTile->getPos() + ":" + std::string(moveTo);
     // pawn piece got changed
     if (pawnChange != 'L') {
         ret.append("=" + std::string(1, pawnChange));

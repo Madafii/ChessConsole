@@ -18,13 +18,13 @@ using namespace std;
 void doMovements(const strvec &moves) {
     ChessInterface chessInterface;
     for (const std::string &move : moves) {
-        if (chessInterface.handleMoveInput(move).value() != GameState::IN_PROGRESS) break;
+        if (chessInterface.handleMoveInput(move).value() != GameState::InProgress) break;
     }
 }
 
 void doMovements(ChessInterface &chessInterface, const strvec &moves) {
     for (const std::string &move : moves) {
-        if (chessInterface.handleMoveInput(move).value() != GameState::IN_PROGRESS) break;
+        if (chessInterface.handleMoveInput(move).value() != GameState::InProgress) break;
     }
 }
 
@@ -54,12 +54,12 @@ auto readInputFile(const string &fileName) -> vector<pair<string, vector<string>
 }
 
 GameState doMovementsFromPGN(ChessInterface &chessInterface, const strvec &moves) {
-    GameState currState = GameState::IN_PROGRESS;
+    GameState currState = GameState::InProgress;
     for (const std::string &move : moves) {
         const bool white = chessInterface.getChessBoard().isWhitesTurn();
         std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, chessInterface.getChessMoveLogic(), white);
         currState = chessInterface.handleMoveInput(inputMyChess).value();
-        if (currState != GameState::IN_PROGRESS) break;
+        if (currState != GameState::InProgress) break;
     }
     return currState;
 }
@@ -79,14 +79,14 @@ TEST(ChessInterfaceTests, testCheckmates) {
 
     for (const auto &[gameOutcome, moves] : movesTests) {
         ChessInterface chessInterface;
-        GameState gameState = GameState::IN_PROGRESS;
+        GameState gameState = GameState::InProgress;
         bool winningColor = gameOutcome[0] == '1';
         for (const auto &move : moves) {
             gameState = chessInterface.handleMoveInput(move).value();
         }
 
         // someone won and it is the correct color
-        EXPECT_EQ(gameState, GameState::WON);
+        EXPECT_EQ(gameState, GameState::Won);
         EXPECT_EQ(winningColor, !chessInterface.getChessBoard().isWhitesTurn());
     }
 }
@@ -107,7 +107,7 @@ TEST(basicChessTests, testPGNDraw) {
     ChessInterface chessInterface;
     GameState endState = doMovementsFromPGN(chessInterface, input);
 
-    EXPECT_EQ(GameState::DRAW, endState);
+    EXPECT_EQ(GameState::Draw, endState);
 }
 
 TEST(basicChessTests, testPGNConverterWin) {

@@ -16,11 +16,19 @@ void ChessBoardDraw::draw(const ChessBoard &board, const PieceTiles &highlightTi
         for (int x = 0; x < 8; ++x) {
             const ChessPiece &drawPiece = board.getTileAt(x, y).getPiece();
             if ((y + x) % 2 == 0) {
-                // Black square
-                std::cout << _backgroundColorBlack;
+                if (isHighlighted(x, y, highlightTiles)) {
+                    std::cout << _backgroundColorHighlightWhite;
+                } else {
+                    // White square
+                    std::cout << _backgroundColorWhite;
+                }
             } else {
-                // White square
-                std::cout << _backgroundColorWhite;
+                if (isHighlighted(x, y, highlightTiles)) {
+                    std::cout << _backgroundColorHighlightBlack;
+                } else {
+                    // Black square
+                    std::cout << _backgroundColorBlack;
+                }
             }
             if (drawPiece.isWhite()) {
                 // green
@@ -30,15 +38,8 @@ void ChessBoardDraw::draw(const ChessBoard &board, const PieceTiles &highlightTi
                 std::cout << _pieceColorBlack;
             }
             if (drawPiece.getType() == ChessPieceType::NONE) {
-                if (std::ranges::any_of(highlightTiles,
-                                        [x, y](const ChessTile *tile) { return tile->getX() == x && tile->getY() == y; })) {
-                    std::cout << "  ";
-                } else {
-                    std::cout << "   ";
-                }
-                continue;
-            }
-            if (_settings.useNerdFont) {
+                std::cout << "   ";
+            } else if (_settings.useNerdFont) {
                 // use black pieces for both (still having different colors)
                 // std::cout << " " << _blackNerdFontPieces.at(drawPiece.getShortName()) << " ";
                 if (drawPiece.isWhite()) {
@@ -53,4 +54,8 @@ void ChessBoardDraw::draw(const ChessBoard &board, const PieceTiles &highlightTi
         std::cout << _defaultColor << std::endl; // Reset to default color after each line
     }
     std::cout << "    a  b  c  d  e  f  g  h " << std::endl;
+}
+
+bool ChessBoardDraw::isHighlighted(int x, int y, const PieceTiles &highlightTiles) const {
+    return std::ranges::any_of(highlightTiles, [x, y](const ChessTile *tile) { return tile->getX() == x && tile->getY() == y; });
 }
