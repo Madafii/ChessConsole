@@ -7,7 +7,7 @@
 #include "ChessInterface.h"
 #include "ChessUI.h"
 
-ChessConsoleUI::ChessConsoleUI(PlayerType playerWhite, PlayerType playerBlack, const ChessBoardDrawSettings &settings)
+ChessConsoleUI::ChessConsoleUI(PlayerFactory playerWhite, PlayerFactory playerBlack, const ChessBoardDrawSettings &settings)
     : ChessUI(playerWhite, playerBlack), _boardDraw(ChessBoardDraw(settings)) {}
 
 void ChessConsoleUI::start() {

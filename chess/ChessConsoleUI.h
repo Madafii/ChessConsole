@@ -6,7 +6,7 @@
 
 class ChessConsoleUI : public ChessUI {
   public:
-    ChessConsoleUI(PlayerType playerWhite, PlayerType playerBlack, const ChessBoardDrawSettings &settings = ChessBoardDrawSettings());
+    ChessConsoleUI(PlayerFactory playerWhite, PlayerFactory playerBlack, const ChessBoardDrawSettings &settingsWhite = ChessBoardDrawSettings());
 
     void start() override;
 
