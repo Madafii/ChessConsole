@@ -23,7 +23,7 @@ class ChessInterface {
 
     // getters
     const ChessBoard &getChessBoard() const { return chessBoard; }
-    ChessMoveLogic &getChessMoveLogic() { return chessLogic; }
+    const ChessMoveLogic &getChessMoveLogic() const { return chessLogic; }
 
     GameState checkGameState();
 

@@ -82,9 +82,9 @@ std::optional<PieceTiles> ChessInterface::getPossibleMovesFromTile(const std::st
     if (const auto fromTile = getMoveTileFromInput(input)) {
         auto possMoves = chessLogic.getPossibleMovesUncached(*fromTile);
         chessLogic.filterPossibleMovesForChecks(*fromTile, possMoves);
-        if (possMoves.size() <= 0) {
-            std::cout << "no possible moves for this piece" << std::endl;
-        }
+        // if (possMoves.size() <= 0) {
+        //     std::cout << "no possible moves for this piece" << std::endl;
+        // }
         return possMoves;
     }
     return std::nullopt;

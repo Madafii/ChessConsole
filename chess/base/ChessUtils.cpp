@@ -1,7 +1,7 @@
 #include "ChessUtils.h"
 #include "ChessMoveLogic.h"
 
-std::string ChessUtils::convertPGNToMyInput(std::string input, ChessMoveLogic &chessLogic, const bool &white) {
+std::string ChessUtils::convertPGNToMyInput(std::string input, const ChessMoveLogic &chessLogic, const bool &white) {
     // ignore sume values in the input
     // Remove '+' characters
     std::erase(input, '+');

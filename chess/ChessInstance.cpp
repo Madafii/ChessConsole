@@ -8,23 +8,28 @@
 #include "ChessLinkedListMoves.h"
 #include "ChessPeepo.h"
 #include "ChessPlayerConsoleHuman.h"
+#include "ChessPlayerRnd.h"
 #include "ChessUI.h"
 
 #include <algorithm>
 #include <format>
 #include <iostream>
 #include <iterator>
+#include <memory>
 #include <optional>
 
 ChessInstance::ChessInstance() {
     // all game options
     gameOptions.emplace("normal", [this] { run(); });
-    gameOptions.emplace("random", [this] { runRandom(); }), gameOptions.emplace("againstRandom", [this] { runAgainstRandom(); }),
-        gameOptions.emplace("data", [this] { runWithChessData(); }), gameOptions.emplace("database", [this] { runAgainstDatabase(); }),
-        gameOptions.emplace("peepo", [this] { runAgainstPeepo(); }), gameOptions.emplace("analyzer", [this] { runWithAnalyzer(); }),
-        gameOptions.emplace("web", [this] { runWebInterface(); }),
+    gameOptions.emplace("random", [this] { runRandom(); });
+    gameOptions.emplace("againstRandom", [this] { runAgainstRandom(); });
+    gameOptions.emplace("data", [this] { runWithChessData(); });
+    gameOptions.emplace("database", [this] { runAgainstDatabase(); });
+    gameOptions.emplace("peepo", [this] { runAgainstPeepo(); });
+    gameOptions.emplace("analyzer", [this] { runWithAnalyzer(); });
+    gameOptions.emplace("web", [this] { runWebInterface(); });
 
-        std::cout << "Select the game you want to play: " << std::endl;
+    std::cout << "Select the game you want to play: " << std::endl;
     printGameOptions();
     std::string playOption;
     while (true) {
@@ -53,71 +58,18 @@ void ChessInstance::run() {
 }
 
 void ChessInstance::runRandom() {
-    // ChessBoard chessBoard;
-    // ChessMoveLogic chessLogic(chessBoard);
-    // ChessInterface chessInterface;
-    // std::random_device rd;
-    // std::mt19937 gen(rd());
-    // while (true) {
-    //     Pieces allPieces = chessBoard.isWhitesTurn() ? chessBoard.getAllWhiteTiles() : chessBoard.getAllBlackTiles();
-    //     std::uniform_int_distribution<> distrFrom(0, static_cast<int>(allPieces.size()) - 1);
-    //     std::string input;
-    //     Pieces possMoves;
-    //     while (true) {
-    //         const int rndFromPiece = distrFrom(gen);
-    //         const ChessTile *fromTile = allPieces.at(rndFromPiece);
-    //         possMoves = chessLogic.getPossibleMoves(*fromTile);
-    //         if (possMoves.size() != 0) {
-    //             input += fromTile->getMove() + ":";
-    //             break;
-    //         }
-    //     }
-    //     std::uniform_int_distribution<> distrTo(0, possMoves.size() - 1);
-    //     const int rndToPiece = distrTo(gen);
-    //     const ChessTile *toTile = possMoves.at(rndToPiece);
-    //     input += toTile->getMove();
-    //     const GameState game_state = chessInterface.handleMoveInput(input);
-    //     if (game_state != GameState::IN_PROGRESS) {
-    //         break;
-    //     }
-    // }
+    ChessBoardDrawSettings settings(false, true);
+    ChessConsoleUI cc([&settings](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerRnd>(chessInterface); },
+                      [](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerRnd>(chessInterface); }, settings);
+    cc.start();
 }
 
 void ChessInstance::runAgainstRandom() {
-    // bool white = true;
-    // ChessBoard chessBoard;
-    // std::random_device rd;
-    // std::mt19937 gen(rd());
-    // while (true) {
-    //     std::string input;
-    //     if (chessBoard.isWhitesTurn() == white) {
-    //         std::cin >> input;
-    //         if (input == "quit") {
-    //             return;
-    //         }
-    //     } else {
-    //         Pieces allPieces = chessBoard.isWhitesTurn() ? chessBoard.getAllWhiteTiles() : chessBoard.getAllBlackTiles();
-    //         std::uniform_int_distribution<> distrFrom(0, allPieces.size() - 1);
-    //         Pieces possMoves;
-    //         while (true) {
-    //             const int rndFromPiece = distrFrom(gen);
-    //             const ChessTile *fromTile = allPieces.at(rndFromPiece);
-    //             possMoves = ChessMoveLogic::getPossibleMoves(chessBoard, fromTile);
-    //             if (possMoves.size() != 0) {
-    //                 input += fromTile->getMove() + ":";
-    //                 break;
-    //             }
-    //         }
-    //         std::uniform_int_distribution<> distrTo(0, possMoves.size() - 1);
-    //         const int rndToPiece = distrTo(gen);
-    //         const ChessTile *toTile = possMoves.at(rndToPiece);
-    //         input += toTile->getMove();
-    //     }
-    //     const GameState game_state = chessBoard.handleMoveInput(input);
-    //     if (game_state != GameState::IN_PROGRESS) {
-    //         break;
-    //     }
-    // }
+    ChessBoardDrawSettings settings(false, true);
+    ChessConsoleUI cc([&settings](const ChessInterface &chessInterface) {
+        return std::make_unique<ChessPlayerConsoleHuman>(chessInterface, settings);
+    }, [](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerRnd>(chessInterface); }, settings);
+    cc.start();
 }
 
 void ChessInstance::runWithChessData() {
@@ -270,9 +222,10 @@ void ChessInstance::runAgainstDatabase() {
             ++gameDepth;
         } else {
             // could not find the move so make a random move
-            const std::string randomMove = ChessPeepo::getRandomInputMove(chessInterface);
-            std::cout << "the db makes the random move: " << randomMove << std::endl;
-            game_state = chessInterface.handleInput(randomMove).value();
+            // TODO: deactivated for now. random move moved to ChessPlayerRnd class
+            // const std::string randomMove = ChessPeepo::getRandomInputMove(chessInterface);
+            // std::cout << "the db makes the random move: " << randomMove << std::endl;
+            // game_state = chessInterface.handleInput(randomMove).value();
         }
 
         chessDraw.draw(chessBoard);

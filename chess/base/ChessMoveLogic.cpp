@@ -32,6 +32,12 @@ PieceTiles ChessMoveLogic::getPossibleMoves(const ChessTile &fromTile) const {
     }
 }
 
+PieceTiles ChessMoveLogic::getPossibleLegalMoves(const ChessTile &fromTile) const {
+    PieceTiles possMoves = getPossibleMoves(fromTile);
+    filterPossibleMovesForChecks(fromTile, possMoves);
+    return possMoves;
+}
+
 // added because of recursion issues when checking castling moves
 PieceTiles ChessMoveLogic::getPossibleMovesNoCastling(const ChessTile &fromTile) const {
     switch (fromTile.getPieceType()) {
@@ -240,6 +246,18 @@ PieceTiles ChessMoveLogic::getAllPossibleMovesPiece(const bool white, const Ches
         }
     }
     return allPossibleMoves;
+}
+
+PieceMoves ChessMoveLogic::getAllLegalMoves(bool white) const {
+    const PieceTiles allPieces = board.getAllTiles(white);
+    PieceMoves allPossMoves;
+    for (const ChessTile *fromTile : allPieces) {
+        const PieceTiles possMoves = getPossibleLegalMoves(*fromTile);
+        for (const ChessTile *toTile : possMoves) {
+            allPossMoves.emplace_back(fromTile, toTile);
+        }
+    }
+    return allPossMoves;
 }
 
 std::map<ChessTile, PieceTiles> ChessMoveLogic::getAllPossibleMovesMap(bool white) const {

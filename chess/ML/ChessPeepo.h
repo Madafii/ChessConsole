@@ -5,7 +5,6 @@
 #include "ChessData.h"
 #include "ChessInterface.h"
 #include "ChessLinkedListMoves.h"
-#include "ChessDatabaseInterface.h"
 #include <sys/types.h>
 
 class ChessPeepo {
@@ -22,7 +21,6 @@ class ChessPeepo {
     // bool makeBestDBMove();
 
     static MoveCompressed *getMostPlayedMove(const std::vector<MoveCompressed*> &moves);
-    static std::string getRandomInputMove(ChessInterface &chessI);
 
     static uint64_t playedMoves(const MoveCompressed *move) { return move->wins + move->loses + move->draws; }
 

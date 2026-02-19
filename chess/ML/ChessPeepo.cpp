@@ -17,7 +17,8 @@ GameState ChessPeepo::makeMostPlayedMove() {
     std::string inputMove;
     if (moveHead == nullptr || moveHead->nexts.empty()) {
         std::cout << "no more suggestions for moves, next move will be random" << std::endl;
-        inputMove = getRandomInputMove(chessInterface);
+        // TODO: deactivated. Moved to ChessPlayerRnd
+        // inputMove = getRandomInputMove(chessInterface);
     } else {
         std::vector<MoveCompressed *> currNexts;
         currNexts.reserve(moveHead->nexts.size());
@@ -57,50 +58,5 @@ MoveCompressed *ChessPeepo::getMostPlayedMove(const std::vector<MoveCompressed*>
         }
     }
     return mostPlayedMove;
-}
-
-std::string ChessPeepo::getRandomInputMove(ChessInterface &chessI) {
-    // random seeder thing
-    std::random_device rd;
-    std::mt19937 gen(rd());
-
-    const ChessBoard &board = chessI.getChessBoard();
-    ChessMoveLogic &logic = chessI.getChessMoveLogic();
-
-    // get respective color pieces
-    PieceTiles allPieces = board.isWhitesTurn() ? board.getAllWhiteTiles() : board.getAllBlackTiles();
-    std::uniform_int_distribution<> distrFrom(0, static_cast<int>(allPieces.size()) - 1);
-
-    // find a random move
-    PieceTiles possMoves;
-    std::string input;
-    bool isPawn = false;
-    // find a move that has at least one possible move
-    while (true) {
-        const int rndFromPiece = distrFrom(gen);
-        const ChessTile *fromTile = allPieces.at(rndFromPiece);
-        possMoves = logic.getPossibleMovesUncached(*fromTile);
-        logic.filterPossibleMovesForChecks(*fromTile, possMoves);
-        if (!possMoves.empty()) {
-            input += fromTile->getPos() + ":";
-            if (fromTile->hasPiece(ChessPieceType::PAWN)) isPawn = true;
-            break;
-        }
-    }
-    std::uniform_int_distribution<> distrTo(0, static_cast<int>(possMoves.size()) - 1);
-    const ChessTile *toTile = possMoves.at(distrTo(gen));
-    // pawn reached end rule
-    if (isPawn && (toTile->getY() == 7 || toTile->getY() == 0)) {
-        input += toTile->getPos();
-        std::uniform_int_distribution<> distrPawnWin(0, 3);
-        const int rndPawnWin = distrPawnWin(gen);
-        if (rndPawnWin == 0) input += "=q";
-        if (rndPawnWin == 1) input += "=r";
-        if (rndPawnWin == 2) input += "=b";
-        if (rndPawnWin == 3) input += "=n";
-        return input;
-    }
-    input += toTile->getPos();
-    return input;
 }
 

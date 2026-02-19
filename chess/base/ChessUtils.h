@@ -5,7 +5,7 @@
 #include <string>
 
 namespace ChessUtils {
-    std::string convertPGNToMyInput(std::string input, ChessMoveLogic &chessLogic, const bool &white);
+    std::string convertPGNToMyInput(std::string input, const ChessMoveLogic &chessLogic, const bool &white);
 };
 
 #endif // CHESSUTILS_H

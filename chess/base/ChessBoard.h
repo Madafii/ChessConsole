@@ -3,6 +3,7 @@
 
 #include "ChessPiece.h"
 #include "ChessTile.h"
+
 #include <array>
 #include <optional>
 #include <vector>
@@ -17,6 +18,7 @@ static constexpr int boardSize = boardWidth * boardHeight;
 using PieceTiles = std::vector<const ChessTile *>;
 using PiecePair = std::optional<std::pair<ChessTile *, ChessTile *>>;
 using PiecePairC = std::pair<const ChessTile *, const ChessTile *>;
+using PieceMoves = std::vector<std::pair<const ChessTile *, const ChessTile *>>;
 
 enum class GameState { Won, Draw, InProgress };
 enum class CastleSide { Left, Right, Both, Any };
@@ -27,6 +29,35 @@ class ChessBoard {
 
     // create the board
     void initBoard();
+
+    // board data getters
+    std::array<ChessTile, boardSize> getBoard() const { return board; }
+    std::vector<std::string> getGameHistory() const { return gameHistory; }
+    int getMovesSinceLastCapture() const { return movesSinceLastCapture; }
+    bool getEnPassantMarker() const { return markTurnForEnPassant; }
+    auto getWhiteRookMoved() const -> std::pair<bool, bool> { return whiteRookMoved; }
+    auto getBlackRookMoved() const -> std::pair<bool, bool> { return blackRookMoved; }
+    auto getLastDoublePawnMove() const -> std::pair<int, int> { return doublePawnMoveAt; }
+
+    // get tiles
+    PieceTiles getAllPiecesFor(bool white, ChessPieceType piece) const;
+    PieceTiles getAllTiles(bool white) const { return white ? getAllWhiteTiles() : getAllBlackTiles(); }
+    PieceTiles getAllTiles() const { return getAllTiles(whitesTurn); }
+    PieceTiles getAllWhiteTiles() const;
+    PieceTiles getAllBlackTiles() const;
+    PieceTiles getPieceType(bool white, ChessPieceType piece) const;
+    PieceTiles getWhitePieceType(ChessPieceType piece) const;
+    PieceTiles getBlackPieceType(ChessPieceType piece) const;
+
+    // setters
+    void setTurn(const bool white) { whitesTurn = white; }
+    void toggleTurn() { whitesTurn = !whitesTurn; }
+    void setEnPassantPossible(const bool possible) { enPassantPossibleLastMove = possible; }
+    void setEnPassantMarker(const bool white) { markTurnForEnPassant = white; }
+    void setLastDoublePawnMove(const std::pair<int, int> &pawnPos) { doublePawnMoveAt = pawnPos; }
+    void resetLastDoublePawnMove() { doublePawnMoveAt = {-1, -1}; }
+    void pushMoveToHistory() { gameHistory.push_back(getStringFromBoard()); }
+    void incrementMoves() { movesSinceLastCapture++; }
 
     // basic checks
     bool isWhitesTurn() const { return whitesTurn; }
@@ -42,34 +73,6 @@ class ChessBoard {
                (side == CastleSide::Any || !blackRookMoved.first || !blackRookMoved.second);
     }
     bool isEnPassantPossible() const { return enPassantPossibleLastMove; }
-
-    // board data getters
-    std::array<ChessTile, boardSize> getBoard() const { return board; }
-    std::vector<std::string> getGameHistory() const { return gameHistory; }
-    int getMovesSinceLastCapture() const { return movesSinceLastCapture; }
-    bool getEnPassantMarker() const { return markTurnForEnPassant; }
-    auto getWhiteRookMoved() const -> std::pair<bool, bool> { return whiteRookMoved; }
-    auto getBlackRookMoved() const -> std::pair<bool, bool> { return blackRookMoved; }
-    auto getLastDoublePawnMove() const -> std::pair<int, int> { return doublePawnMoveAt; }
-
-    // get tiles
-    PieceTiles getAllPiecesFor(bool white, ChessPieceType piece) const;
-    PieceTiles getAllTiles(bool white) const { return white ? getAllWhiteTiles() : getAllBlackTiles(); }
-    PieceTiles getAllWhiteTiles() const;
-    PieceTiles getAllBlackTiles() const;
-    PieceTiles getPieceType(bool white, ChessPieceType piece) const;
-    PieceTiles getWhitePieceType(ChessPieceType piece) const;
-    PieceTiles getBlackPieceType(ChessPieceType piece) const;
-
-    // setters
-    void setTurn(const bool white) { whitesTurn = white; }
-    void toggleTurn() { whitesTurn = !whitesTurn; }
-    void setEnPassantPossible(const bool possible) { enPassantPossibleLastMove = possible; }
-    void setEnPassantMarker(const bool white) { markTurnForEnPassant = white; }
-    void setLastDoublePawnMove(const std::pair<int, int> &pawnPos) { doublePawnMoveAt = pawnPos; }
-    void resetLastDoublePawnMove() { doublePawnMoveAt = {-1, -1}; }
-    void pushGameToHistory() { gameHistory.push_back(getStringFromBoard()); }
-    void incrementMoves() { movesSinceLastCapture++; }
 
     // board pos validators
     static bool validTilePos(std::string_view pos);

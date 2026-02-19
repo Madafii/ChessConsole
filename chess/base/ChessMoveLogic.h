@@ -7,6 +7,9 @@
 #include <functional>
 #include <map>
 
+// TODO: rework caching
+// rework whole king thing. There was issue with recursive calls (might be gone)
+
 class ChessMoveLogic {
     using enum ChessPieceType;
     using possibleMovesFunc = std::function<PieceTiles(const ChessTile &fromTile)>;
@@ -18,10 +21,13 @@ class ChessMoveLogic {
 
     // finds possible moves
     PieceTiles getPossibleMoves(const ChessTile &fromTile) const;
+    PieceTiles getPossibleLegalMoves(const ChessTile &fromTile) const;
     PieceTiles getPossibleMovesNoCastling(const ChessTile &fromTile) const;
     PieceTiles getPossibleMovesUncached(const ChessTile &fromTile) const;
     PieceTiles getAllPossibleMoves(bool white) const;
     PieceTiles getAllPossibleMovesPiece(bool white, ChessPieceType piece) const;
+    PieceMoves getAllLegalMoves(bool white) const;
+    PieceMoves getAllLegalMoves() const { return getAllLegalMoves(board.isWhitesTurn()); }
     std::map<ChessTile, PieceTiles> getAllPossibleMovesMap(bool white) const;
 
     // manipulate a possible moves list

@@ -147,7 +147,7 @@ void ChessBoard::endMove() {
         setEnPassantPossible(false);
         resetLastDoublePawnMove();
     }
-    pushGameToHistory();
+    pushMoveToHistory();
     toggleTurn();
 }
 
