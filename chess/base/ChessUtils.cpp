@@ -2,14 +2,11 @@
 #include "ChessMoveLogic.h"
 
 std::string ChessUtils::convertPGNToMyInput(std::string input, const ChessMoveLogic &chessLogic, const bool &white) {
-    // ignore sume values in the input
-    // Remove '+' characters
+    // ignore some values in the input
     std::erase(input, '+');
-    // Remove '#' characters
     std::erase(input, '#');
-    // Remove 'x' characters
     std::erase(input, 'x');
-    // Remove analzyer characters
+    // Remove analyzer characters
     std::erase(input, '?');
     std::erase(input, '!');
     // extract '=' pawn to piece change
@@ -65,7 +62,7 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, const ChessMoveLo
     const ChessTile *foundFromTile = nullptr;
     std::vector<std::pair<const ChessTile *, const ChessTile *>> foundMoves;
     for (const auto *piece : pieces) {
-        PieceTiles possibleMoves = chessLogic.getPossibleMoves(*piece);
+        PieceTiles possibleMoves = chessLogic.getMoves(*piece);
         auto it = std::ranges::find_if(possibleMoves, [&](const ChessTile *tile) {
             const auto [toX, toY] = ChessTile::getPos(moveTo[0], moveTo[1]);
             if (tile->getX() == toX && tile->getY() + 1 == toY) {
@@ -83,7 +80,7 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, const ChessMoveLo
         for (const auto &[fromTile, toTile] : foundMoves) {
             // check if not possible by being checked
             PieceTiles filterPieces{toTile};
-            chessLogic.filterPossibleMovesForChecks(*fromTile, filterPieces);
+            chessLogic.filterLegalMoves(*fromTile, filterPieces);
             if (filterPieces.size() == 0) continue;
             foundFromTile = fromTile;
             // is like a move hint if there are multiple same pieces that have the to move as a possibility

@@ -4,11 +4,9 @@
 #include "ChessPlayer.h"
 #include <memory>
 
-using PlayerFactory = std::function<std::unique_ptr<ChessPlayer>(const ChessInterface &)>;
-
 class ChessUI {
   public:
-    ChessUI(PlayerFactory playerWhite, PlayerFactory playerBlack);
+    ChessUI(const PlayerFactory &playerWhite, const PlayerFactory &playerBlack);
 
     virtual void start() = 0;
 

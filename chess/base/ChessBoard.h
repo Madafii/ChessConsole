@@ -5,6 +5,7 @@
 #include "ChessTile.h"
 
 #include <array>
+#include <cstddef>
 #include <optional>
 #include <vector>
 
@@ -25,14 +26,12 @@ enum class CastleSide { Left, Right, Both, Any };
 
 class ChessBoard {
   public:
-    ChessBoard() { initBoard(); };
-
-    // create the board
-    void initBoard();
+    explicit ChessBoard() { initBoard(); };
 
     // board data getters
     std::array<ChessTile, boardSize> getBoard() const { return board; }
     std::vector<std::string> getGameHistory() const { return gameHistory; }
+    size_t getGameDepth() const { return gameHistory.size() / 2; }
     int getMovesSinceLastCapture() const { return movesSinceLastCapture; }
     bool getEnPassantMarker() const { return markTurnForEnPassant; }
     auto getWhiteRookMoved() const -> std::pair<bool, bool> { return whiteRookMoved; }
@@ -95,6 +94,8 @@ class ChessBoard {
     void endMove();
 
     std::string getStringFromBoard() const;
+    std::string getMoveFromHistory(size_t depth) const;
+    std::string getLastMove() const { return getMoveFromHistory(gameHistory.size() - 1); }
 
     static std::string getMoveName(const ChessTile &fromTile, const ChessTile &toTile);
     static void mergePossVec(PieceTiles &possibleMoves, PieceTiles possibleMovesMerge);
@@ -111,17 +112,18 @@ class ChessBoard {
     bool markTurnForEnPassant = false;
     int movesSinceLastCapture = 0;
 
+    // create the board
+    void initBoard();
+
     // moves
     void movePawn(const ChessTile &fromTile, const ChessTile &toTile);
     void moveKing(const ChessTile &fromTile, const ChessTile &toTile);
     void moveRook(const ChessTile &fromTile);
-    static void pawnWon(ChessTile &pawnTile, char pawnToPiece);
+    static void pawnPromotion(ChessTile &pawnTile, char pawnToPiece);
 
-    static bool isPawnWinCondition(const ChessTile &toTile) {
+    static bool isPawnPromoted(const ChessTile &toTile) {
         return toTile.hasPiece(ChessPieceType::PAWN) && (toTile.getY() == 0 || toTile.getY() == 7);
     }
-
-    friend ChessBoardDraw;
 };
 
 #endif // CHESSBOARD_H

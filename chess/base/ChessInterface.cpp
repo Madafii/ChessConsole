@@ -80,12 +80,7 @@ void ChessInterface::handleMoveInputNoChecks(const std::string_view input) {
 // nullopt, when anything but your own piece. 0 possMoves does not return nullopt
 std::optional<PieceTiles> ChessInterface::getPossibleMovesFromTile(const std::string_view input) const {
     if (const auto fromTile = getMoveTileFromInput(input)) {
-        auto possMoves = chessLogic.getPossibleMovesUncached(*fromTile);
-        chessLogic.filterPossibleMovesForChecks(*fromTile, possMoves);
-        // if (possMoves.size() <= 0) {
-        //     std::cout << "no possible moves for this piece" << std::endl;
-        // }
-        return possMoves;
+        return chessLogic.getLegalMoves(*fromTile);
     }
     return std::nullopt;
 }

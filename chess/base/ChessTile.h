@@ -18,8 +18,6 @@ class ChessTile {
     [[nodiscard]] ChessPiece &getPiece() { return _piece; }
     [[nodiscard]] const ChessPiece &getPiece() const { return _piece; }
 
-    [[nodiscard]] bool isEmpty() const { return _piece.getType() == ChessPieceType::NONE; }
-
     [[nodiscard]] ChessPieceType getPieceType() const { return _piece.getType(); }
 
     void changePiece(const ChessPiece &piece) { _piece = piece; }
@@ -30,6 +28,7 @@ class ChessTile {
     }
 
     // default checks if any piece on tile
+    bool hasPiece() const { return _piece.getType() != ChessPieceType::NONE; }
     bool hasPiece(const ChessPieceType pType) const { return _piece.getType() == pType; }
     bool hasWhitePiece() const { return _piece.isWhite(); }
     bool hasBlackPiece() const { return !_piece.isWhite(); }

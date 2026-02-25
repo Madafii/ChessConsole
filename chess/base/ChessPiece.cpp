@@ -39,10 +39,11 @@ ChessPiece::ChessPiece(const ChessPieceType type, const bool white) : _type(type
     }
 }
 
+// compare with upper case short name
 ChessPieceType ChessPiece::getTypeFromShort(const char &shortName) {
     if (_shortToEnum.contains(shortName)) {
         return _shortToEnum[shortName];
     }
-    std::cerr << "that is not a ChessPieceType" << std::endl;
-    return ChessPieceType::NONE;
+    // default if no other valid piece type was passed
+    return ChessPieceType::QUEEN;
 }

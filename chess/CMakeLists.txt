@@ -3,6 +3,7 @@ add_library(chess
     ChessPlayer.h ChessPlayer.cpp
     ChessPlayerConsoleHuman.h ChessPlayerConsoleHuman.cpp
     ChessPlayerRnd.h ChessPlayerRnd.cpp
+    ChessPlayerDB.h ChessPlayerDB.cpp
     ChessUI.h ChessUI.cpp
     ChessConsoleUI.h ChessConsoleUI.cpp
 )

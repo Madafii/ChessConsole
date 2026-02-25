@@ -28,6 +28,7 @@ void ChessConsoleUI::start() {
 }
 
 bool ChessConsoleUI::doMove(std::string_view inputMove) {
+    std::cout << "move made: " << inputMove << std::endl;
     _chessInterface.handleMoveInputNoChecks(inputMove);
     _boardDraw.draw(_chessInterface.getChessBoard());
     return _chessInterface.checkGameState() == GameState::InProgress;

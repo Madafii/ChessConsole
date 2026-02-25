@@ -11,7 +11,7 @@ ChessPlayerRnd::ChessPlayerRnd(const ChessInterface &chessInterface) : ChessPlay
 
 ChessPlayerRnd::~ChessPlayerRnd() = default;
 
-std::optional<std::string> ChessPlayerRnd::getNextMove() const {
+std::optional<std::string> ChessPlayerRnd::getNextMove() {
     const PieceMoves allLegalMoves = _chessInterface.getChessMoveLogic().getAllLegalMoves();
     if (allLegalMoves.empty()) return std::nullopt;
 

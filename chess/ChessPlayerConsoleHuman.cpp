@@ -11,7 +11,7 @@ ChessPlayerConsoleHuman::ChessPlayerConsoleHuman(const ChessInterface &chessInte
 
 ChessPlayerConsoleHuman::~ChessPlayerConsoleHuman() = default;
 
-std::optional<std::string> ChessPlayerConsoleHuman::getNextMove() const {
+std::optional<std::string> ChessPlayerConsoleHuman::getNextMove() {
     while (true) {
         auto fromInput = promptInput("enter a piece: ");
         if (!fromInput) return std::nullopt;

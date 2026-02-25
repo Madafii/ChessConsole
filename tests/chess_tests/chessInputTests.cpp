@@ -24,7 +24,12 @@ void doMovements(const strvec &moves) {
 
 void doMovements(ChessInterface &chessInterface, const strvec &moves) {
     for (const std::string &move : moves) {
-        if (chessInterface.handleMoveInput(move).value() != GameState::InProgress) break;
+        auto gameState = chessInterface.handleMoveInput(move);
+        if (!gameState) {
+            std::cout << "invalid input" << std::endl;
+            return;
+        }
+        if (*gameState != GameState::InProgress) break;
     }
 }
 
@@ -58,14 +63,17 @@ GameState doMovementsFromPGN(ChessInterface &chessInterface, const strvec &moves
     for (const std::string &move : moves) {
         const bool white = chessInterface.getChessBoard().isWhitesTurn();
         std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, chessInterface.getChessMoveLogic(), white);
-        currState = chessInterface.handleMoveInput(inputMyChess).value();
-        if (currState != GameState::InProgress) break;
+        auto currState = chessInterface.handleMoveInput(inputMyChess);
+        if (!currState) {
+            std::cerr << "reading PGN input should never result in a wrong input" << std::endl;
+        }
+        if (*currState != GameState::InProgress) break;
     }
     return currState;
 }
 
 TEST(ChessInterfaceTests, testBasics) {
-    auto movesTests = readInputFile("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/basicMoves.txt");
+    auto movesTests = readInputFile("/home/finnp/Documents/Development/GitRepos/ChessConsole/tests/Data/basicMoves.txt");
 
     for (const auto &[checkBoard, moves] : movesTests) {
         ChessInterface chessInterface;
@@ -75,7 +83,7 @@ TEST(ChessInterfaceTests, testBasics) {
 }
 
 TEST(ChessInterfaceTests, testCheckmates) {
-    auto movesTests = readInputFile("/home/finnp/Documents/GitRepos/ChessConsole/tests/Data/checkmates.txt");
+    auto movesTests = readInputFile("/home/finnp/Documents/Development/GitRepos/ChessConsole/tests/Data/checkmates.txt");
 
     for (const auto &[gameOutcome, moves] : movesTests) {
         ChessInterface chessInterface;

@@ -10,7 +10,7 @@ class ChessPlayerConsoleHuman : public ChessPlayer {
                                      const ChessBoardDrawSettings &settings = ChessBoardDrawSettings());
     ~ChessPlayerConsoleHuman() override;
 
-    std::optional<std::string> getNextMove() const override;
+    std::optional<std::string> getNextMove() override;
 
   private:
     ChessBoardDraw _boardDraw;

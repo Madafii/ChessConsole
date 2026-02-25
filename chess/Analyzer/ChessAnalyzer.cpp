@@ -7,9 +7,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
-#include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 
 using oStrVec = ChessAnalyzer::oStrVec;
@@ -47,7 +45,7 @@ std::string ChessAnalyzer::startTerminalAnalyzer() {
 
 std::vector<std::pair<double, std::string>> ChessAnalyzer::getEvalMoves() {
     const bool white = origBoard.isWhitesTurn();
-    const auto moves = chessLogic.getAllPossibleMovesMap(white);
+    const auto moves = chessLogic.getAllLegalMovesMap(white);
     std::vector<std::pair<double, std::string>> evalMovesList;
 
     for (const auto &[fromMove, toMoves] : moves) {
@@ -61,7 +59,6 @@ std::vector<std::pair<double, std::string>> ChessAnalyzer::getEvalMoves() {
             const double simEvalValue = white ? simAnalyzer.evalBoard() : -simAnalyzer.evalBoard();
             const double evalBonusValue = evalPiece(fromMove, *possMove) * std::abs(simEvalValue);
             evalMovesList.emplace_back(simEvalValue + evalBonusValue, move);
-
         }
     }
 
@@ -73,7 +70,7 @@ std::vector<std::pair<double, std::string>> ChessAnalyzer::getEvalMoves() {
 // for now only implemented for depth of one, meaning check own board after a move and the possible reactions of opponent
 std::vector<std::pair<double, std::string>> ChessAnalyzer::getBestEvalMoves(const int depth) {
     const bool white = origBoard.isWhitesTurn();
-    const auto moves = chessLogic.getAllPossibleMovesMap(white);
+    const auto moves = chessLogic.getAllLegalMovesMap(white);
     evalVec evalMoves;
 
     for (const auto &[fromMove, toMoves] : moves) {
@@ -382,7 +379,7 @@ double ChessAnalyzer::evalPiece(const ChessTile &pieceTile, const ChessTile &toT
 double ChessAnalyzer::evalKingMoves(const ChessTile &kingTile, const ChessTile &toTile) {
     double encourage = 0;
     // encourage castling
-    if (std::abs(kingTile.getX() - toTile.getX()) >=2) {
+    if (std::abs(kingTile.getX() - toTile.getX()) >= 2) {
         encourage += 0.5;
         return encourage;
     }
@@ -413,10 +410,9 @@ void ChessAnalyzer::addToAttackedMatrix(boardMatrix &attackedBy, const bool whit
         PieceTiles attackedTiles;
         if (attackingTile->hasPiece(PAWN)) { // pawns extra because different attacking logic then the rest
             attackedTiles = getPawnAttackingTiles(*attackingTile);
-            chessLogic.filterPossibleMovesForChecks(*attackingTile, attackedTiles);
+            chessLogic.filterLegalMoves(*attackingTile, attackedTiles);
         } else {
-            attackedTiles = chessLogic.getPossibleMovesUncached(*attackingTile);
-            chessLogic.filterPossibleMovesForChecks(*attackingTile, attackedTiles);
+            attackedTiles = chessLogic.getLegalMoves(*attackingTile);
         }
         for (const auto &attackedTile : attackedTiles) {
             if (white) {

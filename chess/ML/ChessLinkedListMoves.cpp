@@ -100,7 +100,7 @@ std::string ChessLinkedListMoves::getInfoNextMoves(const MoveCompressed *move) {
     return output;
 }
 
-std::bitset<16> ChessLinkedListMoves::createData(const std::string &nextMove, bool nextWhite) {
+std::bitset<16> ChessLinkedListMoves::createData(std::string_view nextMove, bool nextWhite) {
     std::bitset<16> outSet;
 
     auto setBits = [&](const std::bitset<3> &bits, const size_t startPos) {

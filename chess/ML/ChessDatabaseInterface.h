@@ -18,6 +18,14 @@
 // -- using threads (might do nothing because writing to db is the bottleneck?)
 // -- optimize way to check if values have to be inserted or updated
 
+
+// Idea:
+// there are tables with the naming scheme: {name}_d{depth}_{color}
+// -- there is a "move table" on each depth for (id, move, wins, loses, draws)
+// -- there is a "connection table" on each depth for (id, id_from, id_to)
+// -- the "conection table" use the same depth and color from the id_from they are connecting
+// -- example: the "connection table" {name}_d0_b contains all possible connections from the {name}_d0_b "move table"
+
 using table_pair = std::pair<int, bool>;
 using table_move = std::pair<int, MoveCompressed>;
 using table_move_ptr = std::pair<int, MoveCompressed *>;

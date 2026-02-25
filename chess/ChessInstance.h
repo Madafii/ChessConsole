@@ -20,7 +20,6 @@ class ChessInstance {
     void runAgainstRandom();
     void runWithChessData();
     void runWithChessDatabase();
-    void runAgainstPeepo();
     void runAgainstDatabase();
     void runWithAnalyzer();
     void runWebInterface();

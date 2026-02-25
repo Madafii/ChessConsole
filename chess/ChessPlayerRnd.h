@@ -10,7 +10,7 @@ class ChessPlayerRnd : public ChessPlayer {
     ChessPlayerRnd(const ChessInterface &chessInterface);
     ~ChessPlayerRnd() override;
 
-    std::optional<std::string> getNextMove() const override;
+    std::optional<std::string> getNextMove() override;
 
   private:
     mutable std::mt19937 _gen;

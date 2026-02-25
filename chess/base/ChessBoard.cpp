@@ -1,9 +1,13 @@
 #include "ChessBoard.h"
 #include "ChessPiece.h"
+#include "ChessTile.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdlib>
+#include <format>
 #include <string>
+#include <string_view>
 #include <utility>
 
 void ChessBoard::initBoard() {
@@ -52,11 +56,33 @@ std::string ChessBoard::getStringFromBoard() const {
         // black pieces in upper case
         outMoves += tile.getPiece().getShortName();
     }
-    // TODO: thinking of writing a separate function to know if a en Passant is possible actual why I have this?
-    if (enPassantPossibleLastMove) {
-        outMoves += "1";
-    }
+    // // TODO: thinking of writing a separate function to know if a en Passant is possible actual why I have this?
+    // if (enPassantPossibleLastMove) {
+    //     outMoves += "1";
+    // }
     return outMoves;
+}
+
+// get the move played at given depth. Depth meaning 0 is the board without moves and every board change increments the depth by 1.
+std::string ChessBoard::getMoveFromHistory(size_t depth) const {
+    if (depth < 1 || depth > gameHistory.size()) return "";
+    std::string_view fromBoard = gameHistory[depth - 1];
+    std::string_view toBoard = gameHistory[depth];
+
+    std::string fromTile;
+    std::string toTile;
+    for (size_t i = 0; i < fromBoard.size(); ++i) {
+        if (fromBoard[i] != toBoard[i]) {
+            int y = i / boardWidth;
+            int x = i % boardWidth;
+            if (toBoard[i] == '_') {
+                fromTile = ChessTile::getPos(x, y);
+            } else {
+                toTile = ChessTile::getPos(x, y);
+            }
+        }
+    }
+    return std::format("{}:{}", fromTile, toTile);
 }
 
 std::string ChessBoard::getMoveName(const ChessTile &fromTile, const ChessTile &toTile) {
@@ -137,8 +163,7 @@ void ChessBoard::move(ChessTile &fromTile, ChessTile &toTile, const char pawnToP
 
     fromTile.occupyPiece(toTile.getPiece());
 
-    if (isPawnWinCondition(toTile)) pawnWon(toTile, pawnToPiece);
-
+    if (isPawnPromoted(toTile)) pawnPromotion(toTile, pawnToPiece);
     endMove();
 }
 
@@ -213,7 +238,7 @@ bool ChessBoard::validTilePos(std::string_view pos) {
     return validTilePos(x, y);
 }
 
-void ChessBoard::pawnWon(ChessTile &pawnTile, const char pawnToPiece) {
+void ChessBoard::pawnPromotion(ChessTile &pawnTile, const char pawnToPiece) {
     const bool white = pawnTile.getPiece().isWhite();
     const ChessPieceType pieceType = ChessPiece::getTypeFromShort(std::toupper(pawnToPiece));
 

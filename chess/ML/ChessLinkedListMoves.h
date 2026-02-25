@@ -77,7 +77,7 @@ class ChessLinkedListMoves {
 
     // statics
     static std::string createKey(const bool &white, const std::string &board) { return (white ? "W|" : "B|") + board; };
-    static DataBits createData(const std::string &nextMove, bool nextWhite);
+    static DataBits createData(std::string_view nextMove, bool nextWhite);
     static std::string getMoveFromData(const DataBits &data);
     static bool getWhiteFromData(const DataBits &data);
 
