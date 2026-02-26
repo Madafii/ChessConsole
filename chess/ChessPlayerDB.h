@@ -4,7 +4,6 @@
 #include "ChessInterface.h"
 #include "ChessPlayer.h"
 #include "ChessPlayerRnd.h"
-#include "ChessUI.h"
 
 #include <memory>
 #include <ranges>

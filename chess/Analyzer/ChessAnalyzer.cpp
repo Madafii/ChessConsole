@@ -82,6 +82,8 @@ std::vector<std::pair<double, std::string>> ChessAnalyzer::getBestEvalMoves(cons
             simInterface.handleMoveInputNoChecks(move);
             ChessAnalyzer simAnalyzer(simInterface.getChessBoard());
             const auto simEvalMoves = simAnalyzer.getEvalMoves();
+            // no more moves possible
+            if (simEvalMoves.empty()) break;
             double evalValue = simEvalMoves.front().first;
             evalMoves.emplace_back(evalValue, move);
         }
@@ -332,7 +334,7 @@ double ChessAnalyzer::evalKingProtection(const bool white) {
     const ChessTile *kingTile = origBoard.getPieceType(white, KING).front();
     const int x = kingTile->getX();
     const int y = kingTile->getY();
-    for (const auto &[dirX, dirY] : directionsQueen) {
+    for (const auto &[dirX, dirY] : ChessMoveLogic::directionsAll) {
         const ChessTile &adjTile = origBoard.getTileAt(x + dirX, y + dirY);
         if (adjTile.hasPiece(NONE)) maxSideProtection--;
     }
@@ -450,13 +452,13 @@ PieceTiles ChessAnalyzer::getPawnAttackingTiles(const ChessTile &pawnTile) {
     const int y2 = y + moveY;
     if (ChessBoard::validTilePos(leftX, y2)) {
         const ChessTile &toTileLeft = origBoard.getTileAt(leftX, y2);
-        if (toTileLeft.hasPiece(NONE) || pawnTile.hasWhitePiece() != toTileLeft.hasWhitePiece()) {
+        if (!toTileLeft.hasPiece() || pawnTile.hasWhitePiece() != toTileLeft.hasWhitePiece()) {
             attackingTiles.push_back(&toTileLeft);
         }
     }
     if (ChessBoard::validTilePos(rightX, y2)) {
         const ChessTile &toTileRight = origBoard.getTileAt(rightX, y2);
-        if (toTileRight.hasPiece(NONE) || pawnTile.hasWhitePiece() != toTileRight.hasWhitePiece()) {
+        if (!toTileRight.hasPiece() || pawnTile.hasWhitePiece() != toTileRight.hasWhitePiece()) {
             attackingTiles.push_back(&toTileRight);
         }
     }
@@ -465,20 +467,20 @@ PieceTiles ChessAnalyzer::getPawnAttackingTiles(const ChessTile &pawnTile) {
 }
 
 PieceTiles ChessAnalyzer::getDefendedPieces(const ChessTile &fromTile) {
-    if (fromTile.hasPiece(NONE)) return {};
+    if (!fromTile.hasPiece()) return {};
     switch (fromTile.getPieceType()) {
         case PAWN:
             return getDefendedPiecesPawn(fromTile);
         case ROOK:
-            return getDefendedPiecesByDirection(fromTile, directionsRook);
+            return getDefendedPiecesByDirection(fromTile, ChessMoveLogic::directionsStraight);
         case KNIGHT:
-            return getDefendedPiecesByDirectionSingle(fromTile, directionsKnight);
+            return getDefendedPiecesByDirectionSingle(fromTile, ChessMoveLogic::directionsKnight);
         case BISHOP:
-            return getDefendedPiecesByDirection(fromTile, directionsBishop);
+            return getDefendedPiecesByDirection(fromTile, ChessMoveLogic::directionsDiagonal);
         case QUEEN:
-            return getDefendedPiecesByDirection(fromTile, directionsQueen);
+            return getDefendedPiecesByDirection(fromTile, ChessMoveLogic::directionsAll);
         case KING:
-            return getDefendedPiecesByDirectionSingle(fromTile, directionsQueen);
+            return getDefendedPiecesByDirectionSingle(fromTile, ChessMoveLogic::directionsAll);
         default:
             return {};
     }
@@ -503,37 +505,9 @@ PieceTiles ChessAnalyzer::getDefendedPiecesPawn(const ChessTile &fromTile) {
     return defendedPieces;
 }
 
-PieceTiles ChessAnalyzer::getDefendedPiecesByDirection(const ChessTile &fromTile, const std::vector<int8Pair> &directions) {
-    PieceTiles defendedPieces;
-    const int x = fromTile.getX();
-    const int y = fromTile.getY();
-    for (const auto &[xDirection, yDirection] : directions) {
-        for (int i = 1; i < 8; i++) {
-            const int currX = x + i * xDirection;
-            const int currY = y + i * yDirection;
-            if (!ChessBoard::validTilePos(currX, currY)) break; // no more tiles this direction
-            const ChessTile &nextTile = origBoard.getTileAt(currX, currY);
-            if (!addIfDefending(fromTile, nextTile, defendedPieces)) break; // path blocked
-        }
-    }
-    return defendedPieces;
-}
-
-PieceTiles ChessAnalyzer::getDefendedPiecesByDirectionSingle(const ChessTile &fromTile, const std::vector<int8Pair> &directions) {
-    PieceTiles defendedPieces;
-    const int x = fromTile.getX();
-    const int y = fromTile.getY();
-    for (const auto &[xDirection, yDirection] : directions) {
-        if (!ChessBoard::validTilePos(x + xDirection, y + yDirection)) continue;
-        const ChessTile &nextTile = origBoard.getTileAt(x + xDirection, y + yDirection);
-        addIfDefending(fromTile, nextTile, defendedPieces);
-    }
-    return defendedPieces;
-}
-
 /// return value if continue searching
 bool ChessAnalyzer::addIfDefending(const ChessTile &fromTile, const ChessTile &toTile, PieceTiles &defendingMoves) {
-    if (toTile.hasPiece(NONE)) return true;                   // empty tile
+    if (!toTile.hasPiece()) return true;                      // empty tile
     if (toTile.hasWhitePiece() == fromTile.hasWhitePiece()) { // is defending because it is the same color
         defendingMoves.push_back(&toTile);
     }

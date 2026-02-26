@@ -12,7 +12,8 @@ class ChessMoveLogic {
   public:
     using enum ChessPieceType;
     using possibleMovesFunc = std::function<PieceTiles(const ChessTile &fromTile)>;
-    template <size_t N> using directionArray = std::array<std::pair<int8_t, int8_t>, N>;
+    template <size_t N>
+    using directionArray = std::array<std::pair<int8_t, int8_t>, N>;
 
     static constexpr directionArray<4> directionsDiagonal{std::pair(1, 1), std::pair(1, -1), std::pair(-1, 1), std::pair(-1, -1)};
     static constexpr directionArray<4> directionsStraight{std::pair(0, 1), std::pair(0, -1), std::pair(-1, 0), std::pair(1, 0)};
@@ -73,8 +74,10 @@ class ChessMoveLogic {
     PieceTiles getMovesKing(const ChessTile &fromTile) const;
     PieceTiles getMovesKingSingle(const ChessTile &fromTile) const { return getMovesByDirectionSingle(fromTile, directionsAll); }
     PieceTiles getMovesCastling(const ChessTile &fromTile) const;
-    template <size_t N> PieceTiles getMovesByDirection(const ChessTile &fromTile, const directionArray<N> &directions) const;
-    template <size_t N> PieceTiles getMovesByDirectionSingle(const ChessTile &fromTile, const directionArray<N> &directions) const;
+    template <size_t N>
+    PieceTiles getMovesByDirection(const ChessTile &fromTile, const directionArray<N> &directions) const;
+    template <size_t N>
+    PieceTiles getMovesByDirectionSingle(const ChessTile &fromTile, const directionArray<N> &directions) const;
 
     PieceTiles getLeftCastleTiles(int x, int y) const { return {&_board.getTileAt(x - 1, y), &_board.getTileAt(x - 2, y)}; }
     PieceTiles getRightCastleTiles(int x, int y) const { return {&_board.getTileAt(x + 1, y), &_board.getTileAt(x + 2, y)}; }

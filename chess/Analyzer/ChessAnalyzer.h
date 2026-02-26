@@ -1,5 +1,4 @@
-#ifndef CHESSANALYZER_H
-#define CHESSANALYZER_H
+#pragma once
 
 #include "ChessBoard.h"
 #include "ChessMoveLogic.h"
@@ -78,20 +77,9 @@ class ChessAnalyzer {
     const std::map<ChessPieceType, int> pieceValue = {{ChessPieceType::KING, 0},   {ChessPieceType::QUEEN, 9},  {ChessPieceType::ROOK, 5},
                                                       {ChessPieceType::BISHOP, 3}, {ChessPieceType::KNIGHT, 3}, {ChessPieceType::PAWN, 1},
                                                       {ChessPieceType::NONE, 0}};
-    static constexpr std::array<uint8_t, boardSize> boardValue = {0, 1, 1, 1, 1, 1, 1, 0,
-                                                                  1, 2, 2, 2, 2, 2, 2, 1,
-                                                                  1, 2, 3, 3, 3, 3, 2, 1,
-                                                                  1, 2, 3, 4, 4, 3, 2, 1,
-                                                                  1, 2, 3, 4, 4, 3, 2, 1,
-                                                                  1, 2, 3, 3, 3, 3, 2, 1,
-                                                                  1, 2, 2, 2, 2, 2, 2, 1,
-                                                                  0, 1, 1, 1, 1, 1, 1, 0};
-    const std::vector<int8Pair> directionsBishop = {std::pair(1, 1), std::pair(1, -1), std::pair(-1, 1), std::pair(-1, -1)};
-    const std::vector<int8Pair> directionsKnight = {std::pair(2, 1), std::pair(2, -1), std::pair(-2, 1), std::pair(-2, -1),
-                                                    std::pair(1, 2), std::pair(-1, 2), std::pair(1, -2), std::pair(-1, -2)};
-    const std::vector<int8Pair> directionsRook = {std::pair(0, 1), std::pair(0, -1), std::pair(-1, 0), std::pair(1, 0)};
-    const std::vector<int8Pair> directionsQueen = {std::pair(0, 1), std::pair(0, -1), std::pair(1, 1),  std::pair(1, -1),
-                                                   std::pair(1, 0), std::pair(-1, 0), std::pair(-1, 1), std::pair(-1, -1)};
+    static constexpr std::array<uint8_t, boardSize> boardValue = {0, 1, 1, 1, 1, 1, 1, 0, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 3, 3, 3, 3,
+                                                                  2, 1, 1, 2, 3, 4, 4, 3, 2, 1, 1, 2, 3, 4, 4, 3, 2, 1, 1, 2, 3, 3,
+                                                                  3, 3, 2, 1, 1, 2, 2, 2, 2, 2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 0};
 
     // ------ weights for evaluation should amount to one (100)-------
     static constexpr double weightPieceValue = 0.9;
@@ -114,12 +102,42 @@ class ChessAnalyzer {
     // helper for defender matrix
     PieceTiles getDefendedPieces(const ChessTile &fromTile);
     PieceTiles getDefendedPiecesPawn(const ChessTile &fromTile);
-    PieceTiles getDefendedPiecesByDirection(const ChessTile &fromTile, const std::vector<int8Pair> &directions);
-    PieceTiles getDefendedPiecesByDirectionSingle(const ChessTile &fromTile, const std::vector<int8Pair> &directions);
+    template <size_t N>
+    PieceTiles getDefendedPiecesByDirection(const ChessTile &fromTile, const ChessMoveLogic::directionArray<N> &directions);
+    template <size_t N>
+    PieceTiles getDefendedPiecesByDirectionSingle(const ChessTile &fromTile, const ChessMoveLogic::directionArray<N> &directions);
     static bool addIfDefending(const ChessTile &fromTile, const ChessTile &toTile, PieceTiles &defendingMoves);
 
     // eval helper
     [[nodiscard]] static double getDiffPercentage(double player, double opponent);
 };
 
-#endif
+template <size_t N>
+PieceTiles ChessAnalyzer::getDefendedPiecesByDirection(const ChessTile &fromTile, const ChessMoveLogic::directionArray<N> &directions) {
+    PieceTiles defendedPieces;
+    const int x = fromTile.getX();
+    const int y = fromTile.getY();
+    for (const auto &[xDirection, yDirection] : directions) {
+        for (int i = 1; i < 8; i++) {
+            const int currX = x + i * xDirection;
+            const int currY = y + i * yDirection;
+            if (!ChessBoard::validTilePos(currX, currY)) break; // no more tiles this direction
+            const ChessTile &nextTile = origBoard.getTileAt(currX, currY);
+            if (!addIfDefending(fromTile, nextTile, defendedPieces)) break; // path blocked
+        }
+    }
+    return defendedPieces;
+}
+
+template <size_t N>
+PieceTiles ChessAnalyzer::getDefendedPiecesByDirectionSingle(const ChessTile &fromTile, const ChessMoveLogic::directionArray<N> &directions) {
+    PieceTiles defendedPieces;
+    const int x = fromTile.getX();
+    const int y = fromTile.getY();
+    for (const auto &[xDirection, yDirection] : directions) {
+        if (!ChessBoard::validTilePos(x + xDirection, y + yDirection)) continue;
+        const ChessTile &nextTile = origBoard.getTileAt(x + xDirection, y + yDirection);
+        addIfDefending(fromTile, nextTile, defendedPieces);
+    }
+    return defendedPieces;
+}
