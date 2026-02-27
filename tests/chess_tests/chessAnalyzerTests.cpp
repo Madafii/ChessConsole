@@ -204,7 +204,7 @@ TEST(bestMovesTests, basicTests) {
     chessInterface.handleMoveInput("e7:e6");
     chessInterface.handleMoveInput("f1:d3");
 
-    const auto bestMoves = chessAna.getBestEvalMoves(1);
+    // const auto bestMoves = chessAna.getBestEvalMoves(1);
     // for (const auto &[value, move] : bestMoves) {
     //     std::cout << "The best move is: " << move << " with a value of: " << std::to_string(value) << std::endl;
     // }

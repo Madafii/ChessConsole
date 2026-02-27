@@ -7,11 +7,14 @@
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
+#include <limits>
+#include <queue>
 #include <string>
 #include <utility>
 
 using oStrVec = ChessAnalyzer::oStrVec;
 using boardMatrix = ChessAnalyzer::boardMatrix;
+using evalVec = ChessAnalyzer::evalVec;
 using enum ChessPieceType;
 
 ChessAnalyzer::ChessAnalyzer(const ChessBoard &board) : origBoard(board), chessLogic(ChessMoveLogic(origBoard)) {}
@@ -35,118 +38,91 @@ std::string ChessAnalyzer::startTerminalAnalyzer() {
     return "";
 }
 
-/// returns a vector of moves if a forced checkmate is possible
-// oStrVec ChessAnalyzer::getForcedCheckmate(int depth) {
-//     const bool white = origBoard.isWhitesTurn();
-//     const PieceTiles allMoves = white ? origBoard.getAllWhiteTiles() : origBoard.getAllBlackTiles();
-//
-//     return std::nullopt;
-// }
-
-std::vector<std::pair<double, std::string>> ChessAnalyzer::getEvalMoves() {
+// returns a list of evaluated moves
+evalVec ChessAnalyzer::getEvalMoves() {
     const bool white = origBoard.isWhitesTurn();
-    const auto moves = chessLogic.getAllLegalMovesMap(white);
-    std::vector<std::pair<double, std::string>> evalMovesList;
+    const auto moves = chessLogic.getAllLegalMoves(white);
+    evalVec evalMovesList;
 
-    for (const auto &[fromMove, toMoves] : moves) {
-        const std::string fromMoveStr = fromMove.getPos();
-        for (const ChessTile *possMove : toMoves) {
-            // simulate move and analyze board after move was made
-            ChessInterface simInterface(origBoard);
-            const std::string move = fromMoveStr + ":" + possMove->getPos();
-            simInterface.handleMoveInputNoChecks(move);
-            ChessAnalyzer simAnalyzer(simInterface.getChessBoard());
-            const double simEvalValue = white ? simAnalyzer.evalBoard() : -simAnalyzer.evalBoard();
-            const double evalBonusValue = evalPiece(fromMove, *possMove) * std::abs(simEvalValue);
-            evalMovesList.emplace_back(simEvalValue + evalBonusValue, move);
-        }
+    for (const auto &[fromMove, toMove] : moves) {
+        // simulate move and analyze board after move was made
+        ChessInterface simInterface(origBoard);
+        const std::string move = fromMove->getPos() + ":" + toMove->getPos();
+        simInterface.handleMoveInputNoChecks(move);
+
+        ChessAnalyzer simAnalyzer(simInterface.getChessBoard());
+        const double simEvalValue = white ? simAnalyzer.evalBoard() : -simAnalyzer.evalBoard();
+        const double evalBonusValue = evalPiece(*fromMove, *toMove) * std::abs(simEvalValue);
+        evalMovesList.emplace_back(simEvalValue + evalBonusValue, move);
     }
 
-    // sort which position has the best evaluation
-    std::sort(evalMovesList.begin(), evalMovesList.end(), [](const auto &a, const auto &b) { return a.first > b.first; });
     return evalMovesList;
 }
 
 // for now only implemented for depth of one, meaning check own board after a move and the possible reactions of opponent
-std::vector<std::pair<double, std::string>> ChessAnalyzer::getBestEvalMoves(const int depth) {
-    const bool white = origBoard.isWhitesTurn();
-    const auto moves = chessLogic.getAllLegalMovesMap(white);
-    evalVec evalMoves;
+std::string ChessAnalyzer::getBestEvalMove(int depth) {
+    const auto moves = chessLogic.getAllLegalMoves();
 
-    for (const auto &[fromMove, toMoves] : moves) {
-        const std::string fromMoveStr = fromMove.getPos();
-        for (const ChessTile *toMove : toMoves) {
-            // make move and get eval moves for opponent. Choose their best move as new base eval move, so choose by worst case
-            ChessInterface simInterface(origBoard);
-            const std::string move = fromMoveStr + ":" + toMove->getPos();
-            simInterface.handleMoveInputNoChecks(move);
-            ChessAnalyzer simAnalyzer(simInterface.getChessBoard());
-            const auto simEvalMoves = simAnalyzer.getEvalMoves();
-            // no more moves possible
-            if (simEvalMoves.empty()) break;
-            double evalValue = simEvalMoves.front().first;
-            evalMoves.emplace_back(evalValue, move);
+    // first -> the original move
+    // second -> legal move vector
+    std::queue<std::pair<std::string, PieceMoves>> q;
+    int counter = moves.size();
+
+    evalMap evaluatedMoves;
+    for (const auto &[fromTile, toTile] : moves) {
+        const std::string move = fromTile->getPos() + ":" + toTile->getPos();
+        evaluatedMoves[move] = std::numeric_limits<double>::min();
+        PieceMoves firstMove; firstMove.emplace_back(fromTile, toTile);
+        q.emplace(move, firstMove);
+    }
+    while (!q.empty()) {
+        const auto &[move, moves] = q.front();
+
+        // do own moves
+        for (const auto &[fromTile, toTile] : moves) {
+            ChessInterface ownInterface(origBoard);
+            ownInterface.handleMoveInputNoChecks(*fromTile, *toTile);
+
+            // get oponents evaluated moves
+            ChessInterface oponentMoveInterface(ownInterface.getChessBoard());
+            const PieceMoves oponentMoves = oponentMoveInterface.getChessMoveLogic().getAllLegalMoves();
+            // TODO: check for draw or checkmate propably
+            if (oponentMoves.empty()) continue;
+
+            const bool oponenetWhite = oponentMoveInterface.getChessBoard().isWhitesTurn();
+            double oponentMaxEval = std::numeric_limits<double>::min();
+            for (const auto &[fromTile, toTile] : oponentMoves) {
+                // make oponents moves
+                ChessInterface oponentInterface(ownInterface.getChessBoard());
+                oponentInterface.handleMoveInputNoChecks(*fromTile, *toTile);
+
+                // get evaluation for oponents moves
+                ChessAnalyzer oponentAnalyzer(oponentInterface.getChessBoard());
+                const double simEvalValue = oponenetWhite ? oponentAnalyzer.evalBoard() : -oponentAnalyzer.evalBoard();
+                const double evalBonusValue = evalPiece(*fromTile, *toTile) * std::abs(simEvalValue);
+                const double evalValue = simEvalValue + evalBonusValue;
+                oponentMaxEval = std::max(oponentMaxEval, evalValue);
+
+                if (depth > 0) {
+                    ChessInterface qOwnInterface(oponentInterface.getChessBoard());
+                    PieceMoves qOwnMoves = qOwnInterface.getChessMoveLogic().getAllLegalMoves();
+                    q.emplace(move, qOwnMoves);
+                }
+            }
+            // update highest evaluation for oponent after all moves got checked
+            evaluatedMoves[move] = std::max(evaluatedMoves[move], oponentMaxEval);
         }
+        q.pop();
+        if (counter <= 0) {
+            depth--;
+            counter = q.size();
+            continue;
+        }
+        counter--;
     }
 
-    // sort by lowest now because these values are the best for opponent
-    std::sort(evalMoves.begin(), evalMoves.end(), [](const auto &a, const auto &b) { return a.first < b.first; });
-    return evalMoves;
+    return std::ranges::min_element(evaluatedMoves, [](const auto &a, const auto &b) { return a.second < b.second; })->first;
 }
-
-/// TODO: evaluates the board position for each possible move. Also adding some depth, which returns new evaluations. Should prioritize
-/// worst outcome after opponent moves again for evaluating the move before that
-// std::vector<std::pair<double, std::string>> ChessAnalyzer::getBestEvalMoves() {
-//     const bool white = origBoard.isWhitesTurn();
-//
-//     const Pieces colorPieces = white ? origBoard.getAllWhiteTiles() : origBoard.getAllBlackTiles();
-//     std::vector<std::pair<double, std::string>> evalMovesList;
-//     for (const ChessTile *fromMove : colorPieces) {
-//         const std::string fromMoveName = fromMove->getMove();
-//         Pieces possibleMoves = chessLogic.getPossibleMoves(*fromMove);
-//         chessLogic.filterPossibleMovesForChecks(*fromMove, possibleMoves);
-//         for (const ChessTile *move : possibleMoves) {
-//             // make a copy of the board play the move and evaluate the position
-//             ChessBoard simulateBoard(origBoard);
-//             std::string moveName = fromMoveName + ":" + move->getMove();
-//             simulateBoard.handleMoveInput(moveName);
-//             ChessAnalyzer boardAnalyzer(simulateBoard);
-//             const double evalValue = boardAnalyzer.evalCurrPosition(white);
-//             evalMovesList.emplace_back(evalValue, moveName);
-//         }
-//     }
-//
-//     // sort which position has the best evaluation
-//     std::sort(evalMovesList.begin(), evalMovesList.end(), [](const auto &a, const auto &b) { return a.first > b.first; });
-//     return evalMovesList;
-// }
-
-/// only works for depth of one for now
-// std::vector<std::pair<double, std::string>> ChessAnalyzer::getBestEvalMoves(const int depth) {
-//     bool white = origBoard.isWhitesTurn();
-//     auto origBestMoves = getBestEvalMoves();
-//     /*auto currBestMoves = origBestMoves;*/
-//     for (int i = 0; i <= depth; i++) {
-//         // change player
-//         white = !white;
-//         std::vector<std::pair<double, std::string>> evalMovesList;
-//         std::pair<double, std::string> worstMove(10000, ""); // dummy value that will be overwritten
-//         for (auto &[evalValue, moveName] : origBestMoves) {
-//             // make move from previous evaluation
-//             ChessBoard simulateBoard(origBoard);
-//             simulateBoard.handleMoveInput(moveName);
-//             // get the new best moves
-//             ChessAnalyzer boardAnalyzer(simulateBoard);
-//             auto simBestMoves = boardAnalyzer.getBestEvalMoves();
-//             // get the worst move
-//             const auto simWorstMove = simBestMoves.back();
-//             evalValue = std::min(evalValue, simWorstMove.first);
-//         }
-//     }
-//
-//     std::sort(origBestMoves.begin(), origBestMoves.end(), [](const auto &a, const auto &b) { return a.first > b.first; });
-//     return origBestMoves;
-// }
 
 /// a list of pieces being attacked but not defended
 /// white: the attackers color
@@ -164,8 +140,8 @@ PieceTiles ChessAnalyzer::getFreePieces(const boardMatrix &attackMatr, const boa
     return freePieces;
 }
 
-/// return a matrix with each tile and the corresponding attackers of that tile, where the first pair is the white attackers and the second
-/// the black attackers
+/// return a matrix with each tile and the corresponding attackers of that tile, where the first pair is the white attackers and the
+/// second the black attackers
 ///
 boardMatrix ChessAnalyzer::getAttackedMatrix() {
     boardMatrix attackedBy;
@@ -403,6 +379,19 @@ double ChessAnalyzer::evalRookMoves(const ChessTile &rookTile) {
         if (rookTile.getX() == 7) encourage -= 0.25;
     }
     return encourage;
+}
+
+double ChessAnalyzer::getEvalValue(const ChessInterface &ownInterface, const ChessTile &fromTile, const ChessTile &toTile) {
+    // make oponents moves
+    ChessInterface oponentInterface(ownInterface.getChessBoard());
+    oponentInterface.handleMoveInputNoChecks(fromTile, toTile);
+
+    // get evaluation for oponents moves
+    ChessAnalyzer oponentAnalyzer(oponentInterface.getChessBoard());
+    bool oponentWhite = oponentInterface.getChessBoard().isWhitesTurn();
+    const double simEvalValue = oponentWhite ? oponentAnalyzer.evalBoard() : -oponentAnalyzer.evalBoard();
+    const double evalBonusValue = evalPiece(fromTile, toTile) * std::abs(simEvalValue);
+    return simEvalValue + evalBonusValue;
 }
 
 void ChessAnalyzer::addToAttackedMatrix(boardMatrix &attackedBy, const bool white) {

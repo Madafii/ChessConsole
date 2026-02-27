@@ -1,12 +1,14 @@
 #pragma once
 
 #include "ChessBoard.h"
+#include "ChessInterface.h"
 #include "ChessMoveLogic.h"
 #include "ChessPiece.h"
 #include <cstddef>
 #include <cstdint>
 #include <map>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 // TODO:
@@ -29,6 +31,7 @@ class ChessAnalyzer {
     using boardMatrix = std::array<std::pair<std::vector<const ChessTile *>, std::vector<const ChessTile *>>, boardSize>;
     using valueMatrix = std::array<double, boardSize>;
     using evalVec = std::vector<std::pair<double, std::string>>;
+    using evalMap = std::map<std::string, double>; // TODO: change back to unordered_map. For some reason debugger being weird
     using int8Pair = std::pair<int8_t, int8_t>;
 
     explicit ChessAnalyzer(const ChessBoard &board);
@@ -37,7 +40,7 @@ class ChessAnalyzer {
 
     oStrVec getForcedCheckmate(int depth);
     std::vector<std::pair<double, std::string>> getEvalMoves();
-    std::vector<std::pair<double, std::string>> getBestEvalMoves(int depth);
+    std::string getBestEvalMove(int depth);
     // std::vector<std::pair<double, std::string>> getBestEvalMoves(int depth);
 
     PieceTiles getFreePieces(const boardMatrix &attackMatr, const boardMatrix &defendMatr, bool white);
@@ -92,6 +95,7 @@ class ChessAnalyzer {
     // static constexpr double weightUniquePieceDefends = 0.015;
     // static constexpr double weightUniqueTileDefends = 0.025;
     // ----------------------------------------------------------------
+    double getEvalValue(const ChessInterface &ownInterface, const ChessTile &fromTile, const ChessTile &toTile);
 
     void addToAttackedMatrix(boardMatrix &attackedBy, bool white);
     void addToDefendMatrix(boardMatrix &defendedBy, bool white);

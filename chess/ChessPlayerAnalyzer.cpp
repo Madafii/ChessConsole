@@ -7,7 +7,5 @@ ChessPlayerAnalyzer::ChessPlayerAnalyzer(const ChessInterface &chessInterface)
 ChessPlayerAnalyzer::~ChessPlayerAnalyzer() = default;
 
 std::optional<std::string> ChessPlayerAnalyzer::getNextMove() {
-    const auto bestMoves = _chessAnalyzer.getBestEvalMoves(1);
-    if (bestMoves.empty()) return std::nullopt;
-    return bestMoves.front().second;
+    return _chessAnalyzer.getBestEvalMove(0);
 }

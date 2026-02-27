@@ -89,7 +89,7 @@ class ChessBoard {
     ChessTile &getTileAt(const int pos) { return board[pos]; }
     ChessTile &getTileAt(const std::string_view pos) { return getTileAt(ChessTile::getPos(pos[0], pos[1])); }
 
-    // TODO: might want to change this as it contains logic -> so split to logic?
+    // actual finalized moves
     void move(ChessTile &fromTile, ChessTile &toTile, char pawnToPiece = '0');
     void endMove();
 

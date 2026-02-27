@@ -93,8 +93,7 @@ ChessWebInterface::ChessWebInterface() {
             // std::cout << "the db makes the random move: " << randomMove << std::endl;
             // game_state = chessInterface.handleInput(randomMove).value();
             ChessAnalyzer chessAna(chessInterface.getChessBoard());
-            const auto bestMoves = chessAna.getBestEvalMoves(1);
-            const std::string bestMove = bestMoves.front().second;
+            const std::string bestMove = chessAna.getBestEvalMove(1);
             std::cout << "analyzer making the move: " << bestMove << std::endl;
             game_state = chessInterface.handleInput(bestMove).value();
             analyzer = true;
@@ -138,16 +137,14 @@ ChessWebInterface::ChessWebInterface() {
             // std::cout << "the db makes the random move: " << randomMove << std::endl;
             // game_state = chessInterface.handleInput(randomMove).value();
             ChessAnalyzer chessAna(chessInterface.getChessBoard());
-            const auto bestMoves = chessAna.getBestEvalMoves(1);
-            const std::string bestMove = bestMoves.front().second;
+            const std::string bestMove = chessAna.getBestEvalMove(1);
             std::cout << "analyzer making the move: " << bestMove << std::endl;
             game_state = chessInterface.handleInput(bestMove).value();
             analyzer = true;
         }
 #else
         ChessAnalyzer chessAna(chessInterface.getChessBoard());
-        const auto bestMoves = chessAna.getBestEvalMoves(1);
-        const std::string bestMove = bestMoves.front().second;
+        const std::string bestMove = chessAna.getBestEvalMove(1);
         std::cout << "analyzer making the move: " << bestMove << std::endl;
         game_state = chessInterface.handleInput(bestMove).value();
 #endif
