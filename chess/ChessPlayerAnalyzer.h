@@ -1,8 +1,8 @@
 #pragma once
 
+#include "ChessAnalyzer.h"
 #include "ChessInterface.h"
 #include "ChessPlayer.h"
-#include "ChessAnalyzer.h"
 
 class ChessPlayerAnalyzer : public ChessPlayer {
   public:

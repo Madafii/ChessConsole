@@ -121,7 +121,7 @@ std::string ChessAnalyzer::getBestEvalMove(int depth) {
         counter--;
     }
 
-    return std::ranges::min_element(evaluatedMoves, [](const auto &a, const auto &b) { return a.second < b.second; })->first;
+    return std::ranges::max_element(evaluatedMoves, [](const auto &a, const auto &b) { return a.second < b.second; })->first;
 }
 
 /// a list of pieces being attacked but not defended

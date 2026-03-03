@@ -31,7 +31,7 @@ class ChessAnalyzer {
     using boardMatrix = std::array<std::pair<std::vector<const ChessTile *>, std::vector<const ChessTile *>>, boardSize>;
     using valueMatrix = std::array<double, boardSize>;
     using evalVec = std::vector<std::pair<double, std::string>>;
-    using evalMap = std::map<std::string, double>; // TODO: change back to unordered_map. For some reason debugger being weird
+    using evalMap = std::unordered_map<std::string, double>;
     using int8Pair = std::pair<int8_t, int8_t>;
 
     explicit ChessAnalyzer(const ChessBoard &board);
@@ -80,9 +80,14 @@ class ChessAnalyzer {
     const std::map<ChessPieceType, int> pieceValue = {{ChessPieceType::KING, 0},   {ChessPieceType::QUEEN, 9},  {ChessPieceType::ROOK, 5},
                                                       {ChessPieceType::BISHOP, 3}, {ChessPieceType::KNIGHT, 3}, {ChessPieceType::PAWN, 1},
                                                       {ChessPieceType::NONE, 0}};
-    static constexpr std::array<uint8_t, boardSize> boardValue = {0, 1, 1, 1, 1, 1, 1, 0, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 3, 3, 3, 3,
-                                                                  2, 1, 1, 2, 3, 4, 4, 3, 2, 1, 1, 2, 3, 4, 4, 3, 2, 1, 1, 2, 3, 3,
-                                                                  3, 3, 2, 1, 1, 2, 2, 2, 2, 2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 0};
+    static constexpr std::array<uint8_t, boardSize> boardValue = {0, 1, 1, 1, 1, 1, 1, 0,  // 0
+                                                                  1, 2, 2, 2, 2, 2, 2, 1,  // 1
+                                                                  1, 2, 3, 3, 3, 3, 2, 1,  // 2
+                                                                  1, 2, 3, 4, 4, 3, 2, 1,  // 3
+                                                                  1, 2, 3, 4, 4, 3, 2, 1,  // 4
+                                                                  1, 2, 3, 3, 3, 3, 2, 1,  // 5
+                                                                  1, 2, 2, 2, 2, 2, 2, 1,  // 6
+                                                                  0, 1, 1, 1, 1, 1, 1, 0}; // 7
 
     // ------ weights for evaluation should amount to one (100)-------
     static constexpr double weightPieceValue = 0.9;
@@ -134,7 +139,8 @@ PieceTiles ChessAnalyzer::getDefendedPiecesByDirection(const ChessTile &fromTile
 }
 
 template <size_t N>
-PieceTiles ChessAnalyzer::getDefendedPiecesByDirectionSingle(const ChessTile &fromTile, const ChessMoveLogic::directionArray<N> &directions) {
+PieceTiles ChessAnalyzer::getDefendedPiecesByDirectionSingle(const ChessTile &fromTile,
+                                                             const ChessMoveLogic::directionArray<N> &directions) {
     PieceTiles defendedPieces;
     const int x = fromTile.getX();
     const int y = fromTile.getY();
