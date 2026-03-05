@@ -27,16 +27,35 @@
 
 class ChessAnalyzer {
   public:
+    struct evalLL {
+        evalLL(const std::string &move, const ChessBoard &board, const double val)
+            : s_move(move), s_interface(board), s_val(val), s_nexts() {}
+        std::string s_move;
+        ChessInterface s_interface;
+        double s_val;
+        std::vector<evalLL> s_nexts;
+    };
+
     using oStrVec = std::optional<std::vector<std::string_view>>;
     using boardMatrix = std::array<std::pair<std::vector<const ChessTile *>, std::vector<const ChessTile *>>, boardSize>;
     using valueMatrix = std::array<double, boardSize>;
     using evalVec = std::vector<std::pair<double, std::string>>;
     using evalMap = std::unordered_map<std::string, double>;
+    using evalTree = std::vector<evalLL>;
     using int8Pair = std::pair<int8_t, int8_t>;
 
     explicit ChessAnalyzer(const ChessBoard &board);
 
     std::string startTerminalAnalyzer();
+
+    // evaluation Tree
+    evalTree getEvalTree(uint8_t depth);
+    evalLL getEvalNode(const ChessTile &fromTile, const ChessTile &toTile, const ChessBoard &board);
+    void buildEvalTree(uint8_t depth, evalLL &node);
+
+    // choose move
+    evalLL *getBestEvaluatedMove(evalTree &evalTree);
+    double minmax(const evalLL &node, bool maximizingPlayer);
 
     oStrVec getForcedCheckmate(int depth);
     std::vector<std::pair<double, std::string>> getEvalMoves();
@@ -75,11 +94,11 @@ class ChessAnalyzer {
     double evalKingFirstMove(bool white);
 
   private:
-    const ChessBoard &origBoard;
-    ChessMoveLogic chessLogic;
-    const std::map<ChessPieceType, int> pieceValue = {{ChessPieceType::KING, 0},   {ChessPieceType::QUEEN, 9},  {ChessPieceType::ROOK, 5},
-                                                      {ChessPieceType::BISHOP, 3}, {ChessPieceType::KNIGHT, 3}, {ChessPieceType::PAWN, 1},
-                                                      {ChessPieceType::NONE, 0}};
+    const ChessBoard &_board;
+    ChessMoveLogic _logic;
+    const std::map<ChessPieceType, int> _pieceValue = {{ChessPieceType::KING, 0},   {ChessPieceType::QUEEN, 9},  {ChessPieceType::ROOK, 5},
+                                                       {ChessPieceType::BISHOP, 3}, {ChessPieceType::KNIGHT, 3}, {ChessPieceType::PAWN, 1},
+                                                       {ChessPieceType::NONE, 0}};
     static constexpr std::array<uint8_t, boardSize> boardValue = {0, 1, 1, 1, 1, 1, 1, 0,  // 0
                                                                   1, 2, 2, 2, 2, 2, 2, 1,  // 1
                                                                   1, 2, 3, 3, 3, 3, 2, 1,  // 2
@@ -131,7 +150,7 @@ PieceTiles ChessAnalyzer::getDefendedPiecesByDirection(const ChessTile &fromTile
             const int currX = x + i * xDirection;
             const int currY = y + i * yDirection;
             if (!ChessBoard::validTilePos(currX, currY)) break; // no more tiles this direction
-            const ChessTile &nextTile = origBoard.getTileAt(currX, currY);
+            const ChessTile &nextTile = _board.getTileAt(currX, currY);
             if (!addIfDefending(fromTile, nextTile, defendedPieces)) break; // path blocked
         }
     }
@@ -146,7 +165,7 @@ PieceTiles ChessAnalyzer::getDefendedPiecesByDirectionSingle(const ChessTile &fr
     const int y = fromTile.getY();
     for (const auto &[xDirection, yDirection] : directions) {
         if (!ChessBoard::validTilePos(x + xDirection, y + yDirection)) continue;
-        const ChessTile &nextTile = origBoard.getTileAt(x + xDirection, y + yDirection);
+        const ChessTile &nextTile = _board.getTileAt(x + xDirection, y + yDirection);
         addIfDefending(fromTile, nextTile, defendedPieces);
     }
     return defendedPieces;

@@ -33,7 +33,7 @@ class ChessMoveLogic {
     PieceTiles getAllLegalToTiles(bool white) const;
     PieceTiles getAllLegalMovesPiece(bool white, ChessPieceType piece) const;
     PieceMoves getAllLegalMoves(bool white) const;
-    PieceMoves getAllLegalMoves() const { return getAllLegalMoves(_board.isWhitesTurn()); }
+    PieceMoves getAllLegalMoves() const { return getAllLegalMoves(_board.isWhitesTurn()); } // guess need to add pawn promo moves
     std::map<ChessTile, PieceTiles> getAllLegalMovesMap(bool white) const;
 
     // manipulate a possible moves list
