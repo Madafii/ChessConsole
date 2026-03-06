@@ -57,7 +57,6 @@ class ChessAnalyzer {
     evalLL *getBestEvaluatedMove(evalTree &evalTree);
     double minmax(const evalLL &node, bool maximizingPlayer);
 
-    oStrVec getForcedCheckmate(int depth);
     std::vector<std::pair<double, std::string>> getEvalMoves();
     std::string getBestEvalMove(int depth);
     // std::vector<std::pair<double, std::string>> getBestEvalMoves(int depth);

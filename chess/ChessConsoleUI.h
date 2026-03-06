@@ -6,9 +6,11 @@
 
 class ChessConsoleUI : public ChessUI {
   public:
-    ChessConsoleUI(PlayerFactory playerWhite, PlayerFactory playerBlack, const ChessBoardDrawSettings &settingsWhite = ChessBoardDrawSettings());
+    ChessConsoleUI(const PlayerFactory &playerWhite, const PlayerFactory &playerBlack,
+                   const ChessBoardDrawSettings &settingsWhite = ChessBoardDrawSettings());
 
     void start() override;
+    void startSteps(int steps);
 
   private:
     ChessBoardDraw _boardDraw;
