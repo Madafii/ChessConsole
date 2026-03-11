@@ -1,0 +1,2 @@
+a2:a4 rnbqkbnrpppppppp________________________________PPPPPPPPRNBQKBNR
+a2:a4 b7:b5 a4:b5 rnbqkbnr_ppppppp________p________P______________P_PPPPPPRNBQKBNR

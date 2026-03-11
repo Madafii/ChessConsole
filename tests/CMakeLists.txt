@@ -8,6 +8,8 @@ target_link_libraries(chess_dbInterface chess chessML gtest_main)
 target_link_libraries(chess_analyzer chessBase chessAnalyzer gtest_main)
 target_link_libraries(chess_profiler chess gtest_main)
 
+target_include_directories(chess_input PRIVATE ${CMAKE_BINARY_DIR}/generated)
+
 add_subdirectory(lib/googletest)
 
 include(GoogleTest)

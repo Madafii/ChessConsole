@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <format>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -146,6 +147,7 @@ PieceTiles ChessBoard::getAllPiecesFor(const bool white, const ChessPieceType pi
 
 // every actual board piece change happens here
 void ChessBoard::move(ChessTile &fromTile, ChessTile &toTile, const char pawnToPiece) {
+    lastMove = UndoMove();
     switch (fromTile.getPiece().getType()) {
         case ChessPieceType::PAWN:
             movePawn(fromTile, toTile);
@@ -158,6 +160,9 @@ void ChessBoard::move(ChessTile &fromTile, ChessTile &toTile, const char pawnToP
         default:
             break;
     }
+
+    lastMove->pieceChanges.emplace_back(&fromTile, fromTile.getPiece());
+    lastMove->pieceChanges.emplace_back(&toTile, toTile.getPiece());
 
     fromTile.occupyPiece(toTile.getPiece());
 
@@ -174,6 +179,52 @@ void ChessBoard::endMove() {
     toggleTurn();
 }
 
+// TODO: create solution where makeMove is forced to be called for unmaking moves. Otherwise something else with solution for the
+// boardHistory as that is expensive
+void ChessBoard::makeMove(ChessTile &fromTile, ChessTile &toTile, char pawnToPiece) {
+    lastMove = UndoMove();
+    switch (fromTile.getPiece().getType()) {
+        case ChessPieceType::PAWN:
+            movePawn(fromTile, toTile);
+            break;
+        case ChessPieceType::ROOK:
+            moveRook(fromTile);
+            break;
+        case ChessPieceType::KING:
+            moveKing(fromTile, toTile);
+        default:
+            break;
+    }
+    lastMove->pieceChanges.emplace_back(&fromTile, fromTile.getPiece());
+    lastMove->pieceChanges.emplace_back(&toTile, toTile.getPiece());
+
+    fromTile.occupyPiece(toTile.getPiece());
+
+    if (isPawnPromoted(toTile)) pawnPromotion(toTile, pawnToPiece);
+    if (getEnPassantMarker() != isWhitesTurn()) {
+        setEnPassantPossible(false);
+        resetLastDoublePawnMove();
+    }
+    toggleTurn();
+}
+
+void ChessBoard::undoMove() {
+    if (!lastMove) return;
+    for (auto &[tile, piece] : lastMove->pieceChanges) {
+        tile->changePiece(piece);
+    }
+
+    whiteRookMoved = lastMove->whiteRookMoved;
+    blackRookMoved = lastMove->blackRookMoved;
+    doublePawnMoveAt = lastMove->doublePawnMoveAt;
+    enPassantPossibleLastMove = lastMove->enPassantPossibleLastMove;
+    markTurnForEnPassant = lastMove->markTurnForEnPassant;
+    movesSinceLastCapture = lastMove->movesSinceLastCapture;
+
+    // can only go back one move
+    lastMove = std::nullopt;
+}
+
 void ChessBoard::movePawn(const ChessTile &fromTile, const ChessTile &toTile) {
     // for that special pawn movement check if pawn moved more than two tiles.
     if (abs(fromTile.getY() - toTile.getY()) >= 2) {
@@ -184,6 +235,9 @@ void ChessBoard::movePawn(const ChessTile &fromTile, const ChessTile &toTile) {
     if (fromTile.getX() != toTile.getX() && toTile.getPiece().getType() == ChessPieceType::NONE) {
         const int whiteMove = whitesTurn ? -1 : 1;
         ChessTile &capturedPiece = getTileAt(toTile.getX(), toTile.getY() + whiteMove);
+
+        lastMove->pieceChanges.emplace_back(&capturedPiece, capturedPiece.getPiece());
+
         capturedPiece.changePiece(ChessPiece());
     }
 }
@@ -199,17 +253,17 @@ void ChessBoard::moveKing(const ChessTile &fromTile, const ChessTile &toTile) {
     if (abs(fromTile.getX() - toTile.getX()) >= 2) {
         const int x = toTile.getX();
         const int y = toTile.getY();
-        if (x < 4) {
-            // castle happened on left side
-            ChessTile &rookTile = getTileAt(0, y);
-            ChessTile &rookToTile = getTileAt(3, y);
-            rookToTile.switchPiece(rookTile.getPiece());
-        } else {
-            // castle happened on right side
-            ChessTile &rookTile = getTileAt(7, y);
-            ChessTile &rookToTile = getTileAt(5, y);
-            rookToTile.switchPiece(rookTile.getPiece());
-        }
+
+        const bool leftSide = x < 4;
+        const int xFrom = leftSide ? 0 : 7;
+        const int xTo = leftSide ? 3 : 5;
+        ChessTile &rookTile = getTileAt(xFrom, y);
+        ChessTile &rookToTile = getTileAt(xTo, y);
+
+        lastMove->pieceChanges.emplace_back(&rookToTile, rookToTile.getPiece());
+        lastMove->pieceChanges.emplace_back(&rookTile, rookTile.getPiece());
+
+        rookToTile.switchPiece(rookTile.getPiece());
     }
 }
 

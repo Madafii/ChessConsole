@@ -25,6 +25,17 @@ if(BUILD_SCRIPTS)
 endif()
 if(BUILD_TESTS)
   add_subdirectory(tests)
+  add_custom_command(
+      TARGET chess_control POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory
+              ${CMAKE_SOURCE_DIR}/tests/Data
+              $<TARGET_FILE_DIR:chess_control>/tests/Data
+  )
+  set(TEST_DATA_DIR "${CMAKE_BINARY_DIR}/tests/Data")
+  configure_file(
+      ${CMAKE_SOURCE_DIR}/cmake/config.hpp.in
+      ${CMAKE_BINARY_DIR}/generated/config.hpp
+  )
 endif()
 
 # libraries
