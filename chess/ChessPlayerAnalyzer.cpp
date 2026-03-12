@@ -8,5 +8,6 @@ ChessPlayerAnalyzer::~ChessPlayerAnalyzer() = default;
 
 std::optional<std::string> ChessPlayerAnalyzer::getNextMove() {
     auto moves = _chessAnalyzer.getEvalTree(2);
+    if (moves.empty()) return std::nullopt;
     return _chessAnalyzer.getBestEvaluatedMove(moves)->s_move;
 }

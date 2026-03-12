@@ -68,11 +68,10 @@ void ChessAnalyzer::buildEvalTree(uint8_t depth, evalLL &node) {
 evalLL *ChessAnalyzer::getBestEvaluatedMove(evalTree &evalTree) {
     evalLL *bestNode = nullptr;
     bool maximizingPlayer = _board.isWhitesTurn();
-    double bestValue = maximizingPlayer ? std::numeric_limits<double>::min() : std::numeric_limits<double>::max();
+    double bestValue = maximizingPlayer ? std::numeric_limits<double>::lowest() : std::numeric_limits<double>::max();
 
     for (auto &node : evalTree) {
-        double value = minmax(node, false); // opponent plays next
-
+        double value = minmax(node, maximizingPlayer);
         if (maximizingPlayer) {
             if (value > bestValue) {
                 bestValue = value;
@@ -93,7 +92,7 @@ double ChessAnalyzer::minmax(const evalLL &node, bool maximizingPlayer) {
     if (node.s_nexts.empty()) return node.s_val;
 
     if (maximizingPlayer) {
-        double best = std::numeric_limits<double>::min();
+        double best = std::numeric_limits<double>::lowest();
         for (const auto &child : node.s_nexts) {
             best = std::max(best, minmax(child, false));
         }
