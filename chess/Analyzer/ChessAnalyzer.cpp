@@ -1,6 +1,5 @@
 #include "ChessAnalyzer.h"
 #include "ChessBoard.h"
-#include "ChessInterface.h"
 #include "ChessMoveLogic.h"
 #include "ChessPiece.h"
 #include <algorithm>
@@ -8,7 +7,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <limits>
-#include <queue>
 #include <string>
 #include <sys/types.h>
 #include <utility>
@@ -19,7 +17,7 @@ using evalVec = ChessAnalyzer::evalVec;
 using evalLL = ChessAnalyzer::evalLL;
 using enum ChessPieceType;
 
-ChessAnalyzer::ChessAnalyzer(const ChessBoard &board) : _board(board), _logic(ChessMoveLogic(_board)) {}
+ChessAnalyzer::ChessAnalyzer(ChessBoard &board) : _board(board), _logic({_board}) {}
 
 ChessAnalyzer::evalTree ChessAnalyzer::getEvalTree(uint8_t depth) {
     const auto moves = _logic.getAllLegalMoves();
@@ -28,41 +26,42 @@ ChessAnalyzer::evalTree ChessAnalyzer::getEvalTree(uint8_t depth) {
     evaluationMatrix.reserve(moves.size());
 
     for (const auto &[fromTile, toTile] : moves) {
-        evalLL simEvalLL = getEvalNode(*fromTile, *toTile, _board);
+        ChessTile &from = _board.getTileAt(fromTile->getPos());
+        ChessTile &to = _board.getTileAt(toTile->getPos());
+        UndoMove uMove = _board.makeMove(from, to);
+        evalLL simEvalLL = getEvalNode(from, to);
         buildEvalTree(depth, simEvalLL);
+        _board.undoMove(uMove);
         evaluationMatrix.push_back(simEvalLL);
     }
     return evaluationMatrix;
 }
 
-evalLL ChessAnalyzer::getEvalNode(const ChessTile &fromTile, const ChessTile &toTile, const ChessBoard &board) {
-    // simulate move and analyze board after move was made
-    ChessInterface simInterface(board);
-
+evalLL ChessAnalyzer::getEvalNode(ChessTile &fromTile, ChessTile &toTile) {
     const std::string move = fromTile.getPos() + ":" + toTile.getPos();
-    simInterface.handleMoveInputNoChecks(move);
 
     // get evaluation
-    ChessAnalyzer simAnalyzer(simInterface.getChessBoard());
-    const double simEvalValue = simAnalyzer.evalBoard();
-    const double evalBonusValue = evalPiece(fromTile, toTile) * std::abs(simEvalValue);
+    const double evalValue = evalBoard();
+    const double evalBonusValue = evalPiece(fromTile, toTile) * std::abs(evalValue);
 
-    return {move, simInterface.getChessBoard(), simEvalValue + evalBonusValue};
+    return {move, evalValue + evalBonusValue};
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
 void ChessAnalyzer::buildEvalTree(uint8_t depth, evalLL &node) {
     if (depth == 0) return;
 
-    const ChessBoard &board = node.s_interface.getChessBoard();
-    const ChessMoveLogic &logic = node.s_interface.getChessMoveLogic();
-    const auto moves = logic.getAllLegalMoves();
+    const auto moves = _logic.getAllLegalMoves();
 
     node.s_nexts.reserve(moves.size());
     for (const auto &[fromTile, toTile] : moves) {
-        evalLL simEvalLL = getEvalNode(*fromTile, *toTile, board);
+        ChessTile &from = _board.getTileAt(fromTile->getPos());
+        ChessTile &to = _board.getTileAt(toTile->getPos());
+        UndoMove uMove = _board.makeMove(from, to);
+        evalLL simEvalLL = getEvalNode(from, to);
         node.s_nexts.emplace_back(simEvalLL);
         buildEvalTree(depth - 1, node.s_nexts.back());
+        _board.undoMove(uMove);
     }
 }
 
@@ -106,71 +105,6 @@ double ChessAnalyzer::minmax(const evalLL &node, bool maximizingPlayer) {
         }
         return best;
     }
-}
-
-// for now only implemented for depth of one, meaning check own board after a move and the possible reactions of opponent
-std::string ChessAnalyzer::getBestEvalMove(int depth) {
-    const auto moves = _logic.getAllLegalMoves();
-
-    // first -> the original move
-    // second -> legal move vector
-    std::queue<std::pair<std::string, PieceMoves>> q;
-    int counter = moves.size();
-
-    evalMap evaluatedMoves;
-    for (const auto &[fromTile, toTile] : moves) {
-        const std::string move = fromTile->getPos() + ":" + toTile->getPos();
-        evaluatedMoves[move] = std::numeric_limits<double>::min();
-        PieceMoves firstMove; firstMove.emplace_back(fromTile, toTile);
-        q.emplace(move, firstMove);
-    }
-    while (!q.empty()) {
-        const auto &[move, moves] = q.front();
-
-        // do own moves
-        for (const auto &[fromTile, toTile] : moves) {
-            ChessInterface ownInterface(_board);
-            ownInterface.handleMoveInputNoChecks(*fromTile, *toTile);
-
-            // get oponents evaluated moves
-            ChessInterface oponentMoveInterface(ownInterface.getChessBoard());
-            const PieceMoves oponentMoves = oponentMoveInterface.getChessMoveLogic().getAllLegalMoves();
-            // TODO: check for draw or checkmate propably
-            if (oponentMoves.empty()) continue;
-
-            const bool oponenetWhite = oponentMoveInterface.getChessBoard().isWhitesTurn();
-            double oponentMaxEval = std::numeric_limits<double>::min();
-            for (const auto &[fromTile, toTile] : oponentMoves) {
-                // make oponents moves
-                ChessInterface oponentInterface(ownInterface.getChessBoard());
-                oponentInterface.handleMoveInputNoChecks(*fromTile, *toTile);
-
-                // get evaluation for oponents moves
-                ChessAnalyzer oponentAnalyzer(oponentInterface.getChessBoard());
-                const double simEvalValue = oponenetWhite ? oponentAnalyzer.evalBoard() : -oponentAnalyzer.evalBoard();
-                const double evalBonusValue = evalPiece(*fromTile, *toTile) * std::abs(simEvalValue);
-                const double evalValue = simEvalValue + evalBonusValue;
-                oponentMaxEval = std::max(oponentMaxEval, evalValue);
-
-                if (depth > 0) {
-                    ChessInterface qOwnInterface(oponentInterface.getChessBoard());
-                    PieceMoves qOwnMoves = qOwnInterface.getChessMoveLogic().getAllLegalMoves();
-                    q.emplace(move, qOwnMoves);
-                }
-            }
-            // update highest evaluation for oponent after all moves got checked
-            evaluatedMoves[move] = std::max(evaluatedMoves[move], oponentMaxEval);
-        }
-        q.pop();
-        if (counter <= 0) {
-            depth--;
-            counter = q.size();
-            continue;
-        }
-        counter--;
-    }
-
-    return std::ranges::min_element(evaluatedMoves, [](const auto &a, const auto &b) { return a.second < b.second; })->first;
 }
 
 /// a list of pieces being attacked but not defended
@@ -428,19 +362,6 @@ double ChessAnalyzer::evalRookMoves(const ChessTile &rookTile) {
         if (rookTile.getX() == 7) encourage -= 0.25;
     }
     return encourage;
-}
-
-double ChessAnalyzer::getEvalValue(const ChessInterface &ownInterface, const ChessTile &fromTile, const ChessTile &toTile) {
-    // make oponents moves
-    ChessInterface oponentInterface(ownInterface.getChessBoard());
-    oponentInterface.handleMoveInputNoChecks(fromTile, toTile);
-
-    // get evaluation for oponents moves
-    ChessAnalyzer oponentAnalyzer(oponentInterface.getChessBoard());
-    bool oponentWhite = oponentInterface.getChessBoard().isWhitesTurn();
-    const double simEvalValue = oponentWhite ? oponentAnalyzer.evalBoard() : -oponentAnalyzer.evalBoard();
-    const double evalBonusValue = evalPiece(fromTile, toTile) * std::abs(simEvalValue);
-    return simEvalValue + evalBonusValue;
 }
 
 void ChessAnalyzer::addToAttackedMatrix(boardMatrix &attackedBy, const bool white) {

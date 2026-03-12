@@ -11,8 +11,8 @@
 
 class ChessPlayerDB : public ChessPlayer {
   public:
-    explicit ChessPlayerDB(const ChessInterface &chessInterface);
-    explicit ChessPlayerDB(const ChessInterface &chessInterface, const std::string &dbName, const PlayerFactory &fallbackPlayer);
+    explicit ChessPlayerDB(ChessInterface &chessInterface);
+    explicit ChessPlayerDB(ChessInterface &chessInterface, const std::string &dbName, const PlayerFactory &fallbackPlayer);
 
     std::optional<std::string> getNextMove() override;
 

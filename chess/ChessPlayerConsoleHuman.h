@@ -6,7 +6,7 @@
 
 class ChessPlayerConsoleHuman : public ChessPlayer {
   public:
-    explicit ChessPlayerConsoleHuman(const ChessInterface &chessInterface,
+    explicit ChessPlayerConsoleHuman(ChessInterface &chessInterface,
                                      const ChessBoardDrawSettings &settings = ChessBoardDrawSettings());
     ~ChessPlayerConsoleHuman() override;
 

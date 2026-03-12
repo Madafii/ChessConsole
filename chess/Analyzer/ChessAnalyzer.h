@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ChessBoard.h"
-#include "ChessInterface.h"
 #include "ChessMoveLogic.h"
 #include "ChessPiece.h"
 #include <cstddef>
@@ -28,10 +27,8 @@
 class ChessAnalyzer {
   public:
     struct evalLL {
-        evalLL(const std::string &move, const ChessBoard &board, const double val)
-            : s_move(move), s_interface(board), s_val(val), s_nexts() {}
+        evalLL(const std::string &move, const double val) : s_move(move), s_val(val), s_nexts() {}
         std::string s_move;
-        ChessInterface s_interface;
         double s_val;
         std::vector<evalLL> s_nexts;
     };
@@ -44,22 +41,18 @@ class ChessAnalyzer {
     using evalTree = std::vector<evalLL>;
     using int8Pair = std::pair<int8_t, int8_t>;
 
-    explicit ChessAnalyzer(const ChessBoard &board);
+    explicit ChessAnalyzer(ChessBoard &board);
 
     std::string startTerminalAnalyzer();
 
     // evaluation Tree
     evalTree getEvalTree(uint8_t depth);
-    evalLL getEvalNode(const ChessTile &fromTile, const ChessTile &toTile, const ChessBoard &board);
+    evalLL getEvalNode(ChessTile &fromTile, ChessTile &toTile);
     void buildEvalTree(uint8_t depth, evalLL &node);
 
     // choose move
     evalLL *getBestEvaluatedMove(evalTree &evalTree);
     double minmax(const evalLL &node, bool maximizingPlayer);
-
-    std::vector<std::pair<double, std::string>> getEvalMoves();
-    std::string getBestEvalMove(int depth);
-    // std::vector<std::pair<double, std::string>> getBestEvalMoves(int depth);
 
     PieceTiles getFreePieces(const boardMatrix &attackMatr, const boardMatrix &defendMatr, bool white);
     // get matrix covering all tiles by what piece is attacking it
@@ -93,7 +86,7 @@ class ChessAnalyzer {
     double evalKingFirstMove(bool white);
 
   private:
-    const ChessBoard &_board;
+    ChessBoard &_board;
     ChessMoveLogic _logic;
     const std::map<ChessPieceType, int> _pieceValue = {{ChessPieceType::KING, 0},   {ChessPieceType::QUEEN, 9},  {ChessPieceType::ROOK, 5},
                                                        {ChessPieceType::BISHOP, 3}, {ChessPieceType::KNIGHT, 3}, {ChessPieceType::PAWN, 1},
@@ -118,7 +111,6 @@ class ChessAnalyzer {
     // static constexpr double weightUniquePieceDefends = 0.015;
     // static constexpr double weightUniqueTileDefends = 0.025;
     // ----------------------------------------------------------------
-    double getEvalValue(const ChessInterface &ownInterface, const ChessTile &fromTile, const ChessTile &toTile);
 
     void addToAttackedMatrix(boardMatrix &attackedBy, bool white);
     void addToDefendMatrix(boardMatrix &defendedBy, bool white);

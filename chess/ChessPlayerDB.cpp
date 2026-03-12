@@ -1,12 +1,11 @@
 #include "ChessPlayerDB.h"
 #include "ChessBoard.h"
 #include "ChessLinkedListMoves.h"
-#include "ChessUI.h"
 #include <iostream>
 
-ChessPlayerDB::ChessPlayerDB(const ChessInterface &chessInterface) : ChessPlayer(chessInterface) {}
+ChessPlayerDB::ChessPlayerDB(ChessInterface &chessInterface) : ChessPlayer(chessInterface) {}
 
-ChessPlayerDB::ChessPlayerDB(const ChessInterface &chessInterface, const std::string &dbName, const PlayerFactory &fallbackPlayer)
+ChessPlayerDB::ChessPlayerDB(ChessInterface &chessInterface, const std::string &dbName, const PlayerFactory &fallbackPlayer)
     : ChessPlayer(chessInterface), _dbName(dbName), _chessDB(dbName), _fallbackPlayer(fallbackPlayer(_chessInterface)) {}
 
 std::optional<std::string> ChessPlayerDB::getNextMove() {

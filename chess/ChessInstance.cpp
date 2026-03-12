@@ -45,9 +45,9 @@ ChessInstance::~ChessInstance() = default;
 
 void ChessInstance::run() {
     ChessBoardDrawSettings settings(true, true);
-    ChessConsoleUI cc([&settings](const ChessInterface &chessInterface) {
+    ChessConsoleUI cc([&settings](ChessInterface &chessInterface) {
         return std::make_unique<ChessPlayerConsoleHuman>(chessInterface, settings);
-    }, [&settings](const ChessInterface &chessInterface) {
+    }, [&settings](ChessInterface &chessInterface) {
         return std::make_unique<ChessPlayerConsoleHuman>(chessInterface, settings);
     }, settings);
     cc.start();
@@ -55,46 +55,46 @@ void ChessInstance::run() {
 
 void ChessInstance::runRandom() {
     ChessBoardDrawSettings settings(false, true);
-    ChessConsoleUI cc([](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerRnd>(chessInterface); },
-                      [](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerRnd>(chessInterface); }, settings);
+    ChessConsoleUI cc([](ChessInterface &chessInterface) { return std::make_unique<ChessPlayerRnd>(chessInterface); },
+                      [](ChessInterface &chessInterface) { return std::make_unique<ChessPlayerRnd>(chessInterface); }, settings);
     cc.start();
 }
 
 void ChessInstance::runAgainstRandom() {
     ChessBoardDrawSettings settings(false, true);
-    ChessConsoleUI cc([&settings](const ChessInterface &chessInterface) {
+    ChessConsoleUI cc([&settings](ChessInterface &chessInterface) {
         return std::make_unique<ChessPlayerConsoleHuman>(chessInterface, settings);
-    }, [](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerRnd>(chessInterface); }, settings);
+    }, [](ChessInterface &chessInterface) { return std::make_unique<ChessPlayerRnd>(chessInterface); }, settings);
     cc.start();
 }
 
 void ChessInstance::runDatabase() {
     ChessBoardDrawSettings settings(false, true);
-    ChessConsoleUI cc([](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerDB>(chessInterface); },
-                      [](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerDB>(chessInterface); }, settings);
+    ChessConsoleUI cc([](ChessInterface &chessInterface) { return std::make_unique<ChessPlayerDB>(chessInterface); },
+                      [](ChessInterface &chessInterface) { return std::make_unique<ChessPlayerDB>(chessInterface); }, settings);
     cc.start();
 }
 
 void ChessInstance::runAgainstDatabase() {
     ChessBoardDrawSettings settings(false, true);
-    ChessConsoleUI cc([&settings](const ChessInterface &chessInterface) {
+    ChessConsoleUI cc([&settings](ChessInterface &chessInterface) {
         return std::make_unique<ChessPlayerConsoleHuman>(chessInterface, settings);
-    }, [](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerDB>(chessInterface); }, settings);
+    }, [](ChessInterface &chessInterface) { return std::make_unique<ChessPlayerDB>(chessInterface); }, settings);
     cc.start();
 }
 
 void ChessInstance::runAnalyzer() {
     ChessBoardDrawSettings settings(false, true);
-    ChessConsoleUI cc([](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerAnalyzer>(chessInterface); },
-                      [](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerAnalyzer>(chessInterface); }, settings);
+    ChessConsoleUI cc([](ChessInterface &chessInterface) { return std::make_unique<ChessPlayerAnalyzer>(chessInterface); },
+                      [](ChessInterface &chessInterface) { return std::make_unique<ChessPlayerAnalyzer>(chessInterface); }, settings);
     cc.start();
 }
 
 void ChessInstance::runAgainstAnalyzer() {
     ChessBoardDrawSettings settings(false, true);
-    ChessConsoleUI cc([&settings](const ChessInterface &chessInterface) {
+    ChessConsoleUI cc([&settings](ChessInterface &chessInterface) {
         return std::make_unique<ChessPlayerConsoleHuman>(chessInterface, settings);
-    }, [](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerAnalyzer>(chessInterface); }, settings);
+    }, [](ChessInterface &chessInterface) { return std::make_unique<ChessPlayerAnalyzer>(chessInterface); }, settings);
     cc.start();
 }
 

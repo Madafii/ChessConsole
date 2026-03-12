@@ -1,7 +1,7 @@
 #include "ChessUtils.h"
 #include "ChessMoveLogic.h"
 
-std::string ChessUtils::convertPGNToMyInput(std::string input, const ChessMoveLogic &chessLogic, const bool &white) {
+std::string ChessUtils::convertPGNToMyInput(std::string input, ChessMoveLogic &chessLogic, const bool &white) {
     // ignore some values in the input
     std::erase(input, '+');
     std::erase(input, '#');
@@ -65,7 +65,7 @@ std::string ChessUtils::convertPGNToMyInput(std::string input, const ChessMoveLo
         PieceTiles possibleMoves = chessLogic.getMoves(*piece);
         auto it = std::ranges::find_if(possibleMoves, [&](const ChessTile *tile) {
             const auto [toX, toY] = ChessTile::getPos(moveTo[0], moveTo[1]);
-            if (tile->getX() == toX && tile->getY() + 1 == toY) {
+            if (tile->getX() == toX && tile->getY() == toY) {
                 return true;
             }
             return false;

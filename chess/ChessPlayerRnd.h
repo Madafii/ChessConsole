@@ -7,7 +7,7 @@
 
 class ChessPlayerRnd : public ChessPlayer {
   public:
-    ChessPlayerRnd(const ChessInterface &chessInterface);
+    ChessPlayerRnd(ChessInterface &chessInterface);
     ~ChessPlayerRnd() override;
 
     std::optional<std::string> getNextMove() override;

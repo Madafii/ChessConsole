@@ -84,7 +84,6 @@ ChessWebInterface::ChessWebInterface() {
             return;
         }
 
-
 #ifdef DATABASE
         // after first analyzer move all others also by analyzer
         if (analyzer) {
@@ -93,7 +92,8 @@ ChessWebInterface::ChessWebInterface() {
             // std::cout << "the db makes the random move: " << randomMove << std::endl;
             // game_state = chessInterface.handleInput(randomMove).value();
             ChessAnalyzer chessAna(chessInterface.getChessBoard());
-            const std::string bestMove = chessAna.getBestEvalMove(1);
+            auto moves = chessAna.getEvalTree(1);
+            const std::string bestMove = chessAna.getBestEvaluatedMove(moves)->s_move;
             std::cout << "analyzer making the move: " << bestMove << std::endl;
             game_state = chessInterface.handleInput(bestMove).value();
             analyzer = true;
@@ -137,7 +137,8 @@ ChessWebInterface::ChessWebInterface() {
             // std::cout << "the db makes the random move: " << randomMove << std::endl;
             // game_state = chessInterface.handleInput(randomMove).value();
             ChessAnalyzer chessAna(chessInterface.getChessBoard());
-            const std::string bestMove = chessAna.getBestEvalMove(1);
+            auto moves = chessAna.getEvalTree(1);
+            const std::string bestMove = chessAna.getBestEvaluatedMove(moves)->s_move;
             std::cout << "analyzer making the move: " << bestMove << std::endl;
             game_state = chessInterface.handleInput(bestMove).value();
             analyzer = true;

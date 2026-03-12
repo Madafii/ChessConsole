@@ -9,15 +9,15 @@ class ChessInterface;
 
 class ChessPlayer {
   public:
-    explicit ChessPlayer(const ChessInterface &chessInterface);
+    explicit ChessPlayer(ChessInterface &chessInterface);
     virtual ~ChessPlayer() = default;
 
     virtual std::optional<std::string> getNextMove() = 0;
 
   protected:
-    const ChessInterface &_chessInterface;
+    ChessInterface &_chessInterface;
 
   private:
 };
 
-using PlayerFactory = std::function<std::unique_ptr<ChessPlayer>(const ChessInterface &)>;
+using PlayerFactory = std::function<std::unique_ptr<ChessPlayer>(ChessInterface &)>;

@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -42,6 +43,20 @@ void doMovements(ChessBoard &chessBoard, const StrVecPair &moves) {
     }
 }
 
+void testInvalidInput(ChessInterface &interface, const StrVec &moves) {
+    for (auto it = moves.begin(); it != moves.end() - 1; it++) {
+        auto state = interface.handleInput(*it);
+        EXPECT_NE(state, std::nullopt);
+    }
+    const std::string previousBoardStr = interface.getChessBoard().getStringFromBoard();
+
+    const auto &lastMove = moves.back();
+    auto state = interface.handleInput(lastMove);
+    // invalid input and board does not change
+    EXPECT_EQ(state, std::nullopt);
+    EXPECT_EQ(previousBoardStr, interface.getChessBoard().getStringFromBoard());
+}
+
 void testUndo(const StrVecPair &moves) {
     ChessBoard board;
     for (auto it = moves.begin(); it != moves.end() - 1; it++) {
@@ -57,7 +72,7 @@ void testUndo(const StrVecPair &moves) {
     board.makeMove(fromTile, toTile);
     EXPECT_NE(previousBoardStr, board.getStringFromBoard());
 
-    // undo capturing piece
+    // undo capturing piece getting the same position as before
     board.undoMove();
     EXPECT_EQ(previousBoardStr, board.getStringFromBoard());
 }
@@ -79,6 +94,7 @@ auto readInputFile(const std::string &fileName) -> MoveBoardData {
         std::vector<std::string> tokens;
 
         while (iss >> token) {
+            if (token.starts_with("#")) break;
             tokens.push_back(token);
         }
         std::vector moves(tokens.begin(), tokens.end() - 1);
@@ -88,28 +104,71 @@ auto readInputFile(const std::string &fileName) -> MoveBoardData {
 }
 
 GameState doMovementsFromPGN(ChessInterface &chessInterface, const StrVec &moves) {
-    GameState currState = GameState::InProgress;
+    std::optional<GameState> currState = GameState::InProgress;
     for (const std::string &move : moves) {
         const bool white = chessInterface.getChessBoard().isWhitesTurn();
         std::string inputMyChess = ChessUtils::convertPGNToMyInput(move, chessInterface.getChessMoveLogic(), white);
-        auto currState = chessInterface.handleMoveInput(inputMyChess);
+        currState = chessInterface.handleMoveInput(inputMyChess);
         if (!currState) {
             std::cerr << "reading PGN input should never result in a wrong input" << std::endl;
         }
         if (*currState != GameState::InProgress) break;
     }
-    return currState;
+    return *currState;
 }
 
 // ------------------------------TESTING AREA------------------------------------------------- //
 
-TEST(ChessInterfaceTests, testBasics) {
+
+TEST(testBoard, testGetTileAt) {
+    ChessBoard board;
+    const int compareX = 1;
+    const int compareY = 1;
+
+    ChessTile &t1 = board.getTileAt(1, 1);
+    EXPECT_EQ(compareX, t1.getX());
+    EXPECT_EQ(compareY, t1.getY());
+    ChessTile &t2 = board.getTileAt({1, 1});
+    EXPECT_EQ(compareX, t2.getX());
+    EXPECT_EQ(compareY, t2.getY());
+    ChessTile &t3 = board.getTileAt(9);
+    EXPECT_EQ(compareX, t3.getX());
+    EXPECT_EQ(compareY, t3.getY());
+    ChessTile &t4 = board.getTileAt("b2");
+    EXPECT_EQ(compareX, t4.getX());
+    EXPECT_EQ(compareY, t4.getY());
+}
+
+TEST(ChessInterfaceTests, validInputs) {
     auto movesTests = readInputFile(dataDir.string() + "/basicMoves.txt");
 
     for (const auto &[checkBoard, moves] : movesTests) {
         ChessInterface chessInterface;
         doMovements(chessInterface, moves);
-        EXPECT_EQ(checkBoard, chessInterface.getChessBoard().getGameHistory().back());
+        EXPECT_EQ(checkBoard, chessInterface.getChessBoard().getStringFromBoard());
+        EXPECT_EQ(GameState::InProgress, chessInterface.checkGameState());
+    }
+}
+
+TEST(ChessInterfaceTests, checkmates) {
+    auto movesTests = readInputFile(dataDir.string() + "/checkmates.txt");
+
+    for (const auto &[checkBoard, moves] : movesTests) {
+        ChessInterface chessInterface;
+        doMovements(chessInterface, moves);
+        EXPECT_EQ(checkBoard, chessInterface.getChessBoard().getStringFromBoard());
+        EXPECT_EQ(GameState::Won, chessInterface.checkGameState());
+    }
+}
+
+TEST(ChessInterfaceTests, invalidInputs) {
+    auto movesTests = readInputFile(dataDir.string() + "/invalidMoves.txt");
+
+    for (const auto &[checkBoard, moves] : movesTests) {
+        ChessInterface chessInterface;
+        doMovements(chessInterface, moves);
+        EXPECT_EQ(checkBoard, chessInterface.getChessBoard().getStringFromBoard());
+        EXPECT_EQ(GameState::InProgress, chessInterface.checkGameState());
     }
 }
 
@@ -190,28 +249,30 @@ TEST(basicChessTests, testTmp) {
 }
 
 TEST(testUndo, testInitialMove) {
-    const StrVecPair input = {{"a1", "a3"}};
+    const StrVecPair input = {{"a2", "a4"}};
     testUndo(input);
 }
 
 TEST(testUndo, testCapturing) {
-    const StrVecPair input = {{"a1", "a3"}, {"b6", "b4"}, {"a1", "a3"}};
+    const StrVecPair input = {{"a2", "a4"}, {"b7", "b5"}, {"a2", "a4"}};
     testUndo(input);
 }
 
+// TODO: might extend to testing enpassant booleans in chessboard
 TEST(testUndo, testEnPassant) {
-    const StrVecPair inputs = {{"a1", "a3"}, {"a6", "a5"}, {"a3", "a4"}, {"b6", "b4"}};
+    const StrVecPair inputs = {{"a2", "a4"}, {"a7", "a6"}, {"a4", "a3"}, {"b7", "b5"}};
     testUndo(inputs);
 }
 
+// TODO: might extend to testing castling booleans in chessboard
 TEST(testUndo, testCastling) {
-    const StrVecPair inputs = {{"g0", "h2"}, {"a6", "a5"}, {"e1", "e2"}, {"a5", "a4"}, {"f0", "e1"}, {"a4", "a3"}, {"e0", "g0"}};
+    const StrVecPair inputs = {{"g1", "h3"}, {"a7", "a6"}, {"e2", "e3"}, {"a6", "a5"}, {"f1", "e2"}, {"a5", "a4"}, {"e1", "g1"}};
     testUndo(inputs);
 }
 
 TEST(testUndo, testRepeatedUndo) {
-    const StrVecPair input1 = {{"a1", "a3"}};
-    const StrVecPair input2 = {{"b6", "b4"}};
+    const StrVecPair input1 = {{"a2", "a4"}};
+    const StrVecPair input2 = {{"b7", "b5"}};
     ChessBoard board;
     doMovements(board, input1);
     const std::string previousBoardStr = board.getStringFromBoard();

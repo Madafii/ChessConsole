@@ -24,8 +24,9 @@ bool match(std::vector<const ChessTile *> tiles, const std::vector<ChessPieceTyp
 }
 
 TEST(evalTests, evalBoardValue) {
-    ChessInterface chessInterface;
-    ChessAnalyzer chessAna(chessInterface.getChessBoard());
+    ChessBoard board;
+    ChessInterface chessInterface(board);
+    ChessAnalyzer chessAna(board);
 
     // check values with no moves made
     EXPECT_EQ(chessAna.evalBoardValue(true), 20);
@@ -47,8 +48,9 @@ TEST(evalTests, evalBoardValue) {
 }
 
 TEST(evalTests, evalPieceValue) {
-    ChessInterface chessInterface;
-    ChessAnalyzer chessAna(chessInterface.getChessBoard());
+    ChessBoard board;
+    ChessInterface chessInterface(board);
+    ChessAnalyzer chessAna(board);
 
     // check values with no moves made
     EXPECT_EQ(chessAna.evalPieceValue(true), 39);
@@ -83,8 +85,8 @@ TEST(evalTests, evalKingMove) {
 }
 
 TEST(evalTests, evalRookMove) {
-    ChessInterface chessInterface;
-    const ChessBoard &board = chessInterface.getChessBoard();
+    ChessBoard board;
+    ChessInterface chessInterface(board);
     ChessAnalyzer chessAna(board);
     const ChessTile &leftRookTile = board.getTileAt(0);
     const ChessTile &rightRookTile = board.getTileAt(7);
@@ -103,8 +105,9 @@ TEST(evalTests, evalRookMove) {
 }
 
 TEST(matrixTests, defendMatrix) {
-    ChessInterface chessInterface;
-    ChessAnalyzer chessAna(chessInterface.getChessBoard());
+    ChessBoard board;
+    ChessInterface chessInterface(board);
+    ChessAnalyzer chessAna(board);
 
     // check base value
     const auto defenderMatrix = chessAna.getDefendedMatrix();
@@ -130,8 +133,9 @@ TEST(matrixTests, defendMatrix) {
 }
 
 TEST(matrixTests, attackMatrix) {
-    ChessInterface chessInterface;
-    ChessAnalyzer chessAna(chessInterface.getChessBoard());
+    ChessBoard board;
+    ChessInterface chessInterface(board);
+    ChessAnalyzer chessAna(board);
 
     // check base attack matrix. Should be empty
     auto attackMatrix = chessAna.getAttackedMatrix();
@@ -191,8 +195,9 @@ TEST(matrixTests, attackMatrix) {
 }
 
 TEST(bestMovesTests, basicTests) {
-    ChessInterface chessInterface;
-    ChessAnalyzer chessAna(chessInterface.getChessBoard());
+    ChessBoard board;
+    ChessInterface chessInterface(board);
+    ChessAnalyzer chessAna(board);
 
     chessInterface.handleMoveInput("d2:d4");
     chessInterface.handleMoveInput("d7:d5");
@@ -209,5 +214,3 @@ TEST(bestMovesTests, basicTests) {
     //     std::cout << "The best move is: " << move << " with a value of: " << std::to_string(value) << std::endl;
     // }
 }
-
-

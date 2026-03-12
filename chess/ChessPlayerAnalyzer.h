@@ -6,7 +6,7 @@
 
 class ChessPlayerAnalyzer : public ChessPlayer {
   public:
-    explicit ChessPlayerAnalyzer(const ChessInterface &chessInterface);
+    explicit ChessPlayerAnalyzer(ChessInterface &chessInterface);
     ~ChessPlayerAnalyzer() override;
 
     std::optional<std::string> getNextMove() override;

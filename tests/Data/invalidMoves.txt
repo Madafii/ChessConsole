@@ -1,0 +1,2 @@
+f2:f3 e7:e6 g2:g3 d8:h4 g3:g4 rnbqkbnrppppp__p_____pp________Q____________P___PPPP_PPPRNB_KBNR # invalid move as king remains checked
+d2:d4 a7:a6 d1:d3 b7:b5 c1:d2 c7:c6 b1:c3 d7:d5 e2:e3 e7:e6 b2:b3 f8:a3 e1:c1 r___kbnrp_pb_pppBpnqp______p_____P_P____P_P_P________PPPRNBQK_NR # try castling when path is attacked

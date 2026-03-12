@@ -4,7 +4,7 @@
 
 TEST(ProfileAnalyzer, AnaAgainstAna) {
     ChessBoardDrawSettings settings(false, true);
-    ChessConsoleUI cc([](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerAnalyzer>(chessInterface); },
-                      [](const ChessInterface &chessInterface) { return std::make_unique<ChessPlayerAnalyzer>(chessInterface); }, settings);
+    ChessConsoleUI cc([](ChessInterface &chessInterface) { return std::make_unique<ChessPlayerAnalyzer>(chessInterface); },
+                      [](ChessInterface &chessInterface) { return std::make_unique<ChessPlayerAnalyzer>(chessInterface); }, settings);
     cc.startSteps(5);
 }

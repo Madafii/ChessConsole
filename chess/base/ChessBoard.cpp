@@ -160,10 +160,6 @@ void ChessBoard::move(ChessTile &fromTile, ChessTile &toTile, const char pawnToP
         default:
             break;
     }
-
-    lastMove->pieceChanges.emplace_back(&fromTile, fromTile.getPiece());
-    lastMove->pieceChanges.emplace_back(&toTile, toTile.getPiece());
-
     fromTile.occupyPiece(toTile.getPiece());
 
     if (isPawnPromoted(toTile)) pawnPromotion(toTile, pawnToPiece);
@@ -181,8 +177,14 @@ void ChessBoard::endMove() {
 
 // TODO: create solution where makeMove is forced to be called for unmaking moves. Otherwise something else with solution for the
 // boardHistory as that is expensive
-void ChessBoard::makeMove(ChessTile &fromTile, ChessTile &toTile, char pawnToPiece) {
+UndoMove ChessBoard::makeMove(ChessTile &fromTile, ChessTile &toTile, char pawnToPiece) {
     lastMove = UndoMove();
+    lastMove->whiteRookMoved = whiteRookMoved;
+    lastMove->blackRookMoved = blackRookMoved;
+    lastMove->doublePawnMoveAt = doublePawnMoveAt;
+    lastMove->enPassantPossibleLastMove = enPassantPossibleLastMove;
+    lastMove->markTurnForEnPassant = markTurnForEnPassant;
+    lastMove->movesSinceLastCapture = movesSinceLastCapture;
     switch (fromTile.getPiece().getType()) {
         case ChessPieceType::PAWN:
             movePawn(fromTile, toTile);
@@ -206,22 +208,26 @@ void ChessBoard::makeMove(ChessTile &fromTile, ChessTile &toTile, char pawnToPie
         resetLastDoublePawnMove();
     }
     toggleTurn();
+    return *lastMove;
+}
+
+void ChessBoard::undoMove(const UndoMove &uMove) {
+    for (auto &[tile, piece] : uMove.pieceChanges) {
+        tile->changePiece(piece);
+    }
+
+    whiteRookMoved = uMove.whiteRookMoved;
+    blackRookMoved = uMove.blackRookMoved;
+    doublePawnMoveAt = uMove.doublePawnMoveAt;
+    enPassantPossibleLastMove = uMove.enPassantPossibleLastMove;
+    markTurnForEnPassant = uMove.markTurnForEnPassant;
+    movesSinceLastCapture = uMove.movesSinceLastCapture;
+    toggleTurn();
 }
 
 void ChessBoard::undoMove() {
     if (!lastMove) return;
-    for (auto &[tile, piece] : lastMove->pieceChanges) {
-        tile->changePiece(piece);
-    }
-
-    whiteRookMoved = lastMove->whiteRookMoved;
-    blackRookMoved = lastMove->blackRookMoved;
-    doublePawnMoveAt = lastMove->doublePawnMoveAt;
-    enPassantPossibleLastMove = lastMove->enPassantPossibleLastMove;
-    markTurnForEnPassant = lastMove->markTurnForEnPassant;
-    movesSinceLastCapture = lastMove->movesSinceLastCapture;
-
-    // can only go back one move
+    undoMove(*lastMove);
     lastMove = std::nullopt;
 }
 

@@ -97,7 +97,6 @@ class ChessBoard {
     ChessTile &getTileAt(const int x, const int y) { return board[y * boardWidth + x]; }
     ChessTile &getTileAt(const std::pair<int, int> &pos) { return board[pos.second * boardWidth + pos.first]; }
     ChessTile &getTileAt(const int pos) { return board[pos]; }
-    // use offset of 1 for y coordinates -> a1 = a0
     ChessTile &getTileAt(const std::string_view pos) { return getTileAt(ChessTile::getPos(pos[0], pos[1])); }
 
     // actual finalized moves
@@ -105,7 +104,8 @@ class ChessBoard {
     void endMove();
 
     // non player moves that have to be undone
-    void makeMove(ChessTile &fromTile, ChessTile &toTile, char pawnToPiece = '0');
+    UndoMove makeMove(ChessTile &fromTile, ChessTile &toTile, char pawnToPiece = '0');
+    void undoMove(const UndoMove &uMove);
     void undoMove();
 
     std::string getStringFromBoard() const;

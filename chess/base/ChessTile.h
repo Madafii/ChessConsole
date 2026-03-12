@@ -13,7 +13,7 @@ class ChessTile {
 
     [[nodiscard]] std::string getPos() const { return std::string(static_cast<char>('a' + _x) + std::to_string(_y + 1)); }
     [[nodiscard]] static std::string getPos(int x, int y) { return std::string(static_cast<char>('a' + x) + std::to_string(y + 1)); }
-    [[nodiscard]] static std::pair<int, int> getPos(char x, char y) { return {x - 'a', y - '0'}; }
+    [[nodiscard]] static std::pair<int, int> getPos(char x, char y) { return {x - 'a', y - '1'}; }
 
     [[nodiscard]] ChessPiece &getPiece() { return _piece; }
     [[nodiscard]] const ChessPiece &getPiece() const { return _piece; }

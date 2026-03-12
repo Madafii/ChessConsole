@@ -6,10 +6,10 @@
 #include <functional>
 #include <utility>
 
-ChessMoveLogic::ChessMoveLogic(const ChessBoard &board) : _board(board) {}
+ChessMoveLogic::ChessMoveLogic(ChessBoard &board) : _board(board) {}
 
 // return legal moves
-PieceTiles ChessMoveLogic::getLegalMoves(const ChessTile &fromTile) const {
+PieceTiles ChessMoveLogic::getLegalMoves(const ChessTile &fromTile) {
     switch (fromTile.getPieceType()) {
         case PAWN:
             return getMovesCached(fromTile, std::bind(&ChessMoveLogic::getMovesPawn, this, std::placeholders::_1));
@@ -70,12 +70,12 @@ PieceTiles ChessMoveLogic::getMovesNoCastling(const ChessTile &fromTile) const {
 }
 
 // TODO: rework caching
-PieceTiles ChessMoveLogic::getMovesCached(const ChessTile &fromTile, const possibleMovesFunc &func) const {
+PieceTiles ChessMoveLogic::getMovesCached(const ChessTile &fromTile, const possibleMovesFunc &func) {
     // if (!_possibleMovesCache.contains(&fromTile)) {
-        PieceTiles possMoves = func(fromTile);
-        filterLegalMoves(fromTile, possMoves);
-        // _possibleMovesCache.emplace(&fromTile, possMoves);
-        return possMoves;
+    PieceTiles possMoves = func(fromTile);
+    filterLegalMoves(fromTile, possMoves);
+    // _possibleMovesCache.emplace(&fromTile, possMoves);
+    return possMoves;
     // }
     // return _possibleMovesCache.at(&fromTile);
 }
@@ -150,7 +150,7 @@ PieceTiles ChessMoveLogic::getMovesCastling(const ChessTile &fromTile) const {
     return possibleMoves;
 }
 
-template<size_t N>
+template <size_t N>
 PieceTiles ChessMoveLogic::getMovesByDirection(const ChessTile &fromTile, const directionArray<N> &directions) const {
     PieceTiles possibleMoves;
     const int x = fromTile.getX();
@@ -169,7 +169,7 @@ PieceTiles ChessMoveLogic::getMovesByDirection(const ChessTile &fromTile, const 
     return possibleMoves;
 }
 
-template<size_t N>
+template <size_t N>
 PieceTiles ChessMoveLogic::getMovesByDirectionSingle(const ChessTile &fromTile, const directionArray<N> &directions) const {
     PieceTiles possibleMoves;
     const int x = fromTile.getX();
@@ -185,7 +185,7 @@ PieceTiles ChessMoveLogic::getMovesByDirectionSingle(const ChessTile &fromTile, 
     return possibleMoves;
 }
 
-PieceTiles ChessMoveLogic::getAllLegalToTiles(const bool white) const {
+PieceTiles ChessMoveLogic::getAllLegalToTiles(const bool white) {
     PieceTiles allPossibleMoves;
     const PieceTiles pieceTiles = _board.getAllTiles(white);
     for (const ChessTile *tile : pieceTiles) {
@@ -209,7 +209,7 @@ PieceTiles ChessMoveLogic::getAllLegalMovesPiece(const bool white, const ChessPi
     return allPossibleMoves;
 }
 
-PieceMoves ChessMoveLogic::getAllLegalMoves(bool white) const {
+PieceMoves ChessMoveLogic::getAllLegalMoves(bool white) {
     PieceMoves allPossMoves;
     const PieceTiles allPieces = _board.getAllTiles(white);
     for (const ChessTile *fromTile : allPieces) {
@@ -221,7 +221,7 @@ PieceMoves ChessMoveLogic::getAllLegalMoves(bool white) const {
     return allPossMoves;
 }
 
-std::map<ChessTile, PieceTiles> ChessMoveLogic::getAllLegalMovesMap(bool white) const {
+std::map<ChessTile, PieceTiles> ChessMoveLogic::getAllLegalMovesMap(bool white) {
     std::map<ChessTile, PieceTiles> allPossibleMoves;
     const PieceTiles pieceTiles = _board.getAllTiles(white);
     for (const ChessTile *fromMove : pieceTiles) {
@@ -232,7 +232,7 @@ std::map<ChessTile, PieceTiles> ChessMoveLogic::getAllLegalMovesMap(bool white) 
     return allPossibleMoves;
 }
 
-bool ChessMoveLogic::isInputMovePossible(const ChessTile &fromTile, const ChessTile &toTile) const {
+bool ChessMoveLogic::isInputMovePossible(const ChessTile &fromTile, const ChessTile &toTile) {
     // get the possible moves for the from tile
     PieceTiles possibleMoves = getMoves(fromTile);
     filterLegalMoves(fromTile, possibleMoves);
@@ -241,7 +241,7 @@ bool ChessMoveLogic::isInputMovePossible(const ChessTile &fromTile, const ChessT
     return itPossMove != possibleMoves.end();
 }
 
-void ChessMoveLogic::filterLegalMoves(const ChessTile &fromTile, PieceTiles &possibleMoves) const {
+void ChessMoveLogic::filterLegalMoves(const ChessTile &fromTile, PieceTiles &possibleMoves) {
     // conditions are:
     // -- King can not be checked after the move
     // -- Casteling is only allowed if the tiles in in between the king and the rook are not attacked and the king is not checked
@@ -308,21 +308,21 @@ bool ChessMoveLogic::isKingChecked(const bool white) const {
 /// @param fromTile the tile to move from
 /// @param toTile the tile to move to
 /// @return if King is checked after that move
-bool ChessMoveLogic::isKingCheckedAfterMove(const ChessTile &fromTile, const ChessTile &toTile) const {
-    ChessBoard checkBoard(_board);
-    ChessMoveLogic checkMoveLogic(checkBoard);
-    ChessTile &checkFromTile = checkBoard.getTileAt(fromTile.getX(), fromTile.getY());
-    ChessTile &checkToTile = checkBoard.getTileAt(toTile.getX(), toTile.getY());
-    checkBoard.move(checkFromTile, checkToTile);
+bool ChessMoveLogic::isKingCheckedAfterMove(const ChessTile &fromTile, const ChessTile &toTile) {
+    ChessTile &from = _board.getTileAt(fromTile.getX(), fromTile.getY());
+    ChessTile &to = _board.getTileAt(toTile.getX(), toTile.getY());
+    _board.makeMove(from, to);
+    bool isChecked = isKingChecked(!_board.isWhitesTurn());
+    _board.undoMove();
 
-    return checkMoveLogic.isKingChecked(!checkBoard.isWhitesTurn());
+    return isChecked;
 }
 
-bool ChessMoveLogic::isKingCheckmate(const bool white) const {
+bool ChessMoveLogic::isKingCheckmate(const bool white) {
     return std::ranges::all_of(_board.getAllTiles(white), [this](const ChessTile *tile) { return getLegalMoves(*tile).empty(); });
 }
 
-bool ChessMoveLogic::isDraw(const bool white) const {
+bool ChessMoveLogic::isDraw(const bool white) {
     // if (isThreefoldRepetition()) // seems optional so deactivate for now
     // return true; // self explaining :)
     if (getAllLegalToTiles(white).size() <= 0 && !isKingChecked(white)) {

@@ -1,4 +1,4 @@
 #include "ChessPlayer.h"
 
-ChessPlayer::ChessPlayer(const ChessInterface &chessInterface) : _chessInterface(chessInterface) {}
+ChessPlayer::ChessPlayer(ChessInterface &chessInterface) : _chessInterface(chessInterface) {}
 

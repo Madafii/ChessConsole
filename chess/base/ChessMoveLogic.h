@@ -22,31 +22,32 @@ class ChessMoveLogic {
     static constexpr directionArray<8> directionsKnight{std::pair(2, 1), std::pair(2, -1), std::pair(-2, 1), std::pair(-2, -1),
                                                         std::pair(1, 2), std::pair(-1, 2), std::pair(1, -2), std::pair(-1, -2)};
 
-    explicit ChessMoveLogic(const ChessBoard &board);
+    explicit ChessMoveLogic(ChessBoard &board);
 
     const ChessBoard &getChessBoard() const { return _board; }
 
     // finds possible moves
-    PieceTiles getLegalMoves(const ChessTile &fromTile) const;
+    PieceTiles getLegalMoves(const ChessTile &fromTile);
     PieceTiles getMovesNoCastling(const ChessTile &fromTile) const;
     PieceTiles getMoves(const ChessTile &fromTile) const;
-    PieceTiles getAllLegalToTiles(bool white) const;
+    PieceTiles getAllLegalToTiles(bool white);
     PieceTiles getAllLegalMovesPiece(bool white, ChessPieceType piece) const;
-    PieceMoves getAllLegalMoves(bool white) const;
-    PieceMoves getAllLegalMoves() const { return getAllLegalMoves(_board.isWhitesTurn()); } // guess need to add pawn promo moves
-    std::map<ChessTile, PieceTiles> getAllLegalMovesMap(bool white) const;
+    PieceMoves getAllLegalMoves(bool white);
+    PieceMoves getAllLegalMoves() { return getAllLegalMoves(_board.isWhitesTurn()); } // guess need to add pawn promo moves
+    std::map<ChessTile, PieceTiles> getAllLegalMovesMap(bool white);
 
     // manipulate a possible moves list
-    void filterLegalMoves(const ChessTile &fromTile, PieceTiles &possibleMoves) const;
+    void filterLegalMoves(const ChessTile &fromTile, PieceTiles &possibleMoves);
     static bool addIfLegalMove(const ChessTile &fromTile, const ChessTile &toTile, PieceTiles &possibleMoves);
 
     // checks for things on the board
-    bool isInputMovePossible(const ChessTile &fromTile, const ChessTile &toTile) const;
+    bool isInputMovePossible(const ChessTile &fromTile, const ChessTile &toTile);
     bool isTileAttacked(bool white, const PieceTiles &tilesToCheck) const;
     bool isKingChecked(bool white) const;
-    bool isKingCheckedAfterMove(const ChessTile &fromTile, const ChessTile &toTile) const;
-    bool isKingCheckmate(bool white) const;
-    bool isDraw(bool white) const;
+    bool isKingChecked() const { return isKingChecked(_board.isWhitesTurn()); }
+    bool isKingCheckedAfterMove(const ChessTile &fromTile, const ChessTile &toTile);
+    bool isKingCheckmate(bool white);
+    bool isDraw(bool white);
     bool isThreefoldRepetition() const;
     bool isDeadPosition() const;
 
@@ -60,12 +61,12 @@ class ChessMoveLogic {
     }
 
   private:
-    const ChessBoard &_board;
+    ChessBoard &_board;
 
     mutable std::map<const ChessTile *, PieceTiles> _possibleMovesCache;
 
     // helpers for find possible moves
-    PieceTiles getMovesCached(const ChessTile &fromTile, const possibleMovesFunc &func) const;
+    PieceTiles getMovesCached(const ChessTile &fromTile, const possibleMovesFunc &func);
     PieceTiles getMovesPawn(const ChessTile &fromTile) const;
     PieceTiles getMovesBishop(const ChessTile &fromTile) const { return getMovesByDirection(fromTile, directionsDiagonal); }
     PieceTiles getMovesKnight(const ChessTile &fromTile) const { return getMovesByDirectionSingle(fromTile, directionsKnight); }

@@ -1,7 +1,7 @@
 #include "ChessPlayerAnalyzer.h"
 #include <optional>
 
-ChessPlayerAnalyzer::ChessPlayerAnalyzer(const ChessInterface &chessInterface)
+ChessPlayerAnalyzer::ChessPlayerAnalyzer(ChessInterface &chessInterface)
     : ChessPlayer(chessInterface), _chessAnalyzer(chessInterface.getChessBoard()) {}
 
 ChessPlayerAnalyzer::~ChessPlayerAnalyzer() = default;

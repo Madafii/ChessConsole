@@ -23,8 +23,8 @@ class ChessInterface {
     std::optional<ChessTile> handleToInput(std::string_view input, const PieceTiles &possMoves) const;
 
     // getters
-    ChessBoard &getChessBoard() { return chessBoard; }
-    ChessMoveLogic &getChessMoveLogic() { return chessLogic; }
+    ChessBoard &getChessBoard() const { return chessBoard; }
+    ChessMoveLogic &getChessMoveLogic() const { return chessLogic; }
 
     GameState checkGameState();
 
@@ -44,6 +44,12 @@ class ChessInterface {
     bool checkValidTilePos(const std::vector<std::string_view> &moves) const;
     bool checkFromTile(const ChessTile &tile) const;
 
+    // offset of y axis for internal usage
+    static std::string getInternalInput(std::string_view input) {
+        std::string subStrFrom(input);
+        subStrFrom[1] = static_cast<char>(subStrFrom[1] - 1);
+        return subStrFrom;
+    }
     // splits input into from:to and pawnWonTo
     static std::pair<std::string, char> splitMoveInput(std::string_view input) {
         return {std::string(input.substr(0, 5)), (input.length() == 7 ? input[6] : '0')};

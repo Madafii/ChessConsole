@@ -6,7 +6,7 @@
 #include "ChessBoardDraw.h"
 #include "ChessInterface.h"
 
-ChessPlayerConsoleHuman::ChessPlayerConsoleHuman(const ChessInterface &chessInterface, const ChessBoardDrawSettings &settings)
+ChessPlayerConsoleHuman::ChessPlayerConsoleHuman(ChessInterface &chessInterface, const ChessBoardDrawSettings &settings)
     : ChessPlayer(chessInterface), _boardDraw(settings) {}
 
 ChessPlayerConsoleHuman::~ChessPlayerConsoleHuman() = default;

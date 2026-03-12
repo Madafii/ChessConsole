@@ -69,8 +69,6 @@ void ChessInterface::handleMoveInputNoChecks(const std::string_view input) {
     auto [inputMove, pawnChangeTo] = splitMoveInput(input);
 
     // get the tiles directly
-    inputMove[1] = static_cast<char>(inputMove[1] - 1);
-    inputMove[4] = static_cast<char>(inputMove[4] - 1);
     ChessTile &fromTile = chessBoard.getTileAt(inputMove.substr(0, 2));
     ChessTile &toTile = chessBoard.getTileAt(inputMove.substr(3));
 
@@ -85,7 +83,7 @@ void ChessInterface::handleMoveInputNoChecks(const ChessTile &fromTile, const Ch
 }
 
 // nullopt, when anything but your own piece. 0 possMoves does not return nullopt
-std::optional<PieceTiles> ChessInterface::getPossibleMovesFromTile(const std::string_view input) const {
+std::optional<PieceTiles> ChessInterface::getPossibleMovesFromTile(const std::string_view input) {
     if (const auto fromTile = getMoveTileFromInput(input)) {
         return chessLogic.getLegalMoves(*fromTile);
     }
@@ -95,10 +93,9 @@ std::optional<PieceTiles> ChessInterface::getPossibleMovesFromTile(const std::st
 std::optional<ChessTile> ChessInterface::handleToInput(std::string_view input, const PieceTiles &possMoves) const {
     if (!checkInputLength(input, 2)) return std::nullopt;
 
-    const std::string internalTo = getInternalInput(input);
-    if (!checkValidTilePos({internalTo})) return std::nullopt;
+    if (!checkValidTilePos({input})) return std::nullopt;
 
-    const ChessTile *toTile = &chessBoard.getTileAt(internalTo);
+    const ChessTile *toTile = &chessBoard.getTileAt(input);
     for (const ChessTile *tile : possMoves) {
         if (toTile == tile) return {*tile};
     }
@@ -109,10 +106,9 @@ std::optional<ChessTile> ChessInterface::getMoveTileFromInput(const std::string_
     if (!checkInputLength(input, 2)) return std::nullopt;
 
     // get position strings from the from:to format input
-    const std::string internalFrom = getInternalInput(input);
-    if (!checkValidTilePos({internalFrom})) return std::nullopt;
+    if (!checkValidTilePos({input})) return std::nullopt;
 
-    const ChessTile &tile = chessBoard.getTileAt(internalFrom);
+    const ChessTile &tile = chessBoard.getTileAt(input);
     if (!checkFromTile(tile)) return std::nullopt;
     return tile;
 }
@@ -121,8 +117,8 @@ PiecePair ChessInterface::getMoveTilesFromInput(const std::string_view input) {
     if (!checkInputLength(input, 5)) return std::nullopt;
 
     // get position strings from the from:to format input
-    const std::string internalFrom = getInternalInput(input.substr(0, 2));
-    const std::string internalTo = getInternalInput(input.substr(3));
+    std::string_view internalFrom = input.substr(0, 2);
+    std::string_view internalTo = input.substr(3);
     if (!checkValidTilePos({internalFrom, internalTo})) return std::nullopt;
 
     ChessTile &fromTile = chessBoard.getTileAt(internalFrom);

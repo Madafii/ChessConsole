@@ -7,7 +7,7 @@
 #include <optional>
 #include <random>
 
-ChessPlayerRnd::ChessPlayerRnd(const ChessInterface &chessInterface) : ChessPlayer(chessInterface), _gen(std::random_device{}()) {}
+ChessPlayerRnd::ChessPlayerRnd(ChessInterface &chessInterface) : ChessPlayer(chessInterface), _gen(std::random_device{}()) {}
 
 ChessPlayerRnd::~ChessPlayerRnd() = default;
 
