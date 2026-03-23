@@ -4,6 +4,7 @@ project(chess_control CXX)
 option(BUILD_WEB "Build for web deployment" ON)
 option(BUILD_SCRIPTS "Build scripts" ON)
 option(BUILD_TESTS "Build tests" ON)
+option(BUILD_GL "Build GL" ON)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -36,6 +37,9 @@ if(BUILD_TESTS)
       ${CMAKE_SOURCE_DIR}/cmake/config.hpp.in
       ${CMAKE_BINARY_DIR}/generated/config.hpp
   )
+endif()
+if(BUILD_GL) 
+    add_subdirectory(application)
 endif()
 
 # libraries

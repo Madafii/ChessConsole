@@ -19,7 +19,7 @@ static constexpr int boardSize = boardWidth * boardHeight;
 using PieceTiles = std::vector<const ChessTile *>;
 using PiecePair = std::optional<std::pair<ChessTile *, ChessTile *>>;
 using PiecePairC = std::pair<const ChessTile *, const ChessTile *>;
-using PieceMoves = std::vector<std::pair<const ChessTile *, const ChessTile *>>;
+using PieceMoves = std::vector<PiecePairC>;
 
 enum class GameState { Won, Draw, InProgress };
 enum class CastleSide { Left, Right, Both, Any };
