@@ -5,6 +5,7 @@ find_package(glm CONFIG REQUIRED)
 
 add_library(chessGLBase
     ChessGL.h ChessGL.cpp
+    ChessBoardGLDraw.h ChessBoardGLDraw.cpp
     Renderer.h Renderer.cpp
     VertexBuffer.h VertexBuffer.cpp
     IndexBuffer.h IndexBuffer.cpp
