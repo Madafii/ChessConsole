@@ -1,6 +1,9 @@
 #pragma once
 
+#include "ChessBoardGLDraw.h"
+#include "ChessPiecesGLDraw.h"
 #include <GL/glew.h>
+#include <memory>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
@@ -8,7 +11,7 @@
 
 class ChessGL {
   public:
-    explicit ChessGL() = default;
+    explicit ChessGL();
 
     int start();
 
@@ -16,6 +19,9 @@ class ChessGL {
     static constexpr int windowWidth = 800;
 
   private:
+    std::unique_ptr<ChessBoardGLDraw> _chessBoardDraw;
+    std::unique_ptr<ChessPiecesGLDraw> _chessPiecesDraw;
+
     static void error_callback(int error, const char *description);
     static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 };

@@ -12,7 +12,6 @@ class ChessBoardGLDraw {
   public:
     explicit ChessBoardGLDraw();
 
-    void create();
     void OnRender();
 
     static constexpr float tileHeight = 1.0f / boardHeight;

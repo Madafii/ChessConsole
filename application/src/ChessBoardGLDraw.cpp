@@ -4,13 +4,10 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <memory>
 
-ChessBoardGLDraw::ChessBoardGLDraw() : _translation(0, 0, 0) {}
-
-void ChessBoardGLDraw::create() {
+ChessBoardGLDraw::ChessBoardGLDraw() : _translation(0, 0, 0) {
     constexpr auto boardPositions = getBoardPositions();
     constexpr auto boardIndicies = getBoardIndicies();
 
-    // ------------------------------------ //
     _vertexArray = std::make_unique<VertexArray>();
     _vertexBuffer = std::make_unique<VertexBuffer>(boardPositions.data(), ChessBoardGLDraw::boardVertexBufferSize * sizeof(float));
     VertexBufferLayout layout;
@@ -29,9 +26,6 @@ void ChessBoardGLDraw::create() {
 }
 
 void ChessBoardGLDraw::OnRender() {
-    GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-    GLCall(glClear(GL_COLOR_BUFFER_BIT));
-
     Renderer renderer;
     {
         glm::mat4 model = glm::translate(glm::mat4(1.0f), _translation);

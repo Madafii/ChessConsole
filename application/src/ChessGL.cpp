@@ -1,11 +1,15 @@
 #include "ChessGL.h"
-#include "ChessBoardGLDraw.h"
+#include "Renderer.h"
 
+#include <GLFW/glfw3.h>
 #include <glm/detail/qualifier.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <iostream>
+#include <memory>
+
+ChessGL::ChessGL() : _chessBoardDraw(std::make_unique<ChessBoardGLDraw>()), _chessPiecesDraw(std::make_unique<ChessPiecesGLDraw>()) {}
 
 int ChessGL::start() {
     glfwSetErrorCallback(error_callback);
@@ -33,11 +37,12 @@ int ChessGL::start() {
         std::cout << "not ok!" << std::endl;
     }
 
-    ChessBoardGLDraw cbGLDraw;
-    cbGLDraw.create();
-
     while (!glfwWindowShouldClose(window)) {
-        cbGLDraw.OnRender();
+        GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+        GLCall(glClear(GL_COLOR_BUFFER_BIT));
+
+        _chessBoardDraw->OnRender();
+        _chessPiecesDraw->OnRender();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
