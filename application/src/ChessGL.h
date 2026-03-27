@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ChessBoardGLDraw.h"
+#include "ChessInterface.h"
 #include "ChessPiecesGLDraw.h"
 #include <GL/glew.h>
 #include <memory>
@@ -19,10 +20,11 @@ class ChessGL {
     static constexpr int windowWidth = 800;
 
   private:
+    ChessInterface _chessInterface;
     std::unique_ptr<ChessBoardGLDraw> _chessBoardDraw;
     std::unique_ptr<ChessPiecesGLDraw> _chessPiecesDraw;
 
     static void error_callback(int error, const char *description);
-    static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
+    void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 };
 

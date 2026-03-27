@@ -8,6 +8,9 @@ TextureSet::TextureSet(const std::string &path, uint ssize, uint srows)
     stbi_set_flip_vertically_on_load(1);
     _localBuffer = stbi_load(path.c_str(), &_width, &_height, &_bpp, 4);
 
+    GLCall(glEnable(GL_BLEND));
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
     int cols = _setSize / _setRows;
     int pieceWidth = _width / cols;
     int pieceHeight = _height / _setRows;

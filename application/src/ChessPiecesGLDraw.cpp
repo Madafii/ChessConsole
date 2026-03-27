@@ -1,48 +1,48 @@
 #include "ChessPiecesGLDraw.h"
-#include "ChessGL.h"
+#include "ChessBoard.h"
+#include "ChessPiece.h"
 #include "Renderer.h"
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <memory>
 
-ChessPiecesGLDraw::ChessPiecesGLDraw() : _translation(0, 0, 0) {
+ChessPiecesGLDraw::ChessPiecesGLDraw(ChessBoard &board) : _chessBoard(board) {
     float squareVertices[] = {
-        0.0f,   0.0f,   0.0f, 0.0f, // 0
-        0.125f, 0.0f,   1.0f, 0.0f, // 1
-        0.125f, 0.125f, 1.0f, 1.0f, // 1
-        0.0f,   0.125f, 0.0f, 1.0f  // 1
+        0.0f,        0.0f,         0.0f, 0.0f, // 0
+        _pieceWidth, 0.0f,         1.0f, 0.0f, // 1
+        _pieceWidth, _pieceHeight, 1.0f, 1.0f, // 2
+        0.0f,        _pieceHeight, 0.0f, 1.0f  // 3
     };
 
-    uint indicies[] = {
+    uint pieceIndicies[] = {
         0, 1, 2, // 0
         2, 3, 0  // 1
     };
 
-    _instances = {{{0.0f, 0.0f}, 1.0f}, {{0.875f, 0.875f}, 0.0f}};
-
     _vertexArray = std::make_unique<VertexArray>();
+
+    _indexBuffer = std::make_unique<IndexBuffer>(pieceIndicies, sizeof(pieceIndicies));
+
     _vertexBuffer = std::make_unique<VertexBuffer>(squareVertices, sizeof(squareVertices));
-    _indexBuffer = std::make_unique<IndexBuffer>(indicies, 6 * sizeof(indicies));
 
     VertexBufferLayout layout;
-    layout.Push<float>(2); // position
+    layout.Push<float>(2); // position single piece
     layout.Push<float>(2); // uv
 
     _vertexArray->AddBuffer(*_vertexBuffer, layout);
 
+    updateInstanceData();
     _vertexBufferDynamic = std::make_unique<VertexBufferDynamic>(_instances.data(), _instances.size() * sizeof(InstanceData));
 
-    GLCall(glEnableVertexAttribArray(2));
-    GLCall(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (const void *)nullptr));
-    GLCall(glVertexAttribDivisor(2, 1));
+    VertexBufferLayout layoutDynamic;
+    layoutDynamic.Push<float>(2); // positon board
+    layoutDynamic.Push<float>(1); // layer
 
-    GLCall(glEnableVertexAttribArray(3));
-    GLCall(glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (const void *)(sizeof(glm::vec2))));
-    GLCall(glVertexAttribDivisor(3, 1));
+    _vertexArray->AddBuffer(*_vertexBufferDynamic, layoutDynamic);
 
     _shader = std::make_unique<Shader>("application/res/shaders/Piece.shader");
     _shader->Bind();
-    _textureSet = std::make_unique<TextureSet>("application/res/textures/piecesSet.png", 12, 2);
+    _textureSet = std::make_unique<TextureSet>("application/res/textures/piecesSet.png", _pieceSetSize, _pieceSetRows);
     _shader->SetUniform1i("u_Texture", 0);
 
     _proj = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
@@ -64,6 +64,15 @@ void ChessPiecesGLDraw::OnRender() {
     GLCall(glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr, _instances.size()));
 }
 
-void ChessPiecesGLDraw::OnUpdate() {
-    _vertexBufferDynamic->update(_instances.data(), _instances.size() * sizeof(InstanceData));
+void ChessPiecesGLDraw::OnUpdate() { _vertexBufferDynamic->update(_instances.data(), _instances.size() * sizeof(InstanceData)); }
+
+void ChessPiecesGLDraw::updateInstanceData() {
+    _instances.clear();
+    for (const auto &tile : _chessBoard.getBoard()) {
+        if (!tile.hasPiece()) continue;
+
+        glm::vec2 pos{tile.getX() * _pieceWidth, (boardHeight - 1 - tile.getY()) * _pieceHeight};
+        float layer = _pieceTypeToLayer.at({tile.getPieceType(), tile.hasWhitePiece()});
+        _instances.emplace_back(pos, layer);
+    }
 }
