@@ -25,7 +25,7 @@ void main() {
     int tileX = int(v_Pos.x / u_TileWidth);
     int tileY = int(v_Pos.y / u_TileHeight);
 
-    bool isWhite = (tileX + tileY) % 2 == 0;
+    bool isWhite = (tileX + tileY) % 2 != 0;
 
     vec3 white = vec3(1.0, 1.0, 1.0);
     vec3 black = vec3(0.1, 0.1, 0.1);
