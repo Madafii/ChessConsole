@@ -1,6 +1,7 @@
 #include "ChessPiecesGLDraw.h"
 #include "ChessBoard.h"
 #include "Renderer.h"
+#include <algorithm>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <iostream>
@@ -9,18 +10,6 @@
 #include <ostream>
 
 ChessPiecesGLDraw::ChessPiecesGLDraw(ChessInterface &interface) : _chessInterface(interface) {
-    float squareVertices[] = {
-        0.0f,       0.0f,        0.0f, 0.0f, // 0
-        _tileWidth, 0.0f,        1.0f, 0.0f, // 1
-        _tileWidth, _tileHeight, 1.0f, 1.0f, // 2
-        0.0f,       _tileHeight, 0.0f, 1.0f  // 3
-    };
-
-    uint pieceIndicies[] = {
-        0, 1, 2, // 0
-        2, 3, 0  // 1
-    };
-
     _vertexArray = std::make_unique<VertexArray>();
 
     _indexBuffer = std::make_unique<IndexBuffer>(pieceIndicies, sizeof(pieceIndicies));
@@ -63,16 +52,18 @@ void ChessPiecesGLDraw::onRender() {
     _shader->SetUniformMat4f("u_MVP", mvp);
     _vertexArray->Bind();
     _indexBuffer->Bind();
-    GLCall(glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr, _instances.size()));
+    renderer.DrawDynamic(*_vertexArray, *_indexBuffer, *_shader, _instances.size());
+
+    _selected.onRender();
 }
 
 void ChessPiecesGLDraw::onUpdate(double xPos, double yPos) {
-    if (_selected) {
-        _selected.value().data->position.x = xPos - _tileWidth / 2;
-        _selected.value().data->position.y = 1.0 - yPos - _tileHeight / 2;
+    if (_selected.hasInstance()) {
+        _selected.updatePos({xPos - _tileWidth / 2, 1.0 - yPos - _tileHeight / 2});
     }
 
     _vertexBufferDynamic->update(_instances.data(), _instances.size() * sizeof(InstanceData));
+    _selected.onUpdate();
 }
 
 void ChessPiecesGLDraw::onClick(double xPos, double yPos) {
@@ -91,8 +82,13 @@ void ChessPiecesGLDraw::onClick(double xPos, double yPos) {
     if (!possMoves || possMoves.value().empty()) return;
 
     // select piece and cache possible moves
-    _selected = SelectedPiece{fromTile, *selectedData};
+    _selected.setData(selectedData.value()->position, selectedData.value()->layer, fromTile);
     _possibleMoves = std::move(*possMoves);
+
+    auto found = std::ranges::find_if(_instances, [&](const InstanceData &instanceData) {
+        return instanceData.position == selectedData.value()->position && instanceData.layer == selectedData.value()->layer;
+    });
+    _instances.erase(found);
 }
 
 void ChessPiecesGLDraw::onDrop(double xPos, double yPos) {
@@ -107,7 +103,7 @@ void ChessPiecesGLDraw::onDrop(double xPos, double yPos) {
     // check if it is a valid tile to drop on
     for (const auto &tile : _possibleMoves) {
         if (toTile == tile) {
-            const std::string move = std::format("{}:{}", _selected.value().tile->getPos(), toTile->getPos());
+            const std::string move = std::format("{}:{}", _selected.getPiece()->getPos(), toTile->getPos());
             _chessInterface.handleMoveInput(move);
         }
     }
@@ -139,7 +135,7 @@ std::optional<std::pair<int, int>> ChessPiecesGLDraw::screenToBoard(double xPos,
 }
 
 void ChessPiecesGLDraw::unselect() {
-    _selected = std::nullopt;
+    _selected.setUnselected();
     _possibleMoves.clear();
 }
 

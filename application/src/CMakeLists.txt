@@ -7,6 +7,7 @@ add_library(chessGLBase
     ChessGL.h ChessGL.cpp
     ChessBoardGLDraw.h ChessBoardGLDraw.cpp
     ChessPiecesGLDraw.h ChessPiecesGLDraw.cpp
+    ChessPieceSelectedGLDraw.h ChessPieceSelectedGLDraw.cpp
     Renderer.h Renderer.cpp
     VertexBuffer.h VertexBuffer.cpp
     VertexBufferDynamic.h VertexBufferDynamic.cpp

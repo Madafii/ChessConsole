@@ -21,7 +21,8 @@ class Renderer {
     Renderer();
 
     void Clear() const;
-    void Draw(const VertexArray &va, const IndexBuffer &ib, const Shader &shader) const;
+    void DrawStatic(const VertexArray &va, const IndexBuffer &ib, const Shader &shader) const;
+    void DrawDynamic(const VertexArray &va, const IndexBuffer &ib, const Shader &shader, int size) const;
 
   private:
 };

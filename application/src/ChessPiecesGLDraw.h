@@ -3,13 +3,13 @@
 #include "ChessBoard.h"
 #include "ChessInterface.h"
 #include "ChessPiece.h"
+#include "ChessPieceSelectedGLDraw.h"
 #include "IndexBuffer.h"
 #include "Shader.h"
 #include "TextureSet.h"
 #include "VertexArray.h"
 #include "VertexBufferDynamic.h"
 #include <memory>
-#include <unordered_map>
 #include <vector>
 
 class ChessPiecesGLDraw {
@@ -19,10 +19,31 @@ class ChessPiecesGLDraw {
         float layer;
     };
 
-    struct SelectedPiece {
-        const ChessTile *tile;
-        InstanceData *data;
+    const std::map<std::pair<ChessPieceType, bool>, float> _pieceTypeToLayer{
+        {{ChessPieceType::PAWN, false}, 0.0f}, {{ChessPieceType::KNIGHT, false}, 1.0f}, {{ChessPieceType::BISHOP, false}, 2.0f},
+        {{ChessPieceType::ROOK, false}, 3.0f}, {{ChessPieceType::KING, false}, 4.0f},   {{ChessPieceType::QUEEN, false}, 5.0f},
+        {{ChessPieceType::PAWN, true}, 6.0f},  {{ChessPieceType::KNIGHT, true}, 7.0f},  {{ChessPieceType::BISHOP, true}, 8.0f},
+        {{ChessPieceType::ROOK, true}, 9.0f},  {{ChessPieceType::KING, true}, 10.0f},   {{ChessPieceType::QUEEN, true}, 11.0f}};
+
+    static constexpr float _tileHeight = 1.0f / boardHeight;
+    static constexpr float _tileWidth = 1.0f / boardWidth;
+    static constexpr float _pieceHeight = _tileHeight;
+    static constexpr float _pieceWidth = _tileWidth;
+    static constexpr size_t _pieceSetSize = 12;
+    static constexpr size_t _pieceSetRows = 2;
+
+    static constexpr float squareVertices[32] = {
+        0.0f,       0.0f,        0.0f, 0.0f, // 0
+        _tileWidth, 0.0f,        1.0f, 0.0f, // 1
+        _tileWidth, _tileHeight, 1.0f, 1.0f, // 2
+        0.0f,       _tileHeight, 0.0f, 1.0f  // 3
     };
+
+    static constexpr uint pieceIndicies[6] = {
+        0, 1, 2, // 0
+        2, 3, 0  // 1
+    };
+
 
     explicit ChessPiecesGLDraw(ChessInterface &interface);
 
@@ -35,6 +56,7 @@ class ChessPiecesGLDraw {
 
   private:
     ChessInterface &_chessInterface;
+    ChessPieceSelectedGLDraw _selected;
     std::unique_ptr<VertexArray> _vertexArray;
     std::unique_ptr<VertexBuffer> _vertexBuffer;
     std::unique_ptr<VertexBufferDynamic> _vertexBufferDynamic;
@@ -45,21 +67,7 @@ class ChessPiecesGLDraw {
     glm::mat4 _proj;
     glm::mat4 _view;
     std::vector<InstanceData> _instances;
-    std::optional<SelectedPiece> _selected;
     PieceTiles _possibleMoves;
-
-    const std::map<std::pair<ChessPieceType, bool>, float> _pieceTypeToLayer{
-        {{ChessPieceType::PAWN, false}, 0.0f},  {{ChessPieceType::KNIGHT, false}, 1.0f},  {{ChessPieceType::BISHOP, false}, 2.0f},
-        {{ChessPieceType::ROOK, false}, 3.0f},  {{ChessPieceType::KING, false}, 4.0f},    {{ChessPieceType::QUEEN, false}, 5.0f},
-        {{ChessPieceType::PAWN, true}, 6.0f}, {{ChessPieceType::KNIGHT, true}, 7.0f}, {{ChessPieceType::BISHOP, true}, 8.0f},
-        {{ChessPieceType::ROOK, true}, 9.0f}, {{ChessPieceType::KING, true}, 10.0f},  {{ChessPieceType::QUEEN, true}, 11.0f}};
-
-    static constexpr float _tileHeight = 1.0f / boardHeight;
-    static constexpr float _tileWidth = 1.0f / boardWidth;
-    static constexpr float _pieceHeight = _tileHeight;
-    static constexpr float _pieceWidth = _tileWidth;
-    static constexpr size_t _pieceSetSize = 12;
-    static constexpr size_t _pieceSetRows = 2;
 
     std::optional<std::pair<int, int>> screenToBoard(double xPos, double yPos);
     ChessTile *boardToTile(const std::pair<int, int> &pos) { return &_chessInterface.getChessBoard().getTileAt(pos); }

@@ -32,6 +32,6 @@ void ChessBoardGLDraw::OnRender() {
         glm::mat4 mvp = _proj * _view * model;
         _shader->Bind();
         _shader->SetUniformMat4f("u_MVP", mvp);
-        renderer.Draw(*_vertexArray, *_indexBuffer, *_shader);
+        renderer.DrawStatic(*_vertexArray, *_indexBuffer, *_shader);
     }
 }

@@ -1,5 +1,6 @@
 #include "ChessGL.h"
 #include "Renderer.h"
+#include "VertexBufferLayout.h"
 
 #include <GLFW/glfw3.h>
 #include <glm/detail/qualifier.hpp>
@@ -28,6 +29,8 @@ int ChessGL::start() {
         glfwTerminate();
         return -1;
     }
+
+    glDepthFunc(GL_LEQUAL);
 
     glfwSetWindowUserPointer(window, this);
 
