@@ -3,7 +3,8 @@
 
 layout(location = 0) in vec2 a_Position;
 layout(location = 1) in vec2 a_TexCoord;
-layout(location = 2) in float a_Layer;
+layout(location = 2) in vec2 a_Offset;
+layout(location = 3) in float a_Layer;
 
 uniform mat4 u_MVP;
 
@@ -11,10 +12,12 @@ out vec2 v_TexCoord;
 flat out float v_Layer;
 
 void main() {
+    vec2 pos = a_Position + a_Offset;
+
     v_TexCoord = a_TexCoord;
     v_Layer = a_Layer;
 
-    gl_Position = u_MVP * vec4(a_Position, 0.0, 1.0);
+    gl_Position = u_MVP * vec4(pos, 0.0, 1.0);
 };
 
 #shader fragment

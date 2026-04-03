@@ -3,8 +3,8 @@
 
 layout(location = 0) in vec2 a_Position;
 layout(location = 1) in vec2 a_TexCoord;
-layout(location = 2) in vec2 a_Offset;
-layout(location = 3) in float a_Layer;
+layout(location = 4) in vec2 a_Offset;
+layout(location = 5) in float a_Layer;
 
 uniform mat4 u_MVP;
 

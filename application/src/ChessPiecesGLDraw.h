@@ -4,47 +4,14 @@
 #include "ChessInterface.h"
 #include "ChessPiece.h"
 #include "ChessPieceSelectedGLDraw.h"
-#include "IndexBuffer.h"
-#include "Shader.h"
+#include "Renderer.h"
 #include "TextureSet.h"
-#include "VertexArray.h"
 #include "VertexBufferDynamic.h"
 #include <memory>
 #include <vector>
 
 class ChessPiecesGLDraw {
   public:
-    struct InstanceData {
-        glm::vec2 position;
-        float layer;
-    };
-
-    const std::map<std::pair<ChessPieceType, bool>, float> _pieceTypeToLayer{
-        {{ChessPieceType::PAWN, false}, 0.0f}, {{ChessPieceType::KNIGHT, false}, 1.0f}, {{ChessPieceType::BISHOP, false}, 2.0f},
-        {{ChessPieceType::ROOK, false}, 3.0f}, {{ChessPieceType::KING, false}, 4.0f},   {{ChessPieceType::QUEEN, false}, 5.0f},
-        {{ChessPieceType::PAWN, true}, 6.0f},  {{ChessPieceType::KNIGHT, true}, 7.0f},  {{ChessPieceType::BISHOP, true}, 8.0f},
-        {{ChessPieceType::ROOK, true}, 9.0f},  {{ChessPieceType::KING, true}, 10.0f},   {{ChessPieceType::QUEEN, true}, 11.0f}};
-
-    static constexpr float _tileHeight = 1.0f / boardHeight;
-    static constexpr float _tileWidth = 1.0f / boardWidth;
-    static constexpr float _pieceHeight = _tileHeight;
-    static constexpr float _pieceWidth = _tileWidth;
-    static constexpr size_t _pieceSetSize = 12;
-    static constexpr size_t _pieceSetRows = 2;
-
-    static constexpr float squareVertices[32] = {
-        0.0f,       0.0f,        0.0f, 0.0f, // 0
-        _tileWidth, 0.0f,        1.0f, 0.0f, // 1
-        _tileWidth, _tileHeight, 1.0f, 1.0f, // 2
-        0.0f,       _tileHeight, 0.0f, 1.0f  // 3
-    };
-
-    static constexpr uint pieceIndicies[6] = {
-        0, 1, 2, // 0
-        2, 3, 0  // 1
-    };
-
-
     explicit ChessPiecesGLDraw(ChessInterface &interface);
 
     void onRender();
@@ -52,27 +19,35 @@ class ChessPiecesGLDraw {
     void onClick(double xPos, double yPos);
     void onDrop(double xPos, double yPos);
 
-    void updateInstanceData();
-
   private:
     ChessInterface &_chessInterface;
-    ChessPieceSelectedGLDraw _selected;
-    std::unique_ptr<VertexArray> _vertexArray;
-    std::unique_ptr<VertexBuffer> _vertexBuffer;
+
+    std::shared_ptr<SharedPieceRenderData> _renderData = std::make_shared<SharedPieceRenderData>();
+    std::unique_ptr<Renderer> _renderer = std::make_unique<Renderer>();
+    std::unique_ptr<TextureSet> _textureSet =
+        std::make_unique<TextureSet>("application/res/textures/piecesSet.png", _pieceSetSize, _pieceSetRows);
+    std::unique_ptr<Shader> _shader = std::make_unique<Shader>("application/res/shaders/Piece.shader");
     std::unique_ptr<VertexBufferDynamic> _vertexBufferDynamic;
-    std::unique_ptr<IndexBuffer> _indexBuffer;
-    std::unique_ptr<Shader> _shader;
-    std::unique_ptr<TextureSet> _textureSet;
-    glm::vec3 _translation{0.0f, 0.0f, 0.0f};
-    glm::mat4 _proj;
-    glm::mat4 _view;
-    std::vector<InstanceData> _instances;
+
+    ChessPieceSelectedGLDraw _selected;
     PieceTiles _possibleMoves;
 
+    std::vector<InstanceData> _instances;
+
     std::optional<std::pair<int, int>> screenToBoard(double xPos, double yPos);
-    ChessTile *boardToTile(const std::pair<int, int> &pos) { return &_chessInterface.getChessBoard().getTileAt(pos); }
-    void unselect();
+    std::optional<InstanceData *> getInstance(double xPos, double yPos);
 
     bool inTileArea(glm::vec2 tilePos, double xPos, double yPos);
-    std::optional<InstanceData *> getInstance(double xPos, double yPos);
+
+    void unselect();
+
+    void eraseInstance(const InstanceData &data);
+    void updateInstanceData();
+    void updateInstanceBuffer();
+
+    ChessTile *boardToTile(const std::pair<int, int> &pos) { return &_chessInterface.getChessBoard().getTileAt(pos); }
+
+    static constexpr float getLayer(ChessPieceType type, bool white) {
+        return static_cast<int>(type) + (white ? 6.0f : 0.0f);
+    }
 };

@@ -75,11 +75,11 @@ void ChessInterface::handleMoveInputNoChecks(const std::string_view input) {
     chessBoard.move(fromTile, toTile, pawnChangeTo);
 }
 
-void ChessInterface::handleMoveInputNoChecks(const ChessTile &fromTile, const ChessTile &toTile) {
+void ChessInterface::handleMoveInputNoChecks(const ChessTile &fromTile, const ChessTile &toTile, char pawnPromotion) {
     ChessTile &rfromTile = chessBoard.getTileAt(fromTile.getX(), fromTile.getY());
     ChessTile &rtoTile = chessBoard.getTileAt(toTile.getX(), toTile.getY());
 
-    chessBoard.move(rfromTile, rtoTile, '0');
+    chessBoard.move(rfromTile, rtoTile, pawnPromotion);
 }
 
 // nullopt, when anything but your own piece. 0 possMoves does not return nullopt

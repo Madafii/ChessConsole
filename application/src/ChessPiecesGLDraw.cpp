@@ -1,27 +1,12 @@
 #include "ChessPiecesGLDraw.h"
 #include "ChessBoard.h"
-#include "Renderer.h"
 #include <algorithm>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
-#include <iostream>
 #include <memory>
 #include <optional>
-#include <ostream>
 
-ChessPiecesGLDraw::ChessPiecesGLDraw(ChessInterface &interface) : _chessInterface(interface) {
-    _vertexArray = std::make_unique<VertexArray>();
-
-    _indexBuffer = std::make_unique<IndexBuffer>(pieceIndicies, sizeof(pieceIndicies));
-
-    _vertexBuffer = std::make_unique<VertexBuffer>(squareVertices, sizeof(squareVertices));
-
-    VertexBufferLayout layout;
-    layout.Push<float>(2); // position single piece
-    layout.Push<float>(2); // uv
-
-    _vertexArray->AddBuffer(*_vertexBuffer, layout);
-
+ChessPiecesGLDraw::ChessPiecesGLDraw(ChessInterface &interface) : _chessInterface(interface), _selected(_renderData) {
     updateInstanceData();
     _vertexBufferDynamic = std::make_unique<VertexBufferDynamic>(_instances.data(), _instances.size() * sizeof(InstanceData));
 
@@ -29,30 +14,17 @@ ChessPiecesGLDraw::ChessPiecesGLDraw(ChessInterface &interface) : _chessInterfac
     layoutDynamic.Push<float>(2); // positon board
     layoutDynamic.Push<float>(1); // layer
 
-    _vertexArray->AddBuffer(*_vertexBufferDynamic, layoutDynamic);
-
-    _shader = std::make_unique<Shader>("application/res/shaders/Piece.shader");
-    _shader->Bind();
-    _textureSet = std::make_unique<TextureSet>("application/res/textures/piecesSet.png", _pieceSetSize, _pieceSetRows);
-    _shader->SetUniform1i("u_Texture", 0);
-
-    _proj = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
-    _view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+    _renderData->VAO.AddBuffer(*_vertexBufferDynamic, layoutDynamic);
 }
 
 void ChessPiecesGLDraw::onRender() {
-    Renderer renderer;
-
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), _translation);
-    glm::mat4 mvp = _proj * _view * model;
-
     _textureSet->Bind();
     _shader->Bind();
     _shader->SetUniform1i("u_Texture", 0);
-    _shader->SetUniformMat4f("u_MVP", mvp);
-    _vertexArray->Bind();
-    _indexBuffer->Bind();
-    renderer.DrawDynamic(*_vertexArray, *_indexBuffer, *_shader, _instances.size());
+    _shader->SetUniformMat4f("u_MVP", _renderData->mvp);
+    _renderData->VAO.Bind();
+    _renderData->IBO.Bind();
+    _renderer->DrawDynamic(_renderData->VAO, _renderData->IBO, *_shader, _instances.size());
 
     _selected.onRender();
 }
@@ -62,12 +34,10 @@ void ChessPiecesGLDraw::onUpdate(double xPos, double yPos) {
         _selected.updatePos({xPos - _tileWidth / 2, 1.0 - yPos - _tileHeight / 2});
     }
 
-    _vertexBufferDynamic->update(_instances.data(), _instances.size() * sizeof(InstanceData));
     _selected.onUpdate();
 }
 
 void ChessPiecesGLDraw::onClick(double xPos, double yPos) {
-    std::cout << "clicked at: " << xPos << " : " << yPos << std::endl;
     unselect();
 
     // select instance of InstanceData
@@ -83,33 +53,34 @@ void ChessPiecesGLDraw::onClick(double xPos, double yPos) {
 
     // select piece and cache possible moves
     _selected.setData(selectedData.value()->position, selectedData.value()->layer, fromTile);
+    _selected.onUpdate();
     _possibleMoves = std::move(*possMoves);
 
-    auto found = std::ranges::find_if(_instances, [&](const InstanceData &instanceData) {
-        return instanceData.position == selectedData.value()->position && instanceData.layer == selectedData.value()->layer;
-    });
-    _instances.erase(found);
+    eraseInstance(**selectedData);
+    updateInstanceBuffer();
 }
 
 void ChessPiecesGLDraw::onDrop(double xPos, double yPos) {
-    std::cout << "dropped at: " << xPos << " : " << yPos << std::endl;
-    // check if the screen pos in valid range
     auto boardPos = screenToBoard(xPos, yPos);
     if (!boardPos) return;
 
-    // get tile to drop on
     auto toTile = boardToTile(*boardPos);
 
-    // check if it is a valid tile to drop on
+    // check if valid move then make it
     for (const auto &tile : _possibleMoves) {
         if (toTile == tile) {
-            const std::string move = std::format("{}:{}", _selected.getPiece()->getPos(), toTile->getPos());
-            _chessInterface.handleMoveInput(move);
+            _chessInterface.handleMoveInputNoChecks(*_selected.getPiece(), *toTile);
+            break;
         }
     }
 
     unselect();
+
     updateInstanceData();
+    updateInstanceBuffer();
+
+    _selected.onUpdate();
+
     onUpdate(xPos, yPos);
 }
 
@@ -119,7 +90,7 @@ void ChessPiecesGLDraw::updateInstanceData() {
         if (!tile.hasPiece()) continue;
 
         glm::vec2 pos{tile.getX() * _tileWidth, tile.getY() * _tileHeight};
-        float layer = _pieceTypeToLayer.at({tile.getPieceType(), tile.hasWhitePiece()});
+        float layer = getLayer(tile.getPieceType(), tile.hasWhitePiece());
         _instances.emplace_back(pos, layer);
     }
 }
@@ -127,8 +98,6 @@ void ChessPiecesGLDraw::updateInstanceData() {
 std::optional<std::pair<int, int>> ChessPiecesGLDraw::screenToBoard(double xPos, double yPos) {
     int x = static_cast<int>(xPos * boardWidth);
     int y = boardHeight - 1 - static_cast<int>(yPos * boardHeight);
-
-    std::cout << "board pos: " << x << " : " << y << std::endl;
 
     if (!ChessBoard::validTilePos(x, y)) return std::nullopt;
     return {{x, y}};
@@ -139,11 +108,23 @@ void ChessPiecesGLDraw::unselect() {
     _possibleMoves.clear();
 }
 
+void ChessPiecesGLDraw::eraseInstance(const InstanceData &data) {
+    auto found = std::ranges::find_if(_instances, [&](const InstanceData &instanceData) {
+        return instanceData.position == data.position && instanceData.layer == data.layer;
+    });
+    if (found == _instances.end()) return;
+    _instances.erase(found);
+}
+
+void ChessPiecesGLDraw::updateInstanceBuffer() {
+    _vertexBufferDynamic->update(_instances.data(), _instances.size() * sizeof(InstanceData));
+}
+
 bool ChessPiecesGLDraw::inTileArea(glm::vec2 tilePos, double xPos, double yPos) {
     return ((xPos <= tilePos.x + _tileWidth && xPos >= tilePos.x) && 1.0 - yPos <= tilePos.y + _tileHeight && 1.0 - yPos >= tilePos.y);
 }
 
-std::optional<ChessPiecesGLDraw::InstanceData *> ChessPiecesGLDraw::getInstance(double xPos, double yPos) {
+std::optional<ChessPieceData::InstanceData *> ChessPiecesGLDraw::getInstance(double xPos, double yPos) {
     for (auto &instance : _instances) {
         if (inTileArea(instance.position, xPos, yPos)) {
             return &instance;

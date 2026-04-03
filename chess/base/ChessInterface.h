@@ -16,7 +16,7 @@ class ChessInterface {
     std::optional<GameState> handleInput(std::string_view input);
     std::optional<GameState> handleMoveInput(std::string_view input);
     void handleMoveInputNoChecks(std::string_view input);
-    void handleMoveInputNoChecks(const ChessTile &fromTile, const ChessTile &toTile);
+    void handleMoveInputNoChecks(const ChessTile &fromTile, const ChessTile &toTile, char pawnPromotion = '0');
 
     // handle single tile inputs
     std::optional<PieceTiles> getPossibleMovesFromTile(std::string_view input);
