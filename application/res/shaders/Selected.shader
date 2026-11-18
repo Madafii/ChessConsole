@@ -24,6 +24,7 @@ void main() {
 #version 410 core
 
 uniform sampler2DArray u_Texture;
+uniform bool u_Promotion;
 
 in vec2 v_TexCoord;
 flat in float v_Layer;
@@ -32,4 +33,9 @@ out vec4 color;
 
 void main() {
     color = texture(u_Texture, vec3(v_TexCoord, v_Layer));
+    if (u_Promotion) {
+        vec2 edge = min(v_TexCoord, 1.0 - v_TexCoord);
+        vec3 background = min(edge.x, edge.y) < 0.025 ? vec3(0.18, 0.32, 0.44) : vec3(0.71, 0.82, 0.90);
+        color = vec4(mix(background, color.rgb, color.a), 1.0);
+    }
 };

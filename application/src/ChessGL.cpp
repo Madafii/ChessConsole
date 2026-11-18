@@ -51,6 +51,7 @@ int ChessGL::start() {
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow *, int width, int height) { glViewport(0, 0, width, height); });
 
     if (glewInit() != GLEW_OK) {
         std::cout << "not ok!" << std::endl;
@@ -70,6 +71,9 @@ int ChessGL::start() {
         glfwPollEvents();
     }
 
+    _chessPiecesDraw.reset();
+    _chessBoardDraw.reset();
+    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }
@@ -83,16 +87,22 @@ void ChessGL::key_callback(GLFWwindow *window, int key, [[maybe_unused]] int sca
 }
 
 void ChessGL::cursor_position_callback(GLFWwindow *window, double xpos, double ypos) {
-    _chessPiecesDraw->onUpdate(xpos / windowWidth, ypos / windowHeight);
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    if (width > 0 && height > 0) _chessPiecesDraw->onUpdate(xpos / width, ypos / height);
 }
 
-void ChessGL::mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
+void ChessGL::mouse_button_callback(GLFWwindow *window, int button, int action, [[maybe_unused]] int mods) {
     double xPos;
     double yPos;
     glfwGetCursorPos(window, &xPos, &yPos);
-    double normalizedXPos = xPos / windowWidth;
-    double normalizedYPos = yPos / windowHeight;
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+    if (button != GLFW_MOUSE_BUTTON_LEFT) return;
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    if (width <= 0 || height <= 0) return;
+    double normalizedXPos = xPos / width;
+    double normalizedYPos = yPos / height;
+    if (action == GLFW_PRESS) {
         _chessPiecesDraw->onClick(normalizedXPos, normalizedYPos);
     } else if (action == GLFW_RELEASE) {
         _chessPiecesDraw->onDrop(normalizedXPos, normalizedYPos);
