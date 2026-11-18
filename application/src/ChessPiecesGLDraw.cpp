@@ -68,9 +68,8 @@ void ChessPiecesGLDraw::onClick(double xPos, double yPos) {
     if (!possMoves || possMoves.value().empty()) return;
 
     // select piece and cache possible moves
-    _selected.setData(selectedData.value()->position, selectedData.value()->layer, fromTile);
-    _selected.onUpdate();
     _possibleMoves = std::move(*possMoves);
+    _selected.setData(**selectedData, fromTile, _possibleMoves);
 
     eraseInstance(**selectedData);
     updateInstanceBuffer();
