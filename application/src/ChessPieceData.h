@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ChessBoard.h"
 #include "IndexBuffer.h"
 #include "VertexArray.h"
@@ -7,6 +9,10 @@
 #include <glm/ext/vector_float2.hpp>
 
 namespace ChessPieceData {
+
+constexpr float getLayer(ChessPieceType type, bool white) {
+    return static_cast<int>(type) + (white ? 6.0f : 0.0f);
+}
 
 struct InstanceData {
     glm::vec2 position;
@@ -44,7 +50,7 @@ struct SharedPieceRenderData {
     VertexBuffer VBO;
     IndexBuffer IBO;
 
-    glm::vec3 translation;
+    glm::vec3 translation{0.0f};
     glm::mat4 proj = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
     glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);

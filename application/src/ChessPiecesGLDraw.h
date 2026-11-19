@@ -3,6 +3,7 @@
 #include "ChessBoard.h"
 #include "ChessInterface.h"
 #include "ChessPiece.h"
+#include "ChessPiecePromoGLDraw.h"
 #include "ChessPieceSelectedGLDraw.h"
 #include "Renderer.h"
 #include "TextureSet.h"
@@ -30,6 +31,8 @@ class ChessPiecesGLDraw {
     std::unique_ptr<VertexBufferDynamic> _vertexBufferDynamic;
 
     ChessPieceSelectedGLDraw _selected;
+    ChessPiecePromoGLDraw _promotion;
+    std::optional<std::pair<ChessTile *, ChessTile *>> _pendingPromotion;
     PieceTiles _possibleMoves;
 
     std::vector<InstanceData> _instances;
@@ -47,7 +50,4 @@ class ChessPiecesGLDraw {
 
     ChessTile *boardToTile(const std::pair<int, int> &pos) { return &_chessInterface.getChessBoard().getTileAt(pos); }
 
-    static constexpr float getLayer(ChessPieceType type, bool white) {
-        return static_cast<int>(type) + (white ? 6.0f : 0.0f);
-    }
 };

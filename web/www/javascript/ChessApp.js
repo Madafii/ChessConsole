@@ -1,340 +1,191 @@
-const ENDPOINTS = {
-    DRAG_START: '/drag-start',
-    DRAG_END: '/drag-end',
-    RESET: '/reset',
-};
 const PIECES = {
-    white: {
-        king: '\u2654',
-        queen: '\u2655',
-        rook: '\u2656',
-        bishop: '\u2657',
-        knight: '\u2658',
-        pawn: '\u2659',
-    },
-    black: {
-        king: '\u265A',
-        queen: '\u265B',
-        rook: '\u265C',
-        bishop: '\u265D',
-        knight: '\u265E',
-        pawn: '\u265F',
-    },
+    k: '♔', q: '♕', r: '♖', b: '♗', n: '♘', p: '♙',
+    K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞', P: '♟',
 };
-const BACK_RANK = [
-    'rook',
-    'knight',
-    'bishop',
-    'queen',
-    'king',
-    'bishop',
-    'knight',
-    'rook',
-];
-const CHAR_TO_NAME = {
-    k: 'king',
-    q: 'queen',
-    r: 'rook',
-    b: 'bishop',
-    n: 'knight',
-    p: 'pawn',
+const STATUS_MESSAGES = {
+    playing: 'White to move.',
+    draw: 'Draw.',
+    'white-won': 'You win!',
+    'black-won': 'The opponent wins.',
 };
-function makePiece(side, name) {
-    return { side, name, symbol: PIECES[side][name] };
-}
-function startingPosition() {
-    const board = Array.from({ length: 8 }, () => Array(8).fill(null));
-    board[0] = BACK_RANK.map((n) => makePiece('black', n));
-    board[1] = Array.from({ length: 8 }, () => makePiece('black', 'pawn'));
-    board[6] = Array.from({ length: 8 }, () => makePiece('white', 'pawn'));
-    board[7] = BACK_RANK.map((n) => makePiece('white', n));
-    return board;
-}
-function coordToIndices(coord) {
-    const file = coord[0];
-    const rank = parseInt(coord[1], 10);
-    const f = file.charCodeAt(0) - 'a'.charCodeAt(0);
-    const r = 8 - rank;
-    return { r, f };
-}
-function indicesToCoord(r, f) {
-    const fileChar = String.fromCharCode('a'.charCodeAt(0) + f);
-    const rankChar = (8 - r).toString();
-    return fileChar + rankChar;
-}
-function charToPiece(c) {
-    if (!c || c === '_' || c === ' ')
-        return null;
-    const lower = c.toLowerCase();
-    const name = CHAR_TO_NAME[lower];
-    if (!name)
-        return null;
-    const side = c === lower ? 'white' : 'black';
-    return makePiece(side, name);
-}
 export class ChessApp {
-    constructor(rootId = 'board') {
-        this.board = startingPosition();
-        this.turn = 'white';
-        this.dragFromSquare = null;
-        this.possibleMoves = new Set();
-        const el = document.getElementById(rootId);
-        if (!el)
-            throw new Error(`#${rootId} not found`);
-        this.boardEl = el;
-        this.renderBoard();
-        this.resetServer().catch(console.error);
-        this.updateDraggableForTurn();
-    }
-    // Rendering
-    renderBoard() {
-        this.boardEl.innerHTML = '';
-        for (let r = 0; r < 8; r++) {
-            for (let f = 0; f < 8; f++) {
-                const squareEl = this.createSquareElement(r, f);
-                const piece = this.board[r][f];
-                if (piece) {
-                    const pieceEl = this.createPieceElement(piece);
-                    squareEl.appendChild(pieceEl);
-                }
-                this.boardEl.appendChild(squareEl);
+    constructor() {
+        this.board = document.querySelector('#board');
+        this.status = document.querySelector('#game-status');
+        this.reset = document.querySelector('#reset-game');
+        this.squares = new Map();
+        this.position = '';
+        this.gameStatus = '';
+        this.revision = '';
+        this.busy = false;
+        for (let rank = 8; rank >= 1; rank--) {
+            for (let file = 0; file < 8; file++) {
+                const coordinate = 'abcdefgh'[file] + rank;
+                const square = document.createElement('div');
+                square.classList.add('square', (rank + file) % 2 === 0 ? 'light' : 'dark');
+                square.dataset.square = coordinate;
+                square.addEventListener('dragover', (event) => {
+                    var _a;
+                    if (!((_a = this.drag) === null || _a === void 0 ? void 0 : _a.destinations.has(coordinate)))
+                        return;
+                    event.preventDefault();
+                    if (event.dataTransfer)
+                        event.dataTransfer.dropEffect = 'move';
+                });
+                square.addEventListener('drop', (event) => {
+                    var _a;
+                    const drag = this.drag;
+                    if (!(drag === null || drag === void 0 ? void 0 : drag.destinations.has(coordinate)) || ((_a = event.dataTransfer) === null || _a === void 0 ? void 0 : _a.getData('text/plain')) !== drag.from)
+                        return;
+                    event.preventDefault();
+                    this.clearDrag();
+                    const move = `${drag.from}:${coordinate}`;
+                    if (drag.piece.textContent === PIECES.p && rank === 8) {
+                        this.choosePromotion(square, move);
+                    }
+                    else {
+                        void this.update('/drag-end', move);
+                    }
+                });
+                this.squares.set(coordinate, square);
+                this.board.append(square);
             }
         }
+        this.reset.addEventListener('click', () => void this.update('/reset', ''));
+        void this.update('/board');
     }
-    createSquareElement(r, f) {
-        const square = document.createElement('div');
-        square.classList.add('square');
-        const isLight = ((r + f) % 2) === 0;
-        square.classList.add(isLight ? 'light' : 'dark');
-        const coord = indicesToCoord(r, f);
-        square.setAttribute('data-square', coord);
-        square.addEventListener('dragenter', (ev) => this.onDragEnter(ev));
-        square.addEventListener('dragover', (ev) => this.onDragOver(ev));
-        square.addEventListener('drop', (ev) => this.onDrop(ev));
-        return square;
+    render() {
+        for (const [coordinate, square] of this.squares) {
+            const index = (Number(coordinate[1]) - 1) * 8 + 'abcdefgh'.indexOf(coordinate[0]);
+            const piece = this.position[index];
+            square.replaceChildren();
+            if (!piece || piece === '_')
+                continue;
+            const element = document.createElement('span');
+            const white = piece === piece.toLowerCase();
+            element.classList.add('piece', white ? 'white' : 'black');
+            element.textContent = PIECES[piece];
+            element.draggable = white && this.gameStatus === 'playing';
+            element.addEventListener('dragstart', (event) => this.startDrag(event, coordinate, element));
+            element.addEventListener('dragend', () => {
+                var _a;
+                if (((_a = this.drag) === null || _a === void 0 ? void 0 : _a.piece) === element)
+                    this.clearDrag();
+            });
+            square.append(element);
+        }
     }
-    createPieceElement(piece) {
-        const span = document.createElement('span');
-        span.classList.add('piece', piece.side);
-        span.dataset.side = piece.side;
-        span.innerHTML = piece.symbol;
-        if (piece.side === this.turn)
-            span.setAttribute('draggable', 'true');
-        span.addEventListener('dragstart', (ev) => this.onDragStart(ev, span));
-        span.addEventListener('dragend', () => this.onDragEnd(span));
-        return span;
-    }
-    createPawnSelectionDiv(selectionDiv, pieceChar, from, to) {
-        const span = document.createElement('span');
-        span.classList.add('square');
-        span.classList.add('pawn-selection');
-        span.dataset.piece = pieceChar;
-        span.innerHTML = PIECES[this.turn][CHAR_TO_NAME[pieceChar.toLowerCase()]];
-        span.addEventListener('click', () => { this.onClickSelection(pieceChar, from, to); });
-        selectionDiv.appendChild(span);
-    }
-    handlPawnWins(winSquare, from, to) {
-        // nothing draggable anymore
-        document.querySelectorAll('.piece').forEach((el) => {
-            el.removeAttribute('draggable');
-        });
-        const selectionDiv = document.createElement('div');
-        selectionDiv.classList.add('selection');
-        winSquare.appendChild(selectionDiv);
-        this.createPawnSelectionDiv(selectionDiv, 'Q', from, to);
-        this.createPawnSelectionDiv(selectionDiv, 'R', from, to);
-        this.createPawnSelectionDiv(selectionDiv, 'B', from, to);
-        this.createPawnSelectionDiv(selectionDiv, 'N', from, to);
-    }
-    getSquareElement(coord) {
-        return document.querySelector(`div[data-square="${CSS.escape(coord)}"]`);
-    }
-    updateSquareDOM(r, f, piece) {
-        const coord = indicesToCoord(r, f);
-        const squareEl = this.getSquareElement(coord);
-        if (!squareEl)
-            return;
-        const existing = squareEl.querySelector('.piece');
-        if (!piece) {
-            existing === null || existing === void 0 ? void 0 : existing.remove();
+    startDrag(event, from, piece) {
+        if (this.busy || this.promotion || !piece.draggable || !event.dataTransfer) {
+            event.preventDefault();
             return;
         }
-        if (!existing) {
-            squareEl.appendChild(this.createPieceElement(piece));
-            return;
-        }
-        existing.classList.toggle('white', piece.side === 'white');
-        existing.classList.toggle('black', piece.side === 'black');
-        existing.dataset.side = piece.side;
-        existing.innerHTML = piece.symbol;
-        if (piece.side === this.turn) {
-            existing.setAttribute('draggable', 'true');
-        }
-        else {
-            existing.removeAttribute('draggable');
-        }
+        this.clearDrag();
+        const drag = { from, piece, destinations: new Set() };
+        this.drag = drag;
+        event.dataTransfer.setData('text/plain', from);
+        event.dataTransfer.effectAllowed = 'move';
+        void this.loadHints(drag);
     }
-    updateDraggableForTurn() {
-        document.querySelectorAll('.piece').forEach((el) => {
-            const side = el.dataset.side;
-            if (side === this.turn) {
-                el.setAttribute('draggable', 'true');
+    async loadHints(drag) {
+        try {
+            const response = await this.request('/drag-start', drag.from);
+            const destinations = (await response.text()).trim().split(/\s+/);
+            if (this.drag !== drag)
+                return;
+            for (const to of destinations) {
+                const square = this.squares.get(to);
+                if (!square)
+                    continue;
+                drag.destinations.add(to);
+                square.setAttribute('hint', 'true');
             }
-            else {
-                el.removeAttribute('draggable');
-            }
-        });
+        }
+        catch (_a) {
+            if (this.drag === drag)
+                void this.update('/board');
+        }
     }
-    // Drag & Drop & Click Handlers
-    onClickSelection(pieceChar, from, to) {
+    clearDrag() {
+        var _a, _b, _c;
+        for (const to of (_b = (_a = this.drag) === null || _a === void 0 ? void 0 : _a.destinations) !== null && _b !== void 0 ? _b : [])
+            (_c = this.squares.get(to)) === null || _c === void 0 ? void 0 : _c.removeAttribute('hint');
+        this.drag = undefined;
+    }
+    choosePromotion(square, move) {
         var _a;
-        this.sendMove(from, to, '=' + pieceChar)
-            .then((serverBoard) => this.syncBoardFromString(serverBoard))
-            .catch(console.error);
-        this.updateDraggableForTurn();
-        // remove selection
-        (_a = document.querySelector('.selection')) === null || _a === void 0 ? void 0 : _a.remove();
-    }
-    onDragStart(ev, span) {
-        if (!span.hasAttribute('draggable'))
-            return;
-        const parentSquare = span.parentElement;
-        if (!parentSquare)
-            return;
-        const from = parentSquare.getAttribute('data-square');
-        if (!from || !ev.dataTransfer)
-            return;
-        this.dragFromSquare = parentSquare;
-        ev.dataTransfer.setData('text/plain', from);
-        ev.dataTransfer.effectAllowed = 'move';
-        if (ev.dataTransfer.setDragImage) {
-            ev.dataTransfer.setDragImage(span, 16, 16);
+        const selection = document.createElement('div');
+        selection.className = 'selection';
+        const file = 'abcdefgh'.indexOf(move[3]);
+        const offset = Math.min(4, Math.max(0, file - 1)) - file;
+        selection.style.setProperty('--promotion-offset', `calc(${offset} * var(--size))`);
+        const choices = { Q: 'Queen', R: 'Rook', B: 'Bishop', N: 'Knight' };
+        for (const [piece, name] of Object.entries(choices)) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = PIECES[piece.toLowerCase()];
+            button.setAttribute('aria-label', name);
+            button.addEventListener('click', () => void this.update('/drag-end', `${move}=${piece}`));
+            selection.append(button);
         }
-        setTimeout(() => { span.style.opacity = '0.4'; }, 0);
-        this.fetchPossibleMoves(from)
-            .then((moves) => {
-            this.possibleMoves = moves;
-            this.showMoveHints();
-        })
-            .catch(console.error);
+        square.append(selection);
+        this.promotion = selection;
+        (_a = selection.querySelector('button')) === null || _a === void 0 ? void 0 : _a.focus();
+        this.status.textContent = 'Choose a promotion piece.';
     }
-    onDragEnd(span) {
-        this.dragFromSquare = null;
-        this.possibleMoves.clear();
-        span.style.opacity = '';
-        this.clearMoveHints();
-    }
-    onDragEnter(ev) {
-        var _a, _b;
-        const coord = (_b = (_a = ev.target) === null || _a === void 0 ? void 0 : _a.closest('.square')) === null || _b === void 0 ? void 0 : _b.getAttribute('data-square');
-        if (coord && this.possibleMoves.has(coord))
-            ev.preventDefault();
-    }
-    onDragOver(ev) {
-        var _a, _b;
-        const coord = (_b = (_a = ev.target) === null || _a === void 0 ? void 0 : _a.closest('.square')) === null || _b === void 0 ? void 0 : _b.getAttribute('data-square');
-        if (coord && this.possibleMoves.has(coord)) {
-            ev.preventDefault();
-            if (ev.dataTransfer)
-                ev.dataTransfer.dropEffect = 'move';
+    async update(path, body) {
+        var _a;
+        if (this.busy)
+            return;
+        this.busy = true;
+        this.reset.disabled = true;
+        this.clearDrag();
+        (_a = this.promotion) === null || _a === void 0 ? void 0 : _a.remove();
+        this.promotion = undefined;
+        try {
+            await this.readBoard(await this.request(path, body));
+            this.status.textContent = STATUS_MESSAGES[this.gameStatus];
         }
-    }
-    onDrop(ev) {
-        var _a, _b, _c, _d;
-        const toSquareEl = (_a = ev.target) === null || _a === void 0 ? void 0 : _a.closest('.square');
-        if (!toSquareEl || !ev.dataTransfer)
-            return;
-        const to = toSquareEl.getAttribute('data-square');
-        const from = ev.dataTransfer.getData('text/plain');
-        if (!to || !from || from === to)
-            return;
-        if (!this.possibleMoves.has(to))
-            return;
-        const { r: fr, f: ff } = coordToIndices(from);
-        const { r: tr, f: tf } = coordToIndices(to);
-        const movingPiece = this.board[fr][ff];
-        if (!movingPiece)
-            return;
-        this.board[fr][ff] = null;
-        this.board[tr][tf] = movingPiece;
-        (_c = (_b = this.dragFromSquare) === null || _b === void 0 ? void 0 : _b.querySelector('.piece')) === null || _c === void 0 ? void 0 : _c.remove();
-        (_d = toSquareEl.querySelector('.piece')) === null || _d === void 0 ? void 0 : _d.remove();
-        toSquareEl.appendChild(this.createPieceElement(movingPiece));
-        if (this.checkPawnWins(tr, movingPiece)) {
-            this.onDragEnd(toSquareEl.querySelector('.piece'));
-            this.handlPawnWins(toSquareEl, from, to);
-            return;
-        }
-        this.sendMove(from, to)
-            .then((serverBoard) => this.syncBoardFromString(serverBoard))
-            .catch(console.error);
-        // playing against engine makes it always be whites turn
-        // this.turn = this.turn === 'white' ? 'black' : 'white';
-        this.updateDraggableForTurn();
-        this.onDragEnd(toSquareEl.querySelector('.piece'));
-    }
-    // Move hints
-    showMoveHints() {
-        this.possibleMoves.forEach((coord) => {
-            const el = this.getSquareElement(coord);
-            el === null || el === void 0 ? void 0 : el.setAttribute('hint', 'true');
-        });
-    }
-    clearMoveHints() {
-        document.querySelectorAll('.square[hint="true"]').forEach((sq) => sq.removeAttribute('hint'));
-    }
-    // Server sync
-    async resetServer() {
-        const res = await fetch(ENDPOINTS.RESET);
-        if (!res.ok)
-            throw new Error(res.statusText);
-    }
-    async fetchPossibleMoves(from) {
-        const res = await fetch(ENDPOINTS.DRAG_START, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
-            body: from,
-        });
-        if (!res.ok)
-            throw new Error(res.statusText);
-        const text = await res.text();
-        return new Set(text.trim().length ? text.trim().split(/\s+/) : []);
-    }
-    async sendMove(from, to, pawnChange = '') {
-        const res = await fetch(ENDPOINTS.DRAG_END, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
-            body: `${from}:${to}${pawnChange}`,
-        });
-        if (!res.ok)
-            throw new Error(res.statusText);
-        return await res.text();
-    }
-    // Assumption: server string is 64 chars, ordered a1..h1, a2..h2, ..., a8..h8
-    syncBoardFromString(boardStr) {
-        if (!boardStr || boardStr.length < 64) {
-            console.warn('Invalid server board string');
-            return;
-        }
-        let i = 0;
-        for (let r = 7; r >= 0; r--) {
-            for (let f = 0; f < 8; f++) {
-                const c = boardStr.charAt(i++);
-                const serverSquare = charToPiece(c);
-                const clientSquare = this.board[r][f];
-                const needsUpdate = (!clientSquare && serverSquare) ||
-                    (clientSquare && !serverSquare) ||
-                    (clientSquare && serverSquare &&
-                        (clientSquare.side !== serverSquare.side || clientSquare.name !== serverSquare.name));
-                if (needsUpdate) {
-                    this.board[r][f] = serverSquare;
-                    this.updateSquareDOM(r, f, serverSquare);
+        catch (error) {
+            const message = error instanceof Error ? error.message : 'The request failed.';
+            if (path !== '/board') {
+                try {
+                    await this.readBoard(await this.request('/board'));
+                }
+                catch (_b) {
+                    this.gameStatus = '';
+                    this.render();
                 }
             }
+            this.status.textContent = message;
         }
-        this.updateDraggableForTurn();
+        finally {
+            this.reset.disabled = false;
+            this.busy = false;
+        }
     }
-    checkPawnWins(rank, piece) {
-        return piece.name == 'pawn' && (rank == 0 || rank == 7);
+    async readBoard(response) {
+        const position = await response.text();
+        const status = response.headers.get('X-Game-Status');
+        const revision = response.headers.get('X-Board-Revision');
+        if (revision === null || position.length !== 64 || /[^_kqrbnpKQRBNP]/.test(position) || !status || !Object.prototype.hasOwnProperty.call(STATUS_MESSAGES, status)) {
+            throw new Error('The server returned an invalid board.');
+        }
+        this.revision = revision;
+        this.position = position;
+        this.gameStatus = status;
+        this.render();
+    }
+    async request(path, body) {
+        const response = await fetch(path, body === undefined ? {} : {
+            method: 'POST',
+            headers: path === '/reset'
+                ? { 'Content-Type': 'text/plain' }
+                : { 'Content-Type': 'text/plain', 'X-Board-Revision': this.revision },
+            body,
+        });
+        if (!response.ok)
+            throw new Error((await response.text()) || `Request failed (${response.status}).`);
+        return response;
     }
 }

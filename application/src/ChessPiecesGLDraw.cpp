@@ -27,6 +27,7 @@ void ChessPiecesGLDraw::onRender() {
     _renderer->DrawDynamic(_renderData->VAO, _renderData->IBO, *_shader, _instances.size());
 
     _selected.onRender();
+    _promotion.onRender();
 }
 
 void ChessPiecesGLDraw::onUpdate(double xPos, double yPos) {
@@ -38,39 +39,55 @@ void ChessPiecesGLDraw::onUpdate(double xPos, double yPos) {
 }
 
 void ChessPiecesGLDraw::onClick(double xPos, double yPos) {
-    unselect();
+    if (_pendingPromotion) {
+        if (const auto square = screenToBoard(xPos, yPos)) {
+            if (const auto choice = _promotion.choiceAt(square->first, square->second)) {
+                const auto [from, to] = *_pendingPromotion;
+                _chessInterface.handleMoveInputNoChecks(*from, *to, *choice);
+                updateInstanceData();
+                updateInstanceBuffer();
+            }
+        }
+        _pendingPromotion.reset();
+        _promotion.hide();
+        return;
+    }
+
+    const auto square = screenToBoard(xPos, yPos);
+    if (!square) return;
 
     // select instance of InstanceData
     auto selectedData = getInstance(xPos, yPos);
     if (!selectedData) return;
 
     // select board tile
-    const auto fromTile = boardToTile(*screenToBoard(xPos, yPos));
+    const auto fromTile = boardToTile(*square);
 
     // check for possible moves
     auto possMoves = _chessInterface.getPossibleMovesFromTile(fromTile->getPos());
     if (!possMoves || possMoves.value().empty()) return;
 
     // select piece and cache possible moves
-    _selected.setData(selectedData.value()->position, selectedData.value()->layer, fromTile);
-    _selected.onUpdate();
     _possibleMoves = std::move(*possMoves);
+    _selected.setData(**selectedData, fromTile, _possibleMoves);
 
     eraseInstance(**selectedData);
     updateInstanceBuffer();
 }
 
 void ChessPiecesGLDraw::onDrop(double xPos, double yPos) {
-    auto boardPos = screenToBoard(xPos, yPos);
-    if (!boardPos) return;
+    if (!_selected.hasInstance()) return;
 
-    auto toTile = boardToTile(*boardPos);
-
-    // check if valid move then make it
-    for (const auto &tile : _possibleMoves) {
-        if (toTile == tile) {
-            _chessInterface.handleMoveInputNoChecks(*_selected.getPiece(), *toTile);
-            break;
+    if (const auto square = screenToBoard(xPos, yPos)) {
+        auto *to = boardToTile(*square);
+        if (std::ranges::find(_possibleMoves, to) != _possibleMoves.end()) {
+            auto *from = _selected.getPiece();
+            if (from->hasPiece(ChessPieceType::PAWN) && (to->getY() == 0 || to->getY() == boardHeight - 1)) {
+                _pendingPromotion.emplace(from, to);
+                _promotion.show(*to, from->hasWhitePiece());
+            } else {
+                _chessInterface.handleMoveInputNoChecks(*from, *to);
+            }
         }
     }
 
@@ -78,10 +95,6 @@ void ChessPiecesGLDraw::onDrop(double xPos, double yPos) {
 
     updateInstanceData();
     updateInstanceBuffer();
-
-    _selected.onUpdate();
-
-    onUpdate(xPos, yPos);
 }
 
 void ChessPiecesGLDraw::updateInstanceData() {
@@ -96,6 +109,8 @@ void ChessPiecesGLDraw::updateInstanceData() {
 }
 
 std::optional<std::pair<int, int>> ChessPiecesGLDraw::screenToBoard(double xPos, double yPos) {
+    if (xPos < 0 || xPos >= 1 || yPos < 0 || yPos >= 1) return std::nullopt;
+
     int x = static_cast<int>(xPos * boardWidth);
     int y = boardHeight - 1 - static_cast<int>(yPos * boardHeight);
 

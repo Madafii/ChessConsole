@@ -3,9 +3,7 @@
 
 class ChessWebInterface {
 public:
-  explicit ChessWebInterface();
-
-private:
+    void run();
 };
 
 #endif
