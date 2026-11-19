@@ -1,7 +1,7 @@
 :root {
     --light: #f0d9b5;
     --dark: #b58863;
-    --size: 56px;
+    --size: min(56px, 11vw);
 }
 
 body {
@@ -9,7 +9,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 24px;
+    padding: 24px 0;
     background: #fafafa;
 }
 
@@ -36,7 +36,7 @@ span img {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 30px;
+    font-size: min(30px, 8vw);
     box-sizing: border-box;
 }
 
@@ -65,13 +65,27 @@ span img {
     cursor: default;
 }
 
+#reset-game {
+    margin-top: 16px;
+}
+
+.piece[draggable="true"] {
+    cursor: grab;
+}
+
 .selection {
     display: flex;
     border: 2px solid #333;
-    user-select: none;
     background: var(--light);
     position: absolute;
     z-index: 5;
-    inset-inline-start: -2 * var(--size);
-    inset-block-start: -var(--size);
+    inset-block-start: 100%;
+    inset-inline-start: var(--promotion-offset, 0px);
+}
+
+.selection button {
+    width: var(--size);
+    height: var(--size);
+    font-size: inherit;
+    cursor: pointer;
 }

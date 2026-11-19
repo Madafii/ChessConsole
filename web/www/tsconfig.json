@@ -7,6 +7,5 @@
     "moduleResolution": "Node",
     "skipLibCheck": true
   },
-  // "include": ["src"]
-  "include": ["./**/*.ts"]
+  "include": ["src/**/*.ts"]
 }

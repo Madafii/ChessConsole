@@ -1,7 +1,13 @@
 #include "ChessWebInterface.h"
 
-int main() {
-    ChessWebInterface chessWeb;
+#include <exception>
+#include <iostream>
 
-    return 0;
+int main() {
+    try {
+        ChessWebInterface{}.run();
+    } catch (const std::exception &error) {
+        std::cerr << error.what() << '\n';
+        return 1;
+    }
 }

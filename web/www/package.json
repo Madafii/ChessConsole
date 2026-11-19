@@ -1,19 +1,12 @@
 {
   "name": "www",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "devDependencies": {
-    "@types/node": "^24.5.1",
-    "typescript": "^5.9.2"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
+  "private": true,
   "license": "ISC",
-  "dependencies": {
-    "@dataconnect/generated": "file:src/dataconnect-generated"
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
   }
 }

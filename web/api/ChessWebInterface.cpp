@@ -1,167 +1,247 @@
 #include "ChessWebInterface.h"
 #include "ChessAnalyzer.h"
 #include "ChessBoard.h"
+#include "ChessInterface.h"
 #ifdef DATABASE
 #include "ChessDatabaseInterface.h"
-#endif
-#include "ChessInterface.h"
 #include "ChessPeepo.h"
+#endif
 #include "httplib.h"
-// #include "nlohmann/json.hpp"
+#include <charconv>
+#include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <vector>
 
-using namespace httplib;
-// using nlohmann::json;
+namespace {
+bool isSquare(std::string_view square) {
+    return square.size() == 2 && square[0] >= 'a' && square[0] <= 'h' && square[1] >= '1' && square[1] <= '8';
+}
 
-ChessWebInterface::ChessWebInterface() {
-    // for testing create one chessInstance. I guess that makes it for every user the same board. So gotta learn how every user has its own
-    // instance
-    ChessInterface chessInterface;
-#ifdef DATABASE
-    ChessDatabaseInterface chessDB("chessMoves");
-#endif
-
-    GameState game_state = GameState::InProgress;
-    // will point to base board without moves
-    table_pair gameDepth(0, false);
-    int fromMoveId = 1;
-    bool analyzer = false;
-
-    httplib::Server svr;
-
-    // auto ret = svr.set_mount_point("/", "/app/www");
-    auto ret = svr.set_mount_point("/", "./web/www"); // for localhost
-    if (!ret) {
-        std::cerr << "the specified mount point does not exist" << std::endl;
+std::optional<GameState> applyMove(ChessInterface &game, std::string_view move, bool requirePromotion) {
+    if ((move.size() != 5 && move.size() != 7) || move[2] != ':' ||
+        !isSquare(move.substr(0, 2)) || !isSquare(move.substr(3, 2))) {
+        return std::nullopt;
     }
 
-    svr.Get("/reset", [&](const Request &req, Response &res) {
-        chessInterface = ChessInterface();
-        game_state = GameState::InProgress;
-        gameDepth = {0, false};
-        fromMoveId = 1;
-        analyzer = false;
-        std::cout << "reset chess game" << std::endl;
-        res.status = 200;
-        res.set_content("game reseted", "text/plain");
-    });
+    const auto &from = game.getChessBoard().getTileAt(move.substr(0, 2));
+    const bool promotes = from.hasPiece(ChessPieceType::PAWN) && (move[4] == '1' || move[4] == '8');
+    if (move.size() == 7 && (!promotes || move[5] != '=' || std::string_view("QRBN").find(move[6]) == std::string_view::npos)) {
+        return std::nullopt;
+    }
+    if (promotes && move.size() == 5) {
+        if (requirePromotion) return std::nullopt;
+        return game.handleMoveInput(std::string(move) + "=Q");
+    }
+    return game.handleMoveInput(move);
+}
 
-    svr.Post("/drag-start", [&](const Request &req, Response &res) {
-        const std::string fromTile = req.body;
-        std::cout << "fromTile: " << fromTile << std::endl;
-        const auto possMoves = chessInterface.getPossibleMovesFromTile(fromTile);
-        if (!possMoves) {
-            // TODO: response for invalid input
-            res.status = 400;
-            res.set_content("error", "text/plain");
-            return;
-        }
+std::optional<GameState> playAnalyzer(ChessInterface &game) {
+    auto board = game.getChessBoard();
+    ChessAnalyzer analyzer(board);
+    auto moves = analyzer.getEvalTree(1);
+    const auto *best = analyzer.getBestEvaluatedMove(moves);
+    if (!best) return std::nullopt;
+    return applyMove(game, best->s_move, false);
+}
 
-        std::string resPossMoves;
-        for (const auto &possMove : *possMoves) {
-            resPossMoves.append(possMove->getPos() + " ");
-        }
-        if (resPossMoves.size() > 0) {
-            resPossMoves.erase(resPossMoves.size() - 1);
-        }
+int serverPort() {
+    const char *configured = std::getenv("PORT");
+    if (!configured) return 8080;
 
-        res.status = 200;
-        res.set_content(resPossMoves, "text/plain");
-    });
+    const std::string_view value(configured);
+    int port = 0;
+    const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), port);
+    if (error != std::errc{} || end != value.data() + value.size() || port < 1 || port > 65535) {
+        throw std::runtime_error("PORT must be an integer from 1 to 65535");
+    }
+    return port;
+}
+} // namespace
 
-    // make player move and db move
-    svr.Post("/drag-end", [&](const Request &req, Response &res) {
-        const std::string toTile = req.body;
-        std::cout << "move to tile: " << toTile << std::endl;
-        const auto gameState = chessInterface.handleMoveInput(toTile);
-        if (!gameState) {
-            res.status = 400;
-            res.set_content("could not make move", "text/plain");
-            return;
-        }
-        if (gameState == GameState::Won) {
-            res.status = 200;
-            res.set_content("you win!", "text/plain");
-            return;
-        }
+using httplib::Request;
+using httplib::Response;
+
+void ChessWebInterface::run() {
+    auto game = std::make_unique<ChessInterface>();
+    auto state = GameState::InProgress;
+    std::mutex gameMutex;
 
 #ifdef DATABASE
-        // after first analyzer move all others also by analyzer
-        if (analyzer) {
-            // could not find the move so make a random move
-            // const std::string randomMove = ChessPeepo::getRandomInputMove(chessInterface);
-            // std::cout << "the db makes the random move: " << randomMove << std::endl;
-            // game_state = chessInterface.handleInput(randomMove).value();
-            ChessAnalyzer chessAna(chessInterface.getChessBoard());
-            auto moves = chessAna.getEvalTree(1);
-            const std::string bestMove = chessAna.getBestEvaluatedMove(moves)->s_move;
-            std::cout << "analyzer making the move: " << bestMove << std::endl;
-            game_state = chessInterface.handleInput(bestMove).value();
-            analyzer = true;
+    std::unique_ptr<ChessDatabaseInterface> database;
+    try {
+        database = std::make_unique<ChessDatabaseInterface>("chessMoves");
+    } catch (const std::exception &error) {
+        std::cerr << "Opening database unavailable: " << error.what() << '\n';
+    }
+    table_pair depth(0, false);
+    int previousMove = 1;
+    bool useBook = database != nullptr;
 
-            // return current board position
-            const auto board = chessInterface.getChessBoard().getGameHistory().back();
-            res.status = 200;
-            res.set_content(board, "text/plain");
-            return;
+    const auto playBook = [&](ChessInterface &next, std::string_view move) -> std::optional<GameState> {
+        if (!useBook) return std::nullopt;
+
+        try {
+            const auto playerId = database->getMoveIdOpt(depth, previousMove, ChessLinkedListMoves::createData(move, false));
+            if (playerId) {
+                auto replyDepth = depth;
+                ++replyDepth;
+                auto replies = database->getNextMoves(replyDepth, *playerId);
+                std::vector<MoveCompressed *> moves;
+                moves.reserve(replies.size());
+                for (auto &reply : replies) moves.push_back(&reply.second);
+
+                if (!moves.empty()) {
+                    const auto *best = ChessPeepo::getMostPlayedMove(moves);
+                    if (const auto replyId = database->getMoveIdOpt(replyDepth, *playerId, best->data)) {
+                        if (auto result = applyMove(next, ChessLinkedListMoves::getMoveFromData(best->data), false)) {
+                            previousMove = *replyId;
+                            depth = ++replyDepth;
+                            return result;
+                        }
+                    }
+                }
+            }
+        } catch (const std::exception &error) {
+            std::cerr << "Opening database lookup failed: " << error.what() << '\n';
         }
+        useBook = false;
+        return std::nullopt;
+    };
+#endif
 
-        // get oponents move id
-        if (auto whiteMoveId = chessDB.getMoveIdOpt(gameDepth, fromMoveId, ChessLinkedListMoves::createData(toTile, false))) {
-            fromMoveId = *whiteMoveId;
+    httplib::Server server;
+    const char *configuredRoot = std::getenv("CHESS_WEB_ROOT");
+    const auto root = configuredRoot ? std::filesystem::path(configuredRoot)
+                                    : std::filesystem::path(std::filesystem::exists("web/www") ? "web/www" : "www");
+    if (!server.set_mount_point("/", root.string())) {
+        throw std::runtime_error("Cannot serve web assets from " + root.string());
+    }
 
-            // increment after getting the id
-            ++gameDepth;
+    std::string_view status = "playing";
+    std::uint64_t revision = 0;
+    const auto isCurrent = [&](const Request &request, Response &response) {
+        if (!request.has_header("X-Board-Revision") ||
+            request.get_header_value("X-Board-Revision") == std::to_string(revision)) {
+            return true;
+        }
+        response.status = 409;
+        response.set_content("The board changed. Please try again.", "text/plain");
+        return false;
+    };
+    const auto sendBoard = [&](Response &response) {
+        response.set_header("Cache-Control", "no-store");
+        response.set_header("X-Game-Status", std::string(status));
+        response.set_header("X-Board-Revision", std::to_string(revision));
+        response.set_content(game->getChessBoard().getStringFromBoard(), "text/plain");
+    };
 
-            // get move from oponent and get best next move from db
-            auto nextMoves = chessDB.getNextMoves(gameDepth, fromMoveId);
+    server.Get("/board", [&](const Request &, Response &response) {
+        const std::lock_guard lock(gameMutex);
+        sendBoard(response);
+    });
 
-            // transform to pointer vector
-            std::vector<MoveCompressed *> nextMovePtrs;
-            nextMovePtrs.reserve(nextMoves.size());
-            std::ranges::transform(nextMoves, std::back_inserter(nextMovePtrs), [](auto &move) { return &move.second; });
-
-            // get the move string
-            auto bestMove = ChessPeepo::getMostPlayedMove(nextMovePtrs);
-            std::string dbMove = ChessLinkedListMoves::getMoveFromData(bestMove->data);
-            std::cout << "the db makes the move: " << dbMove << std::endl;
-
-            // make the move
-            game_state = chessInterface.handleInput(dbMove).value();
-
-            // increment turn
-            fromMoveId = *chessDB.getMoveIdOpt(gameDepth, fromMoveId, bestMove->data);
-            ++gameDepth;
+    const auto reset = [&](const Request &request, Response &response) {
+        const std::lock_guard lock(gameMutex);
+        game = std::make_unique<ChessInterface>();
+        ++revision;
+        state = GameState::InProgress;
+        status = "playing";
+#ifdef DATABASE
+        depth = {0, false};
+        previousMove = 1;
+        useBook = database != nullptr;
+#endif
+        if (request.method == "GET") {
+            response.set_header("Cache-Control", "no-store");
+            response.set_content("game reseted", "text/plain");
         } else {
-            // could not find the move so make a random move
-            // const std::string randomMove = ChessPeepo::getRandomInputMove(chessInterface);
-            // std::cout << "the db makes the random move: " << randomMove << std::endl;
-            // game_state = chessInterface.handleInput(randomMove).value();
-            ChessAnalyzer chessAna(chessInterface.getChessBoard());
-            auto moves = chessAna.getEvalTree(1);
-            const std::string bestMove = chessAna.getBestEvaluatedMove(moves)->s_move;
-            std::cout << "analyzer making the move: " << bestMove << std::endl;
-            game_state = chessInterface.handleInput(bestMove).value();
-            analyzer = true;
+            sendBoard(response);
         }
-#else
-        ChessAnalyzer chessAna(chessInterface.getChessBoard());
-        const std::string bestMove = chessAna.getBestEvalMove(1);
-        std::cout << "analyzer making the move: " << bestMove << std::endl;
-        game_state = chessInterface.handleInput(bestMove).value();
-#endif
+    };
+    server.Get("/reset", reset);
+    server.Post("/reset", reset);
 
-        // return current board position
-        const auto board = chessInterface.getChessBoard().getGameHistory().back();
-        res.status = 200;
-        res.set_content(board, "text/plain");
+    server.Post("/drag-start", [&](const Request &request, Response &response) {
+        const std::lock_guard lock(gameMutex);
+        if (!isCurrent(request, response)) return;
+        if (state != GameState::InProgress) {
+            response.status = 409;
+            response.set_content("The game has ended.", "text/plain");
+            return;
+        }
+        const auto moves = isSquare(request.body) ? game->getPossibleMovesFromTile(request.body) : std::nullopt;
+        if (!moves) {
+            response.status = 400;
+            response.set_content("Select one of your own pieces.", "text/plain");
+            return;
+        }
+
+        std::string destinations;
+        for (const auto *move : *moves) {
+            if (!destinations.empty()) destinations += ' ';
+            destinations += move->getPos();
+        }
+        response.set_content(destinations, "text/plain");
     });
 
-    std::cout << "starting server" << std::endl;
-    const char *p = std::getenv("PORT");
-    int port = p ? std::stoi(p) : 8080;
-    if (!svr.listen("0.0.0.0", port)) {
-        std::cerr << "Error: not listening to server" << std::endl;
-    } else {
-        std::cout << "server listening on port: " << port << std::endl;
+    server.Post("/drag-end", [&](const Request &request, Response &response) {
+        const std::lock_guard lock(gameMutex);
+        if (!isCurrent(request, response)) return;
+        if (state != GameState::InProgress) {
+            response.status = 409;
+            response.set_content("The game has ended.", "text/plain");
+            return;
+        }
+
+        auto next = std::make_unique<ChessInterface>(game->getChessBoard());
+        auto result = applyMove(*next, request.body, true);
+        if (!result) {
+            response.status = 400;
+            response.set_content("That move is invalid.", "text/plain");
+            return;
+        }
+
+        const bool playerWon = *result == GameState::Won;
+        if (*result == GameState::InProgress) {
+#ifdef DATABASE
+            result = playBook(*next, request.body);
+            if (!result)
+#endif
+                result = playAnalyzer(*next);
+            if (!result) {
+                response.status = 500;
+                response.set_content("The opponent could not move. Please try again.", "text/plain");
+                return;
+            }
+        }
+
+        game = std::move(next);
+        ++revision;
+        state = *result;
+        switch (state) {
+        case GameState::InProgress: status = "playing"; break;
+        case GameState::Draw: status = "draw"; break;
+        case GameState::Won: status = playerWon ? "white-won" : "black-won"; break;
+        }
+        if (playerWon && !request.has_header("X-Board-Revision")) {
+            response.set_content("you win!", "text/plain");
+        } else {
+            sendBoard(response);
+        }
+    });
+
+    const int port = serverPort();
+    if (!server.bind_to_port("0.0.0.0", port)) {
+        throw std::runtime_error("Cannot bind web server to port " + std::to_string(port));
     }
+    std::cout << "Web server listening on port " << port << std::endl;
+    if (!server.listen_after_bind()) throw std::runtime_error("Web server stopped unexpectedly");
 }
